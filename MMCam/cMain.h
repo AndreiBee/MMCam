@@ -3,6 +3,7 @@
 #define CMAIN_H
 
 #include "wx/wx.h"
+#include "wx/valnum.h"
 
 #include <string>
 #include <memory>
@@ -14,17 +15,35 @@ namespace MainFrameVariables
 {
 	enum
 	{
-		ID_RIGHT_SC_DET_X_ABS,
-		ID_RIGHT_SC_DET_X_REL,
-		ID_RIGHT_SC_DET_X_DEC,
-		ID_RIGHT_SC_DET_X_INC,
-		ID_RIGHT_SC_DET_X_CENTER,
-		ID_RIGHT_SC_DET_X_HOME,
+		/* Detector X */
+		ID_RIGHT_SC_DET_X_ABS_TE_CTL,
+		ID_RIGHT_SC_DET_X_SET_BTN,
+		ID_RIGHT_SC_DET_X_REL_TE_CTL,
+		ID_RIGHT_SC_DET_X_DEC_BTN,
+		ID_RIGHT_SC_DET_X_INC_BTN,
+		ID_RIGHT_SC_DET_X_CENTER_BTN,
+		ID_RIGHT_SC_DET_X_HOME_BTN,
+		/* Detector Y */
+		ID_RIGHT_SC_DET_Y_ABS_TE_CTL,
+		ID_RIGHT_SC_DET_Y_SET_BTN,
+		ID_RIGHT_SC_DET_Y_REL_TE_CTL,
+		ID_RIGHT_SC_DET_Y_DEC_BTN,
+		ID_RIGHT_SC_DET_Y_INC_BTN,
+		ID_RIGHT_SC_DET_Y_CENTER_BTN,
+		ID_RIGHT_SC_DET_Y_HOME_BTN,
+		/* Detector Z */
+		ID_RIGHT_SC_DET_Z_ABS_TE_CTL,
+		ID_RIGHT_SC_DET_Z_SET_BTN,
+		ID_RIGHT_SC_DET_Z_REL_TE_CTL,
+		ID_RIGHT_SC_DET_Z_DEC_BTN,
+		ID_RIGHT_SC_DET_Z_INC_BTN,
+		ID_RIGHT_SC_DET_Z_CENTER_BTN,
+		ID_RIGHT_SC_DET_Z_HOME_BTN,
 	};
 	struct StepperControl
 	{
 		wxTextCtrl* absolute_text_ctrl{}, *relative_text_ctrl{};
-		wxButton* increment_btn{}, * decrement_btn{};
+		wxButton* set_btn{}, * increment_btn{}, * decrement_btn{};
 		wxBitmapButton* center_btn{}, * home_btn{};
 	};
 }
