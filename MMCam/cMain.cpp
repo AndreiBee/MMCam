@@ -78,6 +78,28 @@ void cMain::InitDefaultStateWidgets()
 			m_Z_Optics->DisableAllControls();
 		}
 	}
+	/* Disabling Measurement Controls */
+	{
+		//m_OutDirText->SetLabel("None");
+		m_OutDirBtn->Disable();
+
+		float default_start{ 0.0f }, default_step{ 1.0f }, default_finish{ 24.0f };
+
+		/* First Stage */
+		{
+			m_FirstStage->start->SetValue(wxString::Format(wxT("%.3f"), default_start));
+			m_FirstStage->step->SetValue(wxString::Format(wxT("%.3f"), default_step));
+			m_FirstStage->finish->SetValue(wxString::Format(wxT("%.3f"), default_finish));
+			m_FirstStage->DisableAllControls();
+		}
+		/* Second Stage */
+		{
+			m_SecondStage->start->SetValue(wxString::Format(wxT("%.3f"), default_start));
+			m_SecondStage->step->SetValue(wxString::Format(wxT("%.3f"), default_step));
+			m_SecondStage->finish->SetValue(wxString::Format(wxT("%.3f"), default_finish));
+			m_SecondStage->DisableAllControls();
+		}
+	}
 }
 
 void cMain::CreateLeftAndRightSide()
@@ -104,18 +126,7 @@ void cMain::CreateLeftAndRightSide()
 
 void cMain::CreateLeftSide(wxSizer* left_side_sizer)
 {
-	wxPanel* left_side_panel = new wxPanel(this);
-#ifdef _DEBUG
-	left_side_panel->SetBackgroundColour(wxColor(120, 200, 80));
-#else
-	left_side_panel->SetBackgroundColour(wxColor(255, 255, 255));
-#endif // _DEBUG
-
-	wxBoxSizer* left_side_panel_sizer = new wxBoxSizer(wxVERTICAL);
-
-	left_side_panel->SetSizer(left_side_panel_sizer);
-	left_side_sizer->Add(left_side_panel, 1, wxEXPAND);
-
+	m_CamPreview = std::make_unique<cCamPreview>(this, left_side_sizer);
 }
 
 void cMain::CreateRightSide(wxSizer* right_side_sizer)
@@ -130,6 +141,7 @@ void cMain::CreateRightSide(wxSizer* right_side_sizer)
 	wxBoxSizer* right_side_panel_sizer = new wxBoxSizer(wxVERTICAL);
 
 	CreateSteppersControl(right_side_panel, right_side_panel_sizer);
+	CreateCameraControls(right_side_panel, right_side_panel_sizer);
 	CreateMeasurement(right_side_panel, right_side_panel_sizer);
 
 	right_side_panel->SetSizer(right_side_panel_sizer);
@@ -743,6 +755,54 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 	right_side_panel_sizer->Add(sc_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
 }
 
+void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer)
+{
+	wxSizer* const cam_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Camera");
+
+	{
+		wxSizer* const settings_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Settings");
+		{
+			wxSizer* const exposure_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Exposure [us]");
+
+			wxIntegerValidator<int>	exposure_val(NULL, wxNUM_VAL_ZERO_AS_BLANK);
+			exposure_val.SetMin(1);
+			exposure_val.SetMax(10000000);
+
+			wxSize exposure_size = { 64, 20 };
+
+			m_CamExposure = std::make_unique<wxTextCtrl>(
+				right_side_panel, 
+				MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TE_CTL, 
+				wxT("10000000"), 
+				wxDefaultPosition, 
+				exposure_size, 
+				wxTE_CENTRE, 
+				exposure_val);
+
+			exposure_static_box_sizer->AddStretchSpacer();
+			exposure_static_box_sizer->Add(m_CamExposure.get(), 0, wxEXPAND);
+			exposure_static_box_sizer->AddStretchSpacer();
+
+			settings_static_box_sizer->Add(exposure_static_box_sizer, 0, wxEXPAND);
+		}
+		cam_static_box_sizer->Add(settings_static_box_sizer, 0, wxEXPAND);
+
+		/* Preview */
+		{
+			m_CamPreviewBtn = std::make_unique<wxToggleButton>(
+				right_side_panel,
+				MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TGL_BTN,
+				wxT("Preview"), 
+				wxDefaultPosition, 
+				wxDefaultSize);
+			cam_static_box_sizer->AddStretchSpacer();
+			cam_static_box_sizer->Add(m_CamPreviewBtn.get(), 0, wxALIGN_CENTER | wxRIGHT, 2);
+		}
+	}
+
+	right_side_panel_sizer->Add(cam_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
+}
+
 void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer)
 {
 	wxSizer* const mmt_static_box_sizer = new wxStaticBoxSizer(wxVERTICAL, right_side_panel, "&Measurement");
@@ -754,7 +814,8 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 		m_OutDirText = std::make_unique<wxStaticText>(
 			right_side_panel, 
 			MainFrameVariables::ID_RIGHT_MT_OUT_FLD_ST_TEXT, 
-			wxT("None"));
+			wxT("Nothing"));
+
 		m_OutDirBtn = std::make_unique<wxButton>(
 			right_side_panel, 
 			MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, 
@@ -770,7 +831,6 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 
 	wxSize start_text_ctrl_size = { 54, 20 }, step_text_ctrl_size = {start_text_ctrl_size}, finish_text_ctrl_size{start_text_ctrl_size};
 
-	/* First Stage */
 	{
 		wxSizer* const directions_static_box_sizer = new wxStaticBoxSizer(wxVERTICAL, right_side_panel, "&Directions");
 
@@ -787,6 +847,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_FirstStage->motors);
+				m_FirstStage->stage->SetSelection(0);
 				stage_static_box_sizer->Add(m_FirstStage->stage, 0, wxEXPAND);
 				first_axis_static_box_sizer->Add(stage_static_box_sizer, 0, wxEXPAND);
 			}
@@ -856,6 +917,91 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			}
 
 			directions_static_box_sizer->Add(first_axis_static_box_sizer, 0, wxEXPAND);
+		}
+
+		/* Second axis */
+		{
+			wxSizer* const second_axis_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Second axis");
+
+			/* Stage */
+			{
+				wxSizer* const stage_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Stage");
+				m_SecondStage->stage = new wxChoice(
+					right_side_panel, 
+					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_SecondStage->motors);
+				m_SecondStage->stage->SetSelection(1);
+				stage_static_box_sizer->Add(m_SecondStage->stage, 0, wxEXPAND);
+				second_axis_static_box_sizer->Add(stage_static_box_sizer, 0, wxEXPAND);
+			}
+
+			/* Start */
+			{
+				wxSizer* const start_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Start");
+
+				wxFloatingPointValidator<float>	start_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				start_val.SetMin(-1000.0);
+				start_val.SetMax(1000.0);
+
+				m_SecondStage->start = new wxTextCtrl(
+					right_side_panel,
+					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_START,
+					wxT("123.456"), 
+					wxDefaultPosition, 
+					start_text_ctrl_size, 
+					wxTE_CENTRE, 
+					start_val);
+
+				start_static_box_sizer->Add(m_SecondStage->start, 0, wxEXPAND);
+
+				second_axis_static_box_sizer->Add(start_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
+			}
+
+			/* Step */
+			{
+				wxSizer* const step_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Step");
+
+				wxFloatingPointValidator<float>	step_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				step_val.SetMin(-1000.0);
+				step_val.SetMax(1000.0);
+
+				m_SecondStage->step = new wxTextCtrl(
+					right_side_panel, 
+					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_STEP,
+					wxT("123.456"), 
+					wxDefaultPosition, 
+					step_text_ctrl_size, 
+					wxTE_CENTRE, 
+					step_val);
+				
+				step_static_box_sizer->Add(m_SecondStage->step, 0, wxEXPAND);
+				second_axis_static_box_sizer->Add(step_static_box_sizer, 0, wxEXPAND | wxRIGHT, 2);
+			}
+
+			/* Finish */
+			{
+				wxSizer* const finish_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Finish");
+
+				wxFloatingPointValidator<float>	finish_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				finish_val.SetMin(-1000.0);
+				finish_val.SetMax(1000.0);
+
+				m_SecondStage->finish = new wxTextCtrl(
+					right_side_panel, 
+					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_FINISH,
+					wxT("123.456"), 
+					wxDefaultPosition, 
+					finish_text_ctrl_size, 
+					wxTE_CENTRE, 
+					finish_val);
+
+				finish_static_box_sizer->Add(m_SecondStage->finish, 0, wxEXPAND);
+				second_axis_static_box_sizer->Add(finish_static_box_sizer, 0, wxEXPAND);
+			}
+
+			directions_static_box_sizer->Add(second_axis_static_box_sizer, 0, wxEXPAND);
 		}
 
 		mmt_static_box_sizer->Add(directions_static_box_sizer, 0, wxEXPAND);

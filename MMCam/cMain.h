@@ -3,10 +3,13 @@
 #define CMAIN_H
 
 #include "wx/wx.h"
+#include "wx/tglbtn.h"
 #include "wx/valnum.h"
 
 #include <string>
 #include <memory>
+
+#include "cCamPreview.h"
 
 #include "src/img/center.xpm"
 #include "src/img/home.xpm"
@@ -63,6 +66,9 @@ namespace MainFrameVariables
 		ID_RIGHT_SC_OPT_Z_INC_BTN,
 		ID_RIGHT_SC_OPT_Z_CENTER_BTN,
 		ID_RIGHT_SC_OPT_Z_HOME_BTN,
+		/* Camera */
+		ID_RIGHT_CAM_EXPOSURE_TE_CTL,
+		ID_RIGHT_CAM_EXPOSURE_TGL_BTN,
 		/* Measurement */
 		ID_RIGHT_MT_OUT_FLD_ST_TEXT,
 		ID_RIGHT_MT_OUT_FLD_BTN,
@@ -117,6 +123,14 @@ namespace MainFrameVariables
 			motors.Add("Optics Y");
 			motors.Add("Optics Z");
 		};
+
+		void DisableAllControls()
+		{
+			stage->Disable();
+			start->Disable();
+			step->Disable();
+			finish->Disable();
+		}
 	};
 }
 
@@ -133,12 +147,19 @@ private:
 	void CreateLeftSide(wxSizer* left_side_sizer);
 	void CreateRightSide(wxSizer* right_side_sizer);
 	void CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
+	void CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 
 private:
+	/* Preview Panel */
+	std::unique_ptr<cCamPreview> m_CamPreview{};
 	/* Steppers Control */
 	std::unique_ptr<MainFrameVariables::StepperControl> m_X_Detector{}, m_Y_Detector{}, m_Z_Detector{};
 	std::unique_ptr<MainFrameVariables::StepperControl> m_X_Optics{}, m_Y_Optics{}, m_Z_Optics{};
+
+	/* Camera */
+	std::unique_ptr<wxTextCtrl> m_CamExposure{};
+	std::unique_ptr<wxToggleButton> m_CamPreviewBtn{};
 
 	/* Measurement */
 	std::unique_ptr<wxStaticText> m_OutDirText{};
