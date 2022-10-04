@@ -68,7 +68,7 @@ namespace MainFrameVariables
 		ID_RIGHT_SC_OPT_Z_HOME_BTN,
 		/* Camera */
 		ID_RIGHT_CAM_EXPOSURE_TE_CTL,
-		ID_RIGHT_CAM_EXPOSURE_TGL_BTN,
+		ID_RIGHT_CAM_PREVIEW_BTN,
 		/* Measurement */
 		ID_RIGHT_MT_OUT_FLD_ST_TEXT,
 		ID_RIGHT_MT_OUT_FLD_BTN,
@@ -150,6 +150,8 @@ private:
 	void CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 
+	void OnPreviewCameraImage(wxCommandEvent& evt);
+	void OnExit(wxCloseEvent& evt);
 private:
 	/* Preview Panel */
 	std::unique_ptr<cCamPreview> m_CamPreview{};
@@ -159,7 +161,7 @@ private:
 
 	/* Camera */
 	std::unique_ptr<wxTextCtrl> m_CamExposure{};
-	std::unique_ptr<wxToggleButton> m_CamPreviewBtn{};
+	std::unique_ptr<wxButton> m_CamPreviewBtn{};
 
 	/* Measurement */
 	std::unique_ptr<wxStaticText> m_OutDirText{};

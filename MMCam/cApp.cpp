@@ -13,3 +13,8 @@ bool cApp::OnInit()
 	m_cMainFrame->Show();
 	return true;
 }
+
+cApp::~cApp()
+{
+
+}

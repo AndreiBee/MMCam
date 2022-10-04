@@ -1,7 +1,8 @@
 #include "cMain.h"
 
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
-
+	EVT_CLOSE(cMain::OnExit)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_PREVIEW_BTN, cMain::OnPreviewCameraImage)
 wxEND_EVENT_TABLE()
 
 cMain::cMain(const wxString& title_) 
@@ -789,9 +790,9 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 
 		/* Preview */
 		{
-			m_CamPreviewBtn = std::make_unique<wxToggleButton>(
+			m_CamPreviewBtn = std::make_unique<wxButton>(
 				right_side_panel,
-				MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TGL_BTN,
+				MainFrameVariables::ID_RIGHT_CAM_PREVIEW_BTN,
 				wxT("Preview"), 
 				wxDefaultPosition, 
 				wxDefaultSize);
@@ -1008,4 +1009,26 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 	}
 
 	right_side_panel_sizer->Add(mmt_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
+}
+
+void cMain::OnPreviewCameraImage(wxCommandEvent& evt)
+{
+	m_CamPreview->SetCameraCapturedImage(1000);
+}
+
+void cMain::OnExit(wxCloseEvent& evt)
+{
+	if (evt.CanVeto())
+	{
+		if (wxMessageBox("Are you sure?",
+			"Exit application",
+			wxICON_QUESTION | wxYES_NO) != wxYES)
+		{
+			evt.Veto();
+			return;
+		}
+	}
+	Destroy();  // you may also do:  event.Skip();
+	evt.Skip();
+	// since the default event handler does call Destroy(), too
 }
