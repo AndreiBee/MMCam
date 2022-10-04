@@ -10,7 +10,7 @@ bool cApp::OnInit()
 {
 	::wxInitAllImageHandlers();
 	m_cMainFrame = new cMain(wxT("MMCam"));
-	m_cMainFrame->Show();
+	//m_cMainFrame->Show();
 	return true;
 }
 

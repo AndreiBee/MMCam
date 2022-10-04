@@ -144,11 +144,13 @@
     <ClInclude Include="cApp.h" />
     <ClInclude Include="cCamPreview.h" />
     <ClInclude Include="cMain.h" />
+    <ClInclude Include="cSettings.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cApp.cpp" />
     <ClCompile Include="cCamPreview.cpp" />
     <ClCompile Include="cMain.cpp" />
+    <ClCompile Include="cSettings.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

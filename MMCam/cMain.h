@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "cCamPreview.h"
+#include "cSettings.h"
 
 #include "src/img/center.xpm"
 #include "src/img/home.xpm"
@@ -179,6 +180,8 @@ private:
 	void OnExit(wxCommandEvent& evt);
 
 private:
+	/* Settings Menu */
+	cSettings* m_Settings{};
 	/* Menu Bar */
 	MainFrameVariables::MenuBar* m_MenuBar{};
 	/* Preview Panel */

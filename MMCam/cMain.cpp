@@ -15,6 +15,11 @@ cMain::cMain(const wxString& title_)
 	CreateMainFrame();
 	InitDefaultStateWidgets();
 	CenterOnScreen();
+
+	Show();
+#ifdef _DEBUG
+	m_Settings->ShowModal();
+#endif // _DEBUG
 }
 
 void cMain::CreateMainFrame()
@@ -26,6 +31,8 @@ void cMain::CreateMainFrame()
 
 void cMain::InitComponents()
 {
+	/* Settings Frame */
+	m_Settings = new cSettings(this);
 	/* Detector */
 	m_X_Detector = std::make_unique<MainFrameVariables::StepperControl>();
 	m_Y_Detector = std::make_unique<MainFrameVariables::StepperControl>();
