@@ -2,7 +2,11 @@
 
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CLOSE(cMain::OnExit)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_FILE_QUIT, cMain::OnExit)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
+	EVT_MAXIMIZE(cMain::OnMaximizeButton)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_PREVIEW_BTN, cMain::OnPreviewCameraImage)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
 wxEND_EVENT_TABLE()
 
 cMain::cMain(const wxString& title_) 
@@ -16,6 +20,7 @@ cMain::cMain(const wxString& title_)
 void cMain::CreateMainFrame()
 {
 	InitComponents();
+	CreateMenuBarOnFrame();
 	CreateLeftAndRightSide();
 }
 
@@ -32,6 +37,30 @@ void cMain::InitComponents()
 	/* Measurement */
 	m_FirstStage = std::make_unique<MainFrameVariables::MeasurementStage>();
 	m_SecondStage = std::make_unique<MainFrameVariables::MeasurementStage>();
+}
+
+void cMain::CreateMenuBarOnFrame()
+{
+	m_MenuBar = new MainFrameVariables::MenuBar();
+	this->SetMenuBar(m_MenuBar->menu_bar);
+
+	// File Menu
+	m_MenuBar->menu_file->Append(MainFrameVariables::ID_MENUBAR_FILE_QUIT, wxT("Quit\tCtrl+Q"));
+	m_MenuBar->menu_bar->Append(m_MenuBar->menu_file, wxT("&File"));
+
+	// Edit Menu
+	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
+	// Append Edit Menu to the Menu Bar
+	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
+
+	// Window Menu
+	m_MenuBar->menu_window->Append(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, wxT("Full screen mode\tF11"), wxEmptyString, wxITEM_CHECK);
+	// Append Window Menu to the Menu Bar
+	m_MenuBar->menu_bar->Append(m_MenuBar->menu_window, wxT("&Window"));
+
+	// Help Menu
+	m_MenuBar->menu_help->Append(MainFrameVariables::ID_MENUBAR_HELP_ABOUT, wxT("About MMCam\tF1"));
+	m_MenuBar->menu_bar->Append(m_MenuBar->menu_help, wxT("&Help"));
 }
 
 void cMain::InitDefaultStateWidgets()
@@ -82,7 +111,7 @@ void cMain::InitDefaultStateWidgets()
 	/* Disabling Measurement Controls */
 	{
 		m_OutDirTextCtrl->Disable();
-		m_OutDirBtn->Disable();
+		//m_OutDirBtn->Disable();
 
 		float default_start{ 0.0f }, default_step{ 1.0f }, default_finish{ 24.0f };
 
@@ -106,7 +135,6 @@ void cMain::InitDefaultStateWidgets()
 void cMain::CreateLeftAndRightSide()
 {
 	wxBoxSizer* main_sizer = new wxBoxSizer(wxHORIZONTAL);
-
 
 	int height_left_and_right_panels{ 600 };
 	wxBoxSizer* right_sizer = new wxBoxSizer(wxVERTICAL);
@@ -815,7 +843,11 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 		m_OutDirTextCtrl = std::make_unique<wxTextCtrl>(
 			right_side_panel, 
 			MainFrameVariables::ID_RIGHT_MT_OUT_FLD_TE_CTL, 
-			wxT("Save directory..."));
+			wxT("Save directory..."), 
+			wxDefaultPosition, 
+			wxDefaultSize, 
+			wxTE_LEFT
+			);
 
 		m_OutDirBtn = std::make_unique<wxButton>(
 			right_side_panel, 
@@ -1013,11 +1045,51 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 
 void cMain::OnPreviewCameraImage(wxCommandEvent& evt)
 {
-	m_CamPreview->SetCameraCapturedImage(1000);
+	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() ? wxString("0") : m_CamExposure->GetValue();
+	int exposure_time = abs(wxAtoi(exposure_time_str));
+	m_CamPreview->SetCameraCapturedImage(exposure_time);
+}
+
+void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
+{
+	wxDirDialog save_dialog(NULL, "Choose save directory", "",
+		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+
+	if (save_dialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	m_OutDirTextCtrl->SetValue(save_dialog.GetPath());
+}
+
+void cMain::OnFullScreen(wxCommandEvent& evt)
+{
+	if (!IsMaximized())
+	{
+		Maximize(true);
+		m_MenuBar->menu_window->Check(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, true);
+	}
+	else
+	{
+		Maximize(false);
+		m_MenuBar->menu_window->Check(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, false);
+	}
+}
+
+void cMain::OnMaximizeButton(wxMaximizeEvent& evt)
+{
+	if (m_MenuBar->menu_window->IsChecked(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN))
+	{
+		m_MenuBar->menu_window->Check(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, false);
+	}
+	else
+	{
+		m_MenuBar->menu_window->Check(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, true);
+	}
 }
 
 void cMain::OnExit(wxCloseEvent& evt)
 {
+#ifndef _DEBUG
 	if (evt.CanVeto())
 	{
 		if (wxMessageBox("Are you sure?",
@@ -1028,7 +1100,15 @@ void cMain::OnExit(wxCloseEvent& evt)
 			return;
 		}
 	}
+#endif // !_DEBUG
+
 	Destroy();  // you may also do:  event.Skip();
 	evt.Skip();
 	// since the default event handler does call Destroy(), too
+}
+
+void cMain::OnExit(wxCommandEvent& evt)
+{
+	wxCloseEvent artificialExit(wxEVT_CLOSE_WINDOW);
+	ProcessEvent(artificialExit);
 }

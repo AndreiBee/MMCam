@@ -18,6 +18,10 @@ namespace MainFrameVariables
 {
 	enum
 	{
+		ID_MENUBAR_FILE_QUIT,
+		ID_MENUBAR_EDIT_SETTINGS,
+		ID_MENUBAR_WINDOW_FULLSCREEN,
+		ID_MENUBAR_HELP_ABOUT,
 		/* Detector X */
 		ID_RIGHT_SC_DET_X_ABS_TE_CTL,
 		ID_RIGHT_SC_DET_X_SET_BTN,
@@ -82,6 +86,20 @@ namespace MainFrameVariables
 		ID_RIGHT_MT_SECOND_STAGE_FINISH,
 		ID_RIGHT_MT_START_MEASUREMENT
 	};
+	struct MenuBar
+	{
+		wxMenuBar* menu_bar{};
+		wxMenu* menu_file{};
+		wxMenu* menu_edit{};
+		wxMenu* menu_window{};
+		wxMenu* menu_help{};
+		MenuBar() :
+			menu_bar(new wxMenuBar()),
+			menu_file(new wxMenu()),
+			menu_edit(new wxMenu()),
+			menu_window(new wxMenu()),
+			menu_help(new wxMenu()) {};
+	};
 	struct StepperControl
 	{
 		wxTextCtrl* absolute_text_ctrl{}, *relative_text_ctrl{};
@@ -143,6 +161,7 @@ private:
 	void CreateMainFrame();
 	void InitComponents();
 	void InitDefaultStateWidgets();
+	void CreateMenuBarOnFrame();
 	void CreateLeftAndRightSide();
 	void CreateLeftSide(wxSizer* left_side_sizer);
 	void CreateRightSide(wxSizer* right_side_sizer);
@@ -151,8 +170,17 @@ private:
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 
 	void OnPreviewCameraImage(wxCommandEvent& evt);
+	void OnSetOutDirectoryBtn(wxCommandEvent& evt);
+
+	void OnFullScreen(wxCommandEvent& evt);
+	void OnMaximizeButton(wxMaximizeEvent& evt);
+
 	void OnExit(wxCloseEvent& evt);
+	void OnExit(wxCommandEvent& evt);
+
 private:
+	/* Menu Bar */
+	MainFrameVariables::MenuBar* m_MenuBar{};
 	/* Preview Panel */
 	std::unique_ptr<cCamPreview> m_CamPreview{};
 	/* Steppers Control */
