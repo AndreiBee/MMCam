@@ -16,6 +16,7 @@ cSettings::cSettings(wxWindow* parent_frame)
 
 void cSettings::CreateMainFrame()
 {
+	InitComponents();
 	CreateSettings();
 }
 
@@ -46,6 +47,37 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 		{
 			/* X */
 			wxSizer* const det_x_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&X");
+			{
+				wxSizer* const sn_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&S/N");
+
+				m_DetX->motors = new wxChoice(
+					motors_panel, 
+					wxID_ANY, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_DetX->motors_list);
+
+				m_DetX->motors->SetSelection(0);
+
+				sn_static_box_sizer->Add(m_DetX->motors);
+
+				det_x_static_box_sizer->Add(sn_static_box_sizer);
+			}
+			det_x_static_box_sizer->AddSpacer(2);
+			{
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
+
+				m_DetX->ranges = new wxChoice(
+					motors_panel, 
+					wxID_ANY, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_DetX->ranges_list);
+				m_DetX->ranges->SetSelection(0);
+				range_static_box_sizer->Add(m_DetX->ranges);
+
+				det_x_static_box_sizer->Add(range_static_box_sizer);
+			}
 			detector_static_box_sizer->Add(det_x_static_box_sizer, 0, wxEXPAND);
 			detector_static_box_sizer->AddStretchSpacer();
 
@@ -108,3 +140,12 @@ void cSettings::InitDefaultStateWidgets()
 
 }
 
+void cSettings::InitComponents()
+{
+	m_DetX = std::make_unique<SettingsVariables::MotorSettings>();
+	m_DetY = std::make_unique<SettingsVariables::MotorSettings>();
+	m_DetZ = std::make_unique<SettingsVariables::MotorSettings>();
+	m_OptX = std::make_unique<SettingsVariables::MotorSettings>();
+	m_OptY = std::make_unique<SettingsVariables::MotorSettings>();
+	m_OptZ = std::make_unique<SettingsVariables::MotorSettings>();
+}
