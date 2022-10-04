@@ -81,7 +81,7 @@ void cMain::InitDefaultStateWidgets()
 	}
 	/* Disabling Measurement Controls */
 	{
-		//m_OutDirText->SetLabel("None");
+		m_OutDirTextCtrl->Disable();
 		m_OutDirBtn->Disable();
 
 		float default_start{ 0.0f }, default_step{ 1.0f }, default_finish{ 24.0f };
@@ -812,10 +812,10 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 	{
 		wxSizer* const out_dir_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Output directory");
 		
-		m_OutDirText = std::make_unique<wxStaticText>(
+		m_OutDirTextCtrl = std::make_unique<wxTextCtrl>(
 			right_side_panel, 
-			MainFrameVariables::ID_RIGHT_MT_OUT_FLD_ST_TEXT, 
-			wxT("Nothing"));
+			MainFrameVariables::ID_RIGHT_MT_OUT_FLD_TE_CTL, 
+			wxT("Save directory..."));
 
 		m_OutDirBtn = std::make_unique<wxButton>(
 			right_side_panel, 
@@ -823,8 +823,8 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			wxT("Select folder"));
 		m_OutDirBtn->SetToolTip(wxT("Set the output directory"));
 
-		out_dir_static_box_sizer->Add(m_OutDirText.get(), 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 2);
-		out_dir_static_box_sizer->AddStretchSpacer();
+		out_dir_static_box_sizer->Add(m_OutDirTextCtrl.get(), 1, wxEXPAND | wxRIGHT, 4);
+		//out_dir_static_box_sizer->AddStretchSpacer();
 		out_dir_static_box_sizer->Add(m_OutDirBtn.get(), 0, wxALIGN_CENTER);
 
 		mmt_static_box_sizer->Add(out_dir_static_box_sizer, 0, wxEXPAND);

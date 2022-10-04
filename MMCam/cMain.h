@@ -70,7 +70,7 @@ namespace MainFrameVariables
 		ID_RIGHT_CAM_EXPOSURE_TE_CTL,
 		ID_RIGHT_CAM_PREVIEW_BTN,
 		/* Measurement */
-		ID_RIGHT_MT_OUT_FLD_ST_TEXT,
+		ID_RIGHT_MT_OUT_FLD_TE_CTL,
 		ID_RIGHT_MT_OUT_FLD_BTN,
 		ID_RIGHT_MT_FIRST_STAGE_CHOICE,
 		ID_RIGHT_MT_FIRST_STAGE_START,
@@ -164,7 +164,7 @@ private:
 	std::unique_ptr<wxButton> m_CamPreviewBtn{};
 
 	/* Measurement */
-	std::unique_ptr<wxStaticText> m_OutDirText{};
+	std::unique_ptr<wxTextCtrl> m_OutDirTextCtrl{};
 	std::unique_ptr<wxButton> m_OutDirBtn{};
 	std::unique_ptr<MainFrameVariables::MeasurementStage> m_FirstStage{}, m_SecondStage{};
 	std::unique_ptr<wxButton> m_StartMeasurement{};

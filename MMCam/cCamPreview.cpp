@@ -262,6 +262,7 @@ void cCamPreview::OnSize(wxSizeEvent& evt)
 		m_CanvasSize.SetWidth(newWidth);
 		m_CanvasSize.SetHeight(newHeight);
 		m_Zoom = 1.0;
+		m_PanOffset = {};
 		ChangeSizeOfImageInDependenceOnCanvasSize();
 		m_IsGraphicsBitmapSet = false;
 		Refresh();
