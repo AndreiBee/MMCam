@@ -158,6 +158,8 @@ class cMain final : public wxFrame
 public:
 	cMain(const wxString& title_);
 
+	~cMain();
+
 private:
 	void CreateMainFrame();
 	void InitComponents();
@@ -172,6 +174,8 @@ private:
 
 	void OnPreviewCameraImage(wxCommandEvent& evt);
 	void OnSetOutDirectoryBtn(wxCommandEvent& evt);
+
+	void OnOpenSettings(wxCommandEvent& evt);
 
 	void OnFullScreen(wxCommandEvent& evt);
 	void OnMaximizeButton(wxMaximizeEvent& evt);

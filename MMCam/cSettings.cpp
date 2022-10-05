@@ -310,7 +310,16 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 void cSettings::InitDefaultStateWidgets()
 {
-
+	/* Disabling X and Z Optics motors choices */
+	{
+		m_Motors->m_Optics[0].motors->Disable();
+		m_Motors->m_Optics[2].motors->Disable();
+	}
+	/* Disabling X and Z Optics ranges choices */
+	{
+		m_Motors->m_Optics[0].ranges->Disable();
+		m_Motors->m_Optics[2].ranges->Disable();
+	}
 }
 
 void cSettings::InitComponents()
@@ -353,12 +362,34 @@ void cSettings::BindMotorsAndRangesChoices()
 
 void cSettings::OnMotorsChoice(wxCommandEvent& evt)
 {
-	wxLogDebug("Motor changing");
+	/* Set the selected motor value for each motor */
+	for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
+	{
+		if (motor < m_MotorsCount / 2)
+		{
+			m_Motors->m_Detector[motor].selected_motor = m_Motors->m_Detector[motor].motors->GetSelection();
+		}
+		else
+		{
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].selected_motor = m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->GetSelection();
+		}
+	}
 }
 
 void cSettings::OnRangesChoice(wxCommandEvent& evt)
 {
-	wxLogDebug("Range changing");
+	/* Set the selected range value for each motor */
+	for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
+	{
+		if (motor < m_MotorsCount / 2)
+		{
+			m_Motors->m_Detector[motor].selected_range = m_Motors->m_Detector[motor].ranges->GetSelection();
+		}
+		else
+		{
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].selected_range = m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->GetSelection();
+		}
+	}
 }
 
 void cSettings::OnRefreshBtn(wxCommandEvent& evt)
@@ -367,7 +398,65 @@ void cSettings::OnRefreshBtn(wxCommandEvent& evt)
 
 void cSettings::OnOkBtn(wxCommandEvent& evt)
 {
+	if (!CheckIfThereIsCollisionWithMotors())
 	Hide();
+}
+
+bool cSettings::CheckIfThereIsCollisionWithMotors()
+{
+	auto raise_exception_msg = []() 
+	{
+		wxString title = "Motor selection error";
+		wxMessageBox(
+			wxT
+			(
+				"There is a collision of motors"
+				"\nYou have selected minimum 2 axis on the same motor ID"
+				"\nPlease, change selection and try again"
+			),
+			title,
+			wxICON_ERROR);
+	};
+	uint8_t selected_motor_number{};
+	for (auto current_motor{ 0 }; current_motor < m_MotorsCount; ++current_motor)
+	{
+		if (current_motor < m_MotorsCount / 2)
+		{
+			selected_motor_number = m_Motors->m_Detector[current_motor].selected_motor;
+		}
+		else
+		{
+			selected_motor_number = m_Motors->m_Optics[current_motor - m_MotorsCount / 2].selected_motor;
+		}
+
+		for (auto comp_motor{ 0 }; comp_motor < m_MotorsCount; ++comp_motor)
+		{
+			if (current_motor == comp_motor) continue;
+
+			if (comp_motor < 3)
+			{
+				if (selected_motor_number == m_Motors->m_Detector[comp_motor].selected_motor && selected_motor_number != 0)
+				{
+					raise_exception_msg();
+					return true;
+				}
+				else
+					continue;
+			}
+			else
+			{	
+				if (selected_motor_number == m_Motors->m_Optics[comp_motor - m_MotorsCount / 2].selected_motor && selected_motor_number != 0)
+				{
+					raise_exception_msg();
+					return true;
+				}
+				else
+					continue;
+
+			}
+		}
+	}
+	return false;
 }
 
 void cSettings::OnCancelBtn(wxCommandEvent& evt)

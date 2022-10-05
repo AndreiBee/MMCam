@@ -27,6 +27,7 @@ namespace SettingsVariables
 	{
 		wxChoice* motors{}, * ranges{};
 		wxArrayString motors_list, ranges_list;
+		uint8_t selected_motor{}, selected_range{};
 
 		MotorSettings()
 		{
@@ -77,12 +78,13 @@ private:
 
 	void OnRefreshBtn(wxCommandEvent& evt);
 	void OnOkBtn(wxCommandEvent& evt);
+	bool CheckIfThereIsCollisionWithMotors();
 	void OnCancelBtn(wxCommandEvent& evt);
 
 private:
 	wxButton* m_OkBtn{}, *m_CancelBtn{}, *m_RefreshBtn{};
-	//std::unique_ptr<SettingsVariables::MotorSettings> m_DetX{}, m_DetY{}, m_DetZ{}, m_OptX{}, m_OptY{}, m_OptZ{};
 	std::unique_ptr<SettingsVariables::MotorSettingsArray> m_Motors{};
+	const int m_MotorsCount{ 6 };
 };
 
 #endif // !CSETTINGS_H

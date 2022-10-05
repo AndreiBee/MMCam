@@ -3,6 +3,7 @@
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CLOSE(cMain::OnExit)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_FILE_QUIT, cMain::OnExit)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
 	EVT_MAXIMIZE(cMain::OnMaximizeButton)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_PREVIEW_BTN, cMain::OnPreviewCameraImage)
@@ -18,7 +19,8 @@ cMain::cMain(const wxString& title_)
 
 	Show();
 #ifdef _DEBUG
-	m_Settings->ShowModal();
+	wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS);
+	ProcessEvent(art_evt);
 #endif // _DEBUG
 }
 
@@ -1068,6 +1070,11 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 	m_OutDirTextCtrl->SetValue(save_dialog.GetPath());
 }
 
+void cMain::OnOpenSettings(wxCommandEvent& evt)
+{
+	m_Settings->ShowModal();
+}
+
 void cMain::OnFullScreen(wxCommandEvent& evt)
 {
 	if (!IsMaximized())
@@ -1118,4 +1125,9 @@ void cMain::OnExit(wxCommandEvent& evt)
 {
 	wxCloseEvent artificialExit(wxEVT_CLOSE_WINDOW);
 	ProcessEvent(artificialExit);
+}
+
+cMain::~cMain()
+{
+	delete m_MenuBar;
 }
