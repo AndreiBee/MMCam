@@ -117,7 +117,7 @@ void cMain::InitDefaultStateWidgets()
 	}
 	/* Disabling Measurement Controls */
 	{
-		m_OutDirTextCtrl->Disable();
+		//m_OutDirTextCtrl->Disable();
 		//m_OutDirBtn->Disable();
 
 		float default_start{ 0.0f }, default_step{ 1.0f }, default_finish{ 24.0f };
@@ -853,7 +853,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			wxT("Save directory..."), 
 			wxDefaultPosition, 
 			wxDefaultSize, 
-			wxTE_LEFT
+			wxTE_LEFT | wxTE_READONLY
 			);
 
 		m_OutDirBtn = std::make_unique<wxButton>(

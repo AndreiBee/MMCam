@@ -7,7 +7,7 @@ cSettings::cSettings(wxWindow* parent_frame)
 		"Settings", 
 		wxDefaultPosition, 
 		wxDefaultSize, 
-		wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+		wxDEFAULT_DIALOG_STYLE)
 {
 	CreateMainFrame();
 	InitDefaultStateWidgets();
@@ -18,6 +18,7 @@ void cSettings::CreateMainFrame()
 {
 	InitComponents();
 	CreateSettings();
+	BindMotorsAndRangesChoices();
 }
 
 void cSettings::CreateSettings()
@@ -47,47 +48,118 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 		{
 			/* X */
 			wxSizer* const det_x_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&X");
+			/* Serial Number */
 			{
 				wxSizer* const sn_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&S/N");
 
-				m_DetX->motors = new wxChoice(
+				m_Motors->m_Detector[0].motors = new wxChoice(
 					motors_panel, 
-					wxID_ANY, 
+					SettingsVariables::ID_MOT_DET_X_MOTOR, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_DetX->motors_list);
+					m_Motors->m_Detector[0].motors_list);
 
-				m_DetX->motors->SetSelection(0);
+				m_Motors->m_Detector[0].motors->SetSelection(0);
 
-				sn_static_box_sizer->Add(m_DetX->motors);
+				sn_static_box_sizer->Add(m_Motors->m_Detector[0].motors);
 
 				det_x_static_box_sizer->Add(sn_static_box_sizer);
 			}
+			/* Range */
 			det_x_static_box_sizer->AddSpacer(2);
 			{
 				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
 
-				m_DetX->ranges = new wxChoice(
+				m_Motors->m_Detector[0].ranges = new wxChoice(
 					motors_panel, 
-					wxID_ANY, 
+					SettingsVariables::ID_MOT_DET_X_RANGE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_DetX->ranges_list);
-				m_DetX->ranges->SetSelection(0);
-				range_static_box_sizer->Add(m_DetX->ranges);
+					m_Motors->m_Detector[0].ranges_list);
+				m_Motors->m_Detector[0].ranges->SetSelection(0);
+				range_static_box_sizer->Add(m_Motors->m_Detector[0].ranges);
 
 				det_x_static_box_sizer->Add(range_static_box_sizer);
 			}
 			detector_static_box_sizer->Add(det_x_static_box_sizer, 0, wxEXPAND);
+
+			detector_static_box_sizer->AddSpacer(2);
 			detector_static_box_sizer->AddStretchSpacer();
 
 			/* Y */
 			wxSizer* const det_y_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Y");
+			/* Serial Number */
+			{
+				wxSizer* const sn_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&S/N");
+
+				m_Motors->m_Detector[1].motors = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_DET_Y_MOTOR, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Detector[1].motors_list);
+
+				m_Motors->m_Detector[1].motors->SetSelection(0);
+
+				sn_static_box_sizer->Add(m_Motors->m_Detector[1].motors);
+
+				det_y_static_box_sizer->Add(sn_static_box_sizer);
+			}
+			/* Range */
+			det_y_static_box_sizer->AddSpacer(2);
+			{
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
+
+				m_Motors->m_Detector[1].ranges = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_DET_Y_RANGE, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Detector[1].ranges_list);
+				m_Motors->m_Detector[1].ranges->SetSelection(0);
+				range_static_box_sizer->Add(m_Motors->m_Detector[1].ranges);
+
+				det_y_static_box_sizer->Add(range_static_box_sizer);
+			}
 			detector_static_box_sizer->Add(det_y_static_box_sizer, 0, wxEXPAND);
+			detector_static_box_sizer->AddSpacer(2);
 			detector_static_box_sizer->AddStretchSpacer();
 
 			/* Z */
 			wxSizer* const det_z_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Z");
+			/* Serial Number */
+			{
+				wxSizer* const sn_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&S/N");
+
+				m_Motors->m_Detector[2].motors = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_DET_Z_MOTOR, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Detector[2].motors_list);
+
+				m_Motors->m_Detector[2].motors->SetSelection(0);
+
+				sn_static_box_sizer->Add(m_Motors->m_Detector[2].motors);
+
+				det_z_static_box_sizer->Add(sn_static_box_sizer);
+			}
+			/* Range */
+			det_z_static_box_sizer->AddSpacer(2);
+			{
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
+
+				m_Motors->m_Detector[2].ranges = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_DET_Z_RANGE, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Detector[2].ranges_list);
+				m_Motors->m_Detector[2].ranges->SetSelection(0);
+				range_static_box_sizer->Add(m_Motors->m_Detector[2].ranges);
+
+				det_z_static_box_sizer->Add(range_static_box_sizer);
+			}
 			detector_static_box_sizer->Add(det_z_static_box_sizer, 0, wxEXPAND);
 		}
 		motors_static_box_sizer->Add(detector_static_box_sizer, 0, wxEXPAND);
@@ -96,23 +168,124 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 		{
 			/* X */
 			wxSizer* const opt_x_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&X");
+			/* Serial Number */
+			{
+				wxSizer* const sn_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&S/N");
+
+				m_Motors->m_Optics[0].motors = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_OPT_X_MOTOR, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Optics[0].motors_list);
+
+				m_Motors->m_Optics[0].motors->SetSelection(0);
+
+				sn_static_box_sizer->Add(m_Motors->m_Optics[0].motors);
+
+				opt_x_static_box_sizer->Add(sn_static_box_sizer);
+			}
+			/* Range */
+			opt_x_static_box_sizer->AddSpacer(2);
+			{
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
+
+				m_Motors->m_Optics[0].ranges = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_OPT_X_RANGE, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Optics[0].ranges_list);
+				m_Motors->m_Optics[0].ranges->SetSelection(0);
+				range_static_box_sizer->Add(m_Motors->m_Optics[0].ranges);
+
+				opt_x_static_box_sizer->Add(range_static_box_sizer);
+			}
 			optics_static_box_sizer->Add(opt_x_static_box_sizer, 0, wxEXPAND);
+			optics_static_box_sizer->AddSpacer(2);
 			optics_static_box_sizer->AddStretchSpacer();
 
 			/* Y */
 			wxSizer* const opt_y_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Y");
+			/* Serial Number */
+			{
+				wxSizer* const sn_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&S/N");
+
+				m_Motors->m_Optics[1].motors = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_OPT_Y_MOTOR, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Optics[1].motors_list);
+
+				m_Motors->m_Optics[1].motors->SetSelection(0);
+
+				sn_static_box_sizer->Add(m_Motors->m_Optics[1].motors);
+
+				opt_y_static_box_sizer->Add(sn_static_box_sizer);
+			}
+			/* Range */
+			opt_y_static_box_sizer->AddSpacer(2);
+			{
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
+
+				m_Motors->m_Optics[1].ranges = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_OPT_Y_RANGE, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Optics[1].ranges_list);
+				m_Motors->m_Optics[1].ranges->SetSelection(0);
+				range_static_box_sizer->Add(m_Motors->m_Optics[1].ranges);
+
+				opt_y_static_box_sizer->Add(range_static_box_sizer);
+			}
 			optics_static_box_sizer->Add(opt_y_static_box_sizer, 0, wxEXPAND);
+			optics_static_box_sizer->AddSpacer(2);
 			optics_static_box_sizer->AddStretchSpacer();
 
 			/* Z */
 			wxSizer* const opt_z_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Z");
+			/* Serial Number */
+			{
+				wxSizer* const sn_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&S/N");
+
+				m_Motors->m_Optics[2].motors = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_OPT_Z_MOTOR, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Optics[2].motors_list);
+
+				m_Motors->m_Optics[2].motors->SetSelection(0);
+
+				sn_static_box_sizer->Add(m_Motors->m_Optics[2].motors);
+
+				opt_z_static_box_sizer->Add(sn_static_box_sizer);
+			}
+			/* Range */
+			opt_z_static_box_sizer->AddSpacer(2);
+			{
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
+
+				m_Motors->m_Optics[2].ranges = new wxChoice(
+					motors_panel, 
+					SettingsVariables::ID_MOT_OPT_Z_RANGE, 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					m_Motors->m_Optics[2].ranges_list);
+				m_Motors->m_Optics[2].ranges->SetSelection(0);
+				range_static_box_sizer->Add(m_Motors->m_Optics[2].ranges);
+
+				opt_z_static_box_sizer->Add(range_static_box_sizer);
+			}
 			optics_static_box_sizer->Add(opt_z_static_box_sizer, 0, wxEXPAND);
 		}
 		motors_static_box_sizer->Add(optics_static_box_sizer, 0, wxEXPAND);
 
 	}
 	motors_panel_sizer->Add(motors_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
-	
+	motors_panel_sizer->AddSpacer(5);
 	motors_panel_sizer->AddStretchSpacer();
 
 	/* Control Buttons */
@@ -142,10 +315,62 @@ void cSettings::InitDefaultStateWidgets()
 
 void cSettings::InitComponents()
 {
-	m_DetX = std::make_unique<SettingsVariables::MotorSettings>();
-	m_DetY = std::make_unique<SettingsVariables::MotorSettings>();
-	m_DetZ = std::make_unique<SettingsVariables::MotorSettings>();
-	m_OptX = std::make_unique<SettingsVariables::MotorSettings>();
-	m_OptY = std::make_unique<SettingsVariables::MotorSettings>();
-	m_OptZ = std::make_unique<SettingsVariables::MotorSettings>();
+	m_Motors = std::make_unique<SettingsVariables::MotorSettingsArray>();
+}
+
+void cSettings::BindMotorsAndRangesChoices()
+{
+	/* Binding Motors */
+	{
+		/* Detector */
+		m_Motors->m_Detector[0].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
+		m_Motors->m_Detector[1].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
+		m_Motors->m_Detector[2].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
+		/* Optics */
+		m_Motors->m_Optics[0].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
+		m_Motors->m_Optics[1].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
+		m_Motors->m_Optics[2].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
+	}
+	/* Binding Ranges */
+	{
+		/* Detector */
+		m_Motors->m_Detector[0].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
+		m_Motors->m_Detector[1].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
+		m_Motors->m_Detector[2].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
+		/* Optics */
+		m_Motors->m_Optics[0].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
+		m_Motors->m_Optics[1].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
+		m_Motors->m_Optics[2].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
+	}
+
+	/* Binding Bottom Buttons */
+	{
+		m_RefreshBtn->Bind(wxEVT_BUTTON, &cSettings::OnRefreshBtn, this);
+		m_OkBtn->Bind(wxEVT_BUTTON, &cSettings::OnOkBtn, this);
+		m_CancelBtn->Bind(wxEVT_BUTTON, &cSettings::OnCancelBtn, this);
+	}
+}
+
+void cSettings::OnMotorsChoice(wxCommandEvent& evt)
+{
+	wxLogDebug("Motor changing");
+}
+
+void cSettings::OnRangesChoice(wxCommandEvent& evt)
+{
+	wxLogDebug("Range changing");
+}
+
+void cSettings::OnRefreshBtn(wxCommandEvent& evt)
+{
+}
+
+void cSettings::OnOkBtn(wxCommandEvent& evt)
+{
+	Hide();
+}
+
+void cSettings::OnCancelBtn(wxCommandEvent& evt)
+{
+	Hide();
 }
