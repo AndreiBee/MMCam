@@ -17,6 +17,7 @@ cSettings::cSettings(wxWindow* parent_frame)
 void cSettings::CreateMainFrame()
 {
 	InitComponents();
+	ReadXMLFile();
 	CreateSettings();
 	BindMotorsAndRangesChoices();
 }
@@ -57,7 +58,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_DET_X_MOTOR, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Detector[0].motors_list);
+					m_Motors->unique_motors_list);
 
 				m_Motors->m_Detector[0].motors->SetSelection(0);
 
@@ -75,7 +76,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_DET_X_RANGE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Detector[0].ranges_list);
+					m_Motors->unique_ranges_list);
 				m_Motors->m_Detector[0].ranges->SetSelection(0);
 				range_static_box_sizer->Add(m_Motors->m_Detector[0].ranges);
 
@@ -97,7 +98,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_DET_Y_MOTOR, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Detector[1].motors_list);
+					m_Motors->unique_motors_list);
 
 				m_Motors->m_Detector[1].motors->SetSelection(0);
 
@@ -115,7 +116,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_DET_Y_RANGE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Detector[1].ranges_list);
+					m_Motors->unique_ranges_list);
 				m_Motors->m_Detector[1].ranges->SetSelection(0);
 				range_static_box_sizer->Add(m_Motors->m_Detector[1].ranges);
 
@@ -136,7 +137,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_DET_Z_MOTOR, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Detector[2].motors_list);
+					m_Motors->unique_motors_list);
 
 				m_Motors->m_Detector[2].motors->SetSelection(0);
 
@@ -154,7 +155,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_DET_Z_RANGE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Detector[2].ranges_list);
+					m_Motors->unique_ranges_list);
 				m_Motors->m_Detector[2].ranges->SetSelection(0);
 				range_static_box_sizer->Add(m_Motors->m_Detector[2].ranges);
 
@@ -177,7 +178,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_OPT_X_MOTOR, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Optics[0].motors_list);
+					m_Motors->unique_motors_list);
 
 				m_Motors->m_Optics[0].motors->SetSelection(0);
 
@@ -195,7 +196,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_OPT_X_RANGE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Optics[0].ranges_list);
+					m_Motors->unique_ranges_list);
 				m_Motors->m_Optics[0].ranges->SetSelection(0);
 				range_static_box_sizer->Add(m_Motors->m_Optics[0].ranges);
 
@@ -216,7 +217,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_OPT_Y_MOTOR, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Optics[1].motors_list);
+					m_Motors->unique_motors_list);
 
 				m_Motors->m_Optics[1].motors->SetSelection(0);
 
@@ -234,7 +235,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_OPT_Y_RANGE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Optics[1].ranges_list);
+					m_Motors->unique_ranges_list);
 				m_Motors->m_Optics[1].ranges->SetSelection(0);
 				range_static_box_sizer->Add(m_Motors->m_Optics[1].ranges);
 
@@ -255,7 +256,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_OPT_Z_MOTOR, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Optics[2].motors_list);
+					m_Motors->unique_motors_list);
 
 				m_Motors->m_Optics[2].motors->SetSelection(0);
 
@@ -273,7 +274,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 					SettingsVariables::ID_MOT_OPT_Z_RANGE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->m_Optics[2].ranges_list);
+					m_Motors->unique_ranges_list);
 				m_Motors->m_Optics[2].ranges->SetSelection(0);
 				range_static_box_sizer->Add(m_Motors->m_Optics[2].ranges);
 
@@ -398,7 +399,7 @@ void cSettings::OnRefreshBtn(wxCommandEvent& evt)
 
 void cSettings::OnOkBtn(wxCommandEvent& evt)
 {
-	if (!CheckIfThereIsCollisionWithMotors())
+	if (!CheckIfThereIsCollisionWithMotors() && CheckIfUserSelectedAllRangesForAllSelectedMotors())
 	Hide();
 }
 
@@ -452,14 +453,98 @@ bool cSettings::CheckIfThereIsCollisionWithMotors()
 				}
 				else
 					continue;
-
 			}
 		}
 	}
 	return false;
 }
 
+bool cSettings::CheckIfUserSelectedAllRangesForAllSelectedMotors()
+{
+	auto raise_exception_msg = []() 
+	{
+		wxString title = "Range selection error";
+		wxMessageBox(
+			wxT
+			(
+				"You didn't select ranges for all selected motors"
+				"\nPlease, select ranges for all selected motors and try again"
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	for (auto comp_motor{ 0 }; comp_motor < m_MotorsCount; ++comp_motor)
+	{
+		if (comp_motor < 3)
+		{
+			if (m_Motors->m_Detector[comp_motor].selected_motor != 0 && m_Motors->m_Detector[comp_motor].selected_range == 0)
+			{
+				raise_exception_msg();
+				return false;
+			}
+			else
+				continue;
+		}
+		else
+		{	
+			if (m_Motors->m_Optics[comp_motor - m_MotorsCount / 2].selected_motor != 0 && m_Motors->m_Optics[comp_motor - m_MotorsCount / 2].selected_range == 0)
+			{
+				raise_exception_msg();
+				return false;
+			}
+			else
+				continue;
+		}
+	}
+}
+
 void cSettings::OnCancelBtn(wxCommandEvent& evt)
 {
 	Hide();
+}
+
+void cSettings::ReadXMLFile()
+{
+	pugi::xml_document doc;
+
+	pugi::xml_parse_result result = doc.load_file("src\\mtrs.xml");
+
+	if (!result)
+		return;
+
+	auto xml_parser = [&](pugi::xml_node motor_array) 
+	{
+		auto child = motor_array.children().begin();
+		m_Motors->xml_motors_list.Add(child->child_value());
+		++child;
+		m_Motors->xml_ranges_list.Add(child->child_value());
+	};
+
+	for (pugi::xml_node detector : doc.child("motors").child("detector"))
+	{
+		xml_parser(detector);
+	}
+	for (pugi::xml_node optics : doc.child("motors").child("optics"))
+	{
+		xml_parser(optics);
+	}
+
+	/* Adding unique elements from xml_motors_list into unique_motors_list */
+	for (const auto& note : m_Motors->xml_motors_list)
+	{
+		if (m_Motors->unique_motors_list.Index(note) == wxNOT_FOUND)
+		{
+			m_Motors->unique_motors_list.Add(note);
+		}
+	}
+	/* Adding unique elements from xml_ranges_list into unique_ranges_list */
+	for (const auto& note : m_Motors->xml_ranges_list)
+	{
+		if (m_Motors->unique_ranges_list.Index(note) == wxNOT_FOUND)
+		{
+			m_Motors->unique_ranges_list.Add(note);
+		}
+	}
+
 }

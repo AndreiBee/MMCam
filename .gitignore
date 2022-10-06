@@ -18,6 +18,7 @@
 *.tif
 *.xlsx
 *.pdf
+*.xml
 
 # Mono auto generated files
 mono_crash.*
