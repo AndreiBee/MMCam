@@ -5,6 +5,7 @@
 #include "wx/wx.h"
 
 #include <memory>
+#include <set>
 
 #define PUGIXML_HEADER_ONLY
 #include "src/third_libs/pugixml.hpp"
@@ -37,20 +38,22 @@ namespace SettingsVariables
 	{
 		wxChoice* motors{}, * ranges{};
 		uint8_t selected_motor{}, selected_range{};
+		uint8_t prev_selected_motor{}, prev_selected_range{};
 	};
 
 	struct MotorSettingsArray
 	{
 		std::unique_ptr<MotorSettings[]> m_Detector{}, m_Optics{};
 		wxArrayString xml_motors_list, xml_ranges_list;
-		wxArrayString unique_motors_list, unique_ranges_list;
+
+		wxArrayString prev_state_motors_list, prev_state_ranges_list;
+		std::set<wxString> unique_motors_set, unique_ranges_set;
+		wxArrayString unique_motors, unique_ranges;
+
 		MotorSettingsArray()
 		{
 			m_Detector = std::make_unique<MotorSettings[]>(3);
 			m_Optics = std::make_unique<MotorSettings[]>(3);
-
-			unique_motors_list.Add("None");
-			unique_ranges_list.Add("None");
 		}
 	};
 }
@@ -75,10 +78,14 @@ private:
 	void OnOkBtn(wxCommandEvent& evt);
 	bool CheckIfThereIsCollisionWithMotors();
 	bool CheckIfUserSelectedAllRangesForAllSelectedMotors();
+	bool CheckIfUserSelectedAllMotorsForAllSelectedRanges();
 	void OnCancelBtn(wxCommandEvent& evt);
 
 	/* Reading XML data from mtrs.xml file */
 	void ReadXMLFile();
+	void UpdateUniqueArray();
+	void UpdatePreviousStatesData();
+	void SetPreviousStatesDataAsCurrentSelection();
 
 private:
 	wxButton* m_OkBtn{}, *m_CancelBtn{}, *m_RefreshBtn{};
