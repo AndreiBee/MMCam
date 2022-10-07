@@ -113,7 +113,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(WXWIN320)\include; $(WXWIN320)\include\msvc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -130,7 +130,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(WXWIN320)\include; $(WXWIN320)\include\msvc;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

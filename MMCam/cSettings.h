@@ -6,9 +6,12 @@
 
 #include <memory>
 #include <set>
+#include <sstream>
+#include <fstream>
 
-#define PUGIXML_HEADER_ONLY
-#include "src/third_libs/pugixml.hpp"
+#include "rapidxml.hpp"
+#include "rapidxml_utils.hpp"
+#include "rapidxml_print.hpp"
 
 namespace SettingsVariables
 {
@@ -37,18 +40,18 @@ namespace SettingsVariables
 	struct MotorSettings
 	{
 		wxChoice* motors{}, * ranges{};
-		uint8_t selected_motor{}, selected_range{};
-		uint8_t prev_selected_motor{}, prev_selected_range{};
+		uint8_t current_selection[2], prev_selection[2];
 	};
 
 	struct MotorSettingsArray
 	{
 		std::unique_ptr<MotorSettings[]> m_Detector{}, m_Optics{};
-		wxArrayString xml_motors_list, xml_ranges_list;
 
-		wxArrayString prev_state_motors_list, prev_state_ranges_list;
-		std::set<wxString> unique_motors_set, unique_ranges_set;
-		wxArrayString unique_motors, unique_ranges;
+		wxArrayString xml_all_motors[2];
+		wxArrayString xml_selected_motors[2];
+
+		std::set<int> unique_motors_set[2];
+		wxArrayString unique_motors[2];
 
 		MotorSettingsArray()
 		{
@@ -81,13 +84,17 @@ private:
 	bool CheckIfUserSelectedAllMotorsForAllSelectedRanges();
 	void OnCancelBtn(wxCommandEvent& evt);
 
-	/* Reading XML data from mtrs.xml file */
+	/* Working with XML data and operating with m_Motors variables */
 	void ReadXMLFile();
 	void UpdateUniqueArray();
+	void SelectMotorsAndRangesFromXMLFile();
+	void SelectMotorsAndRangesOnWXChoice();
 	void UpdatePreviousStatesData();
 	void SetPreviousStatesDataAsCurrentSelection();
+	void WriteActualSelectedMotorsAndRangesIntoXMLFile();
 
 private:
+	const wxString xml_file_path = "src\\mtrs.xml";
 	wxButton* m_OkBtn{}, *m_CancelBtn{}, *m_RefreshBtn{};
 	std::unique_ptr<SettingsVariables::MotorSettingsArray> m_Motors{};
 	const int m_MotorsCount{ 6 };
