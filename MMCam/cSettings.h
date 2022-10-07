@@ -18,28 +18,29 @@ namespace SettingsVariables
 	enum
 	{
 		/* Detector X */
-		ID_MOT_DET_X_MOTOR,
-		ID_MOT_DET_X_RANGE,
+		ID_MOT_DET_X_MOTOR_CHOICE,
+		ID_MOT_DET_X_RANGE_ST_TEXT,
 		/* Detector Y */
-		ID_MOT_DET_Y_MOTOR,
-		ID_MOT_DET_Y_RANGE,
+		ID_MOT_DET_Y_MOTOR_CHOICE,
+		ID_MOT_DET_Y_RANGE_ST_TEXT,
 		/* Detector Z */
-		ID_MOT_DET_Z_MOTOR,
-		ID_MOT_DET_Z_RANGE,
+		ID_MOT_DET_Z_MOTOR_CHOICE,
+		ID_MOT_DET_Z_RANGE_ST_TEXT,
 		/* Optics X */
-		ID_MOT_OPT_X_MOTOR,
-		ID_MOT_OPT_X_RANGE,
+		ID_MOT_OPT_X_MOTOR_CHOICE,
+		ID_MOT_OPT_X_RANGE_ST_TEXT,
 		/* Optics Y */
-		ID_MOT_OPT_Y_MOTOR,
-		ID_MOT_OPT_Y_RANGE,
+		ID_MOT_OPT_Y_MOTOR_CHOICE,
+		ID_MOT_OPT_Y_RANGE_ST_TEXT,
 		/* Optics Z */
-		ID_MOT_OPT_Z_MOTOR,
-		ID_MOT_OPT_Z_RANGE,
+		ID_MOT_OPT_Z_MOTOR_CHOICE,
+		ID_MOT_OPT_Z_RANGE_ST_TEXT,
 	};
 
 	struct MotorSettings
 	{
-		wxChoice* motors{}, * ranges{};
+		wxChoice* motors{}; 
+		wxStaticText* ranges{};
 		uint8_t current_selection[2], prev_selection[2];
 	};
 
@@ -75,7 +76,7 @@ private:
 
 	void BindMotorsAndRangesChoices();
 	void OnMotorsChoice(wxCommandEvent& evt);
-	void OnRangesChoice(wxCommandEvent& evt);
+	void UpdateRangesTextCtrls();
 
 	void OnRefreshBtn(wxCommandEvent& evt);
 	void OnOkBtn(wxCommandEvent& evt);

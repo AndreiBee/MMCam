@@ -1073,6 +1073,7 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 void cMain::OnOpenSettings(wxCommandEvent& evt)
 {
 	m_Settings->ShowModal();
+	uint8_t show{ 1 };
 }
 
 void cMain::OnFullScreen(wxCommandEvent& evt)

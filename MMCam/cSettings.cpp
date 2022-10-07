@@ -46,6 +46,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 	wxSizer* const motors_static_box_sizer = new wxStaticBoxSizer(wxVERTICAL, motors_panel, "&Motors");
 	{
+		int top_offset_static_text{ 5 };
 		wxSizer* const detector_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Detector");
 		{
 			/* X */
@@ -56,7 +57,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				m_Motors->m_Detector[0].motors = new wxChoice(
 					motors_panel, 
-					SettingsVariables::ID_MOT_DET_X_MOTOR, 
+					SettingsVariables::ID_MOT_DET_X_MOTOR_CHOICE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_Motors->unique_motors[0]);
@@ -72,16 +73,16 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 			{
 				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
 
-				m_Motors->m_Detector[0].ranges = new wxChoice(
-					motors_panel, 
-					SettingsVariables::ID_MOT_DET_X_RANGE, 
+				m_Motors->m_Detector[0].ranges = new wxStaticText(
+					motors_panel,
+					SettingsVariables::ID_MOT_DET_X_RANGE_ST_TEXT,
+					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->unique_motors[1]);
-				m_Motors->m_Detector[0].ranges->SetSelection(0);
-				range_static_box_sizer->Add(m_Motors->m_Detector[0].ranges);
+					wxALIGN_CENTRE_HORIZONTAL);
+				range_static_box_sizer->Add(m_Motors->m_Detector[0].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
-				det_x_static_box_sizer->Add(range_static_box_sizer);
+				det_x_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
 			detector_static_box_sizer->Add(det_x_static_box_sizer, 0, wxEXPAND);
 
@@ -96,7 +97,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				m_Motors->m_Detector[1].motors = new wxChoice(
 					motors_panel, 
-					SettingsVariables::ID_MOT_DET_Y_MOTOR, 
+					SettingsVariables::ID_MOT_DET_Y_MOTOR_CHOICE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_Motors->unique_motors[0]);
@@ -112,16 +113,16 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 			{
 				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
 
-				m_Motors->m_Detector[1].ranges = new wxChoice(
+				m_Motors->m_Detector[1].ranges = new wxStaticText(
 					motors_panel, 
-					SettingsVariables::ID_MOT_DET_Y_RANGE, 
+					SettingsVariables::ID_MOT_DET_Y_RANGE_ST_TEXT, 	
+					wxT("None"), 
 					wxDefaultPosition, 
-					wxDefaultSize, 
-					m_Motors->unique_motors[1]);
-				m_Motors->m_Detector[1].ranges->SetSelection(0);
-				range_static_box_sizer->Add(m_Motors->m_Detector[1].ranges);
+					wxDefaultSize,
+					wxALIGN_CENTRE_HORIZONTAL);
+				range_static_box_sizer->Add(m_Motors->m_Detector[1].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
-				det_y_static_box_sizer->Add(range_static_box_sizer);
+				det_y_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
 			detector_static_box_sizer->Add(det_y_static_box_sizer, 0, wxEXPAND);
 			detector_static_box_sizer->AddSpacer(2);
@@ -135,7 +136,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				m_Motors->m_Detector[2].motors = new wxChoice(
 					motors_panel, 
-					SettingsVariables::ID_MOT_DET_Z_MOTOR, 
+					SettingsVariables::ID_MOT_DET_Z_MOTOR_CHOICE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_Motors->unique_motors[0]);
@@ -151,16 +152,16 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 			{
 				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
 
-				m_Motors->m_Detector[2].ranges = new wxChoice(
+				m_Motors->m_Detector[2].ranges = new wxStaticText(
 					motors_panel, 
-					SettingsVariables::ID_MOT_DET_Z_RANGE, 
+					SettingsVariables::ID_MOT_DET_Z_RANGE_ST_TEXT, 	
+					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->unique_motors[1]);
-				m_Motors->m_Detector[2].ranges->SetSelection(0);
-				range_static_box_sizer->Add(m_Motors->m_Detector[2].ranges);
+					wxALIGN_CENTRE_HORIZONTAL);
+				range_static_box_sizer->Add(m_Motors->m_Detector[2].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
-				det_z_static_box_sizer->Add(range_static_box_sizer);
+				det_z_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
 			detector_static_box_sizer->Add(det_z_static_box_sizer, 0, wxEXPAND);
 		}
@@ -176,7 +177,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				m_Motors->m_Optics[0].motors = new wxChoice(
 					motors_panel, 
-					SettingsVariables::ID_MOT_OPT_X_MOTOR, 
+					SettingsVariables::ID_MOT_OPT_X_MOTOR_CHOICE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_Motors->unique_motors[0]);
@@ -192,16 +193,16 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 			{
 				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
 
-				m_Motors->m_Optics[0].ranges = new wxChoice(
+				m_Motors->m_Optics[0].ranges = new wxStaticText(
 					motors_panel, 
-					SettingsVariables::ID_MOT_OPT_X_RANGE, 
+					SettingsVariables::ID_MOT_OPT_X_RANGE_ST_TEXT, 	
+					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->unique_motors[1]);
-				m_Motors->m_Optics[0].ranges->SetSelection(0);
-				range_static_box_sizer->Add(m_Motors->m_Optics[0].ranges);
+					wxALIGN_CENTRE_HORIZONTAL);
+				range_static_box_sizer->Add(m_Motors->m_Optics[0].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
-				opt_x_static_box_sizer->Add(range_static_box_sizer);
+				opt_x_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
 			optics_static_box_sizer->Add(opt_x_static_box_sizer, 0, wxEXPAND);
 			optics_static_box_sizer->AddSpacer(2);
@@ -215,7 +216,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				m_Motors->m_Optics[1].motors = new wxChoice(
 					motors_panel, 
-					SettingsVariables::ID_MOT_OPT_Y_MOTOR, 
+					SettingsVariables::ID_MOT_OPT_Y_MOTOR_CHOICE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_Motors->unique_motors[0]);
@@ -231,16 +232,16 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 			{
 				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
 
-				m_Motors->m_Optics[1].ranges = new wxChoice(
+				m_Motors->m_Optics[1].ranges = new wxStaticText(
 					motors_panel, 
-					SettingsVariables::ID_MOT_OPT_Y_RANGE, 
+					SettingsVariables::ID_MOT_OPT_Y_RANGE_ST_TEXT, 
+					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->unique_motors[1]);
-				m_Motors->m_Optics[1].ranges->SetSelection(0);
-				range_static_box_sizer->Add(m_Motors->m_Optics[1].ranges);
+					wxALIGN_CENTRE_HORIZONTAL);
+				range_static_box_sizer->Add(m_Motors->m_Optics[1].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
-				opt_y_static_box_sizer->Add(range_static_box_sizer);
+				opt_y_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
 			optics_static_box_sizer->Add(opt_y_static_box_sizer, 0, wxEXPAND);
 			optics_static_box_sizer->AddSpacer(2);
@@ -254,7 +255,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				m_Motors->m_Optics[2].motors = new wxChoice(
 					motors_panel, 
-					SettingsVariables::ID_MOT_OPT_Z_MOTOR, 
+					SettingsVariables::ID_MOT_OPT_Z_MOTOR_CHOICE, 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_Motors->unique_motors[0]);
@@ -270,16 +271,16 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 			{
 				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, motors_panel, "&Range");
 
-				m_Motors->m_Optics[2].ranges = new wxChoice(
+				m_Motors->m_Optics[2].ranges = new wxStaticText(
 					motors_panel, 
-					SettingsVariables::ID_MOT_OPT_Z_RANGE, 
+					SettingsVariables::ID_MOT_OPT_Z_RANGE_ST_TEXT, 
+					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
-					m_Motors->unique_motors[1]);
-				m_Motors->m_Optics[2].ranges->SetSelection(0);
-				range_static_box_sizer->Add(m_Motors->m_Optics[2].ranges);
+					wxALIGN_CENTRE_HORIZONTAL);
+				range_static_box_sizer->Add(m_Motors->m_Optics[2].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
-				opt_z_static_box_sizer->Add(range_static_box_sizer);
+				opt_z_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
 			optics_static_box_sizer->Add(opt_z_static_box_sizer, 0, wxEXPAND);
 		}
@@ -319,11 +320,6 @@ void cSettings::InitDefaultStateWidgets()
 		m_Motors->m_Optics[0].motors->Disable();
 		m_Motors->m_Optics[2].motors->Disable();
 	}
-	/* Disabling X and Z Optics ranges choices */
-	{
-		m_Motors->m_Optics[0].ranges->Disable();
-		m_Motors->m_Optics[2].ranges->Disable();
-	}
 }
 
 void cSettings::InitComponents()
@@ -343,17 +339,6 @@ void cSettings::BindMotorsAndRangesChoices()
 		m_Motors->m_Optics[0].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
 		m_Motors->m_Optics[1].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
 		m_Motors->m_Optics[2].motors->Bind(wxEVT_CHOICE, &cSettings::OnMotorsChoice, this);
-	}
-	/* Binding Ranges */
-	{
-		/* Detector */
-		m_Motors->m_Detector[0].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
-		m_Motors->m_Detector[1].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
-		m_Motors->m_Detector[2].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
-		/* Optics */
-		m_Motors->m_Optics[0].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
-		m_Motors->m_Optics[1].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
-		m_Motors->m_Optics[2].ranges->Bind(wxEVT_CHOICE, &cSettings::OnRangesChoice, this);
 	}
 
 	/* Binding Bottom Buttons */
@@ -378,20 +363,51 @@ void cSettings::OnMotorsChoice(wxCommandEvent& evt)
 			m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[0] = m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->GetSelection();
 		}
 	}
+	UpdateRangesTextCtrls();
 }
 
-void cSettings::OnRangesChoice(wxCommandEvent& evt)
-{
-	/* Set the selected range value for each motor */
+void cSettings::UpdateRangesTextCtrls()
+{	
+	wxString find_string{}, current_range_text{};
+	uint8_t current_index{};
+	/* Set the corresponding range for selected motors */
 	for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
 	{
 		if (motor < m_MotorsCount / 2)
 		{
-			m_Motors->m_Detector[motor].current_selection[1] = m_Motors->m_Detector[motor].ranges->GetSelection();
+			current_index = m_Motors->m_Detector[motor].current_selection[0];
+			find_string = m_Motors->unique_motors[0][current_index];
+			if (find_string == "None")
+			{
+				m_Motors->m_Detector[motor].ranges->SetLabel("None");
+				m_Motors->m_Detector[motor].current_selection[1] = 0;
+				continue;
+			}
+			current_index = m_Motors->xml_all_motors[0].Index(find_string);
+			current_range_text = m_Motors->xml_all_motors[1].Item(current_index);
+
+			m_Motors->m_Detector[motor].ranges->SetLabel(current_range_text);
+			/* Update current_selection index of range */
+			current_index = m_Motors->unique_motors[1].Index(current_range_text);
+			m_Motors->m_Detector[motor].current_selection[1] = current_index;
 		}
 		else
 		{
-			m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->GetSelection();
+			current_index = m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[0];
+			find_string = m_Motors->unique_motors[0][current_index];
+			if (find_string == "None")
+			{
+				m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel("None");
+				m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = 0;
+				continue;
+			}
+			current_index = m_Motors->xml_all_motors[0].Index(find_string);
+			current_range_text = m_Motors->xml_all_motors[1].Item(current_index);
+
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel(current_range_text);
+			/* Update current_selection index of range */
+			current_index = m_Motors->unique_motors[1].Index(current_range_text);
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = current_index;
 		}
 	}
 }
@@ -559,11 +575,17 @@ void cSettings::OnCancelBtn(wxCommandEvent& evt)
 
 void cSettings::ReadXMLFile()
 {
+	auto xmlFile = std::make_unique<rapidxml::file<>>(xml_file_path.mb_str());
+	auto document = std::make_unique<rapidxml::xml_document<>>();
+	document->parse<0>(xmlFile->data());
+	rapidxml::xml_node<>* motors_node = document->first_node("motors");
+
+	/*
 	rapidxml::file<> xmlFile(xml_file_path.mb_str());
 	rapidxml::xml_document<> document;
 	document.parse<0>(xmlFile.data());
 	rapidxml::xml_node<>* motors_node = document.first_node("motors");
-
+	*/
 	if (!motors_node)
 		return;
 
@@ -717,7 +739,7 @@ void cSettings::SelectMotorsAndRangesOnWXChoice()
 			m_Motors->m_Detector[motor].motors->SetSelection(current_index);
 
 			current_index = m_Motors->m_Detector[motor].current_selection[1];
-			m_Motors->m_Detector[motor].ranges->SetSelection(current_index);
+			m_Motors->m_Detector[motor].ranges->SetLabel(m_Motors->unique_motors[1][current_index]);
 		}
 		else
 		{
@@ -725,54 +747,70 @@ void cSettings::SelectMotorsAndRangesOnWXChoice()
 			m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->SetSelection(current_index);
 			
 			current_index = m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1];
-			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetSelection(current_index);
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel(m_Motors->unique_motors[1][current_index]);
 		}
 	}
 }
 
 void cSettings::UpdatePreviousStatesData()
 {
-	int current_index_in_choice{};
+	int current_index{};
 	for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
 	{
 		if (motor < m_MotorsCount / 2)
 		{
-			current_index_in_choice = m_Motors->m_Detector[motor].motors->GetSelection();
-			m_Motors->m_Detector[motor].prev_selection[0] = current_index_in_choice;
+			current_index= m_Motors->m_Detector[motor].motors->GetSelection();
+			m_Motors->m_Detector[motor].prev_selection[0] = current_index;
 
-			current_index_in_choice = m_Motors->m_Detector[motor].ranges->GetSelection();
-			m_Motors->m_Detector[motor].prev_selection[1] = current_index_in_choice;
+			current_index= m_Motors->m_Detector[motor].current_selection[1];
+			m_Motors->m_Detector[motor].prev_selection[1] = current_index;
 		}
 		else
 		{
-			current_index_in_choice = m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->GetSelection();
-			m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[0] = current_index_in_choice;
+			current_index= m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->GetSelection();
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[0] = current_index;
 
-			current_index_in_choice = m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->GetSelection();
-			m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1] = current_index_in_choice;
+			current_index= m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1];
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1] = current_index;
 		}
 	}
 }
 
 void cSettings::SetPreviousStatesDataAsCurrentSelection()
 {
+	int current_index{};
 	for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
 	{
 		if (motor < m_MotorsCount / 2)
 		{
 			m_Motors->m_Detector[motor].motors->SetSelection(m_Motors->m_Detector[motor].prev_selection[0]);
-			m_Motors->m_Detector[motor].ranges->SetSelection(m_Motors->m_Detector[motor].prev_selection[1]);
+			current_index = m_Motors->m_Detector[motor].prev_selection[1];
+			m_Motors->m_Detector[motor].ranges->SetLabel(m_Motors->unique_motors[1][current_index]);
 		}
 		else
 		{
 			m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->SetSelection(m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[0]);
-			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetSelection(m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1]);
+			current_index = m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1];
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel(m_Motors->unique_motors[1][current_index]);
 		}
 	}
 }
 
 void cSettings::WriteActualSelectedMotorsAndRangesIntoXMLFile()
 {
+	auto document = std::make_unique<rapidxml::xml_document<>>();
+	// Open *.xml file
+	std::ifstream xml_file(xml_file_path.mb_str());
+	// Preparing buffer
+	std::stringstream file_buffer;
+	file_buffer << xml_file.rdbuf();
+	xml_file.close();
+
+	std::string content(file_buffer.str());
+	document->parse<0 | rapidxml::parse_no_data_nodes>(&content[0]);
+	rapidxml::xml_node<>* motors_node = document->first_node("motors");
+
+	/*
 	rapidxml::xml_document<> document;
 	// Open *.xml file
 	std::ifstream xml_file(xml_file_path.mb_str());
@@ -782,9 +820,8 @@ void cSettings::WriteActualSelectedMotorsAndRangesIntoXMLFile()
 	xml_file.close();
 	std::string content(file_buffer.str());
 	document.parse<0 | rapidxml::parse_no_data_nodes>(&content[0]);
-
 	rapidxml::xml_node<>* motors_node = document.first_node("motors");
-
+	*/
 	if (!motors_node)
 		return;
 
@@ -826,8 +863,8 @@ void cSettings::WriteActualSelectedMotorsAndRangesIntoXMLFile()
 	if (out_file.is_open())
 	{
 		out_file << "<?xml version=\"1.0\"?>\n";
-		out_file << document;
+		out_file << *document;
 		out_file.close();
 	}
-	document.clear();
+	document->clear();
 }
