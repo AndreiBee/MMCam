@@ -2,8 +2,10 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 #include <memory>
+#include <map>
 #include <vector>
 #include <ximc.h>
+
 
 namespace MotorVariables
 {
@@ -13,7 +15,7 @@ namespace MotorVariables
 		float MinMotorPos{}, MiddleMotorPos{}, MaxMotorPos{};
 		float StagePos{};
 		float MinStagePos{}, MiddleStagePos{}, MaxStagePos{};
-		float MotorRange{};
+		float MotorRange{}, StageRange{};
 	};
 }
 
@@ -33,6 +35,7 @@ public:
 	Motor();
 	/* Getters */
 	auto GetDeviceSerNum() const;
+	auto GetDeviceRange() const;
 
 	/* Setters */
 	auto SetDeviceName(const char* device_name);
@@ -60,10 +63,15 @@ class MotorArray final
 {
 public:
 	MotorArray();
-	auto InitAllMotors();
+	bool InitAllMotors();
+	auto FillNames();
+
+	/* Getter */
+	std::map<int, float> GetNamesWithRanges() const;
 
 private:
 	std::vector<Motor> m_MotorsArray{};
+	std::map<int, float> m_NamesOfMotorsWithRanges{};
 };
 
 #endif

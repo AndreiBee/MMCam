@@ -573,6 +573,91 @@ void cSettings::OnCancelBtn(wxCommandEvent& evt)
 	SetPreviousStatesDataAsCurrentSelection();
 }
 
+auto cSettings::CompareXMLWithConnectedDevices()
+{
+	auto raise_exception_msg = []() 
+	{
+		wxString title = "Device enumeration error";
+		wxMessageBox(
+			wxT
+			(
+				"Data file is not correct!"
+				"\nData from file don't correspond with connected devices"
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	m_PhysicalMotors = std::make_unique<MotorArray>();
+
+	auto physical_motors = m_PhysicalMotors->GetNamesWithRanges();
+	unsigned short serial_numbers_in_xml{};
+	for (const auto& motor : physical_motors)
+	{
+		std::for_each(m_Motors->unique_motors_map.begin(), m_Motors->unique_motors_map.end(),
+			[&](const auto& pair)
+			{
+				if (motor.first == pair.first) ++serial_numbers_in_xml;
+			}
+		);
+	}
+
+	auto default_state_of_motors = [&]()
+	{
+		m_Motors->xml_all_motors[0].Clear();
+		m_Motors->xml_all_motors[1].Clear();
+		m_Motors->xml_selected_motors[0].Clear();
+		m_Motors->xml_selected_motors[1].Clear();
+
+		wxString motor_sn{}, motor_range{};
+		std::map<int, float>::iterator phys_mot_iter = physical_motors.begin();
+		for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
+		{
+			if (motor < physical_motors.size())
+			{
+				motor_sn = wxString::Format(wxT("%i"), phys_mot_iter->first);
+				motor_range = wxString::Format(wxT("%.2f"), phys_mot_iter->second);
+				++phys_mot_iter;
+			}
+			else
+			{
+				motor_sn = "None";
+				motor_range = "None";
+			}
+			m_Motors->xml_all_motors[0].Add(motor_sn);
+			m_Motors->xml_all_motors[1].Add(motor_range);
+		}
+
+		for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
+		{
+			if (motor < m_MotorsCount / 2)
+			{
+				m_Motors->m_Detector[motor].prev_selection[0] = 0;
+				m_Motors->m_Detector[motor].prev_selection[1] = 0;
+				m_Motors->m_Detector[motor].current_selection[0] = 0;
+				m_Motors->m_Detector[motor].current_selection[1] = 0;
+			}
+			else
+			{
+				m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[0] = 0;
+				m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1] = 0;
+				m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[0] = 0;
+				m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = 0;
+			}
+			m_Motors->xml_selected_motors[0].Add("None");
+			m_Motors->xml_selected_motors[1].Add("None");
+		}
+	};
+
+
+	if (serial_numbers_in_xml != m_Motors->unique_motors_map.size())
+	{
+		m_Motors->unique_motors_map = physical_motors;
+		default_state_of_motors();
+		raise_exception_msg();
+	}
+}
+
 void cSettings::ReadXMLFile()
 {
 	auto xmlFile = std::make_unique<rapidxml::file<>>(xml_file_path.mb_str());
@@ -580,12 +665,6 @@ void cSettings::ReadXMLFile()
 	document->parse<0>(xmlFile->data());
 	rapidxml::xml_node<>* motors_node = document->first_node("motors");
 
-	/*
-	rapidxml::file<> xmlFile(xml_file_path.mb_str());
-	rapidxml::xml_document<> document;
-	document.parse<0>(xmlFile.data());
-	rapidxml::xml_node<>* motors_node = document.first_node("motors");
-	*/
 	if (!motors_node)
 		return;
 
@@ -628,11 +707,13 @@ void cSettings::ReadXMLFile()
 	int count{};
 	for (const auto& note : m_Motors->xml_all_motors[0])
 	{
-		m_Motors->unique_motors_map.emplace(std::make_pair(wxAtoi(note), wxAtof(m_Motors->xml_all_motors[1][count])));
-		//m_Motors->unique_motors_set[0].emplace(wxAtoi(note));
-		//m_Motors->unique_motors_set[1].emplace(wxAtof(m_Motors->xml_all_motors[1][count]));
-		++count;
+		if (note != "None")
+		{
+			m_Motors->unique_motors_map.emplace(std::make_pair(wxAtoi(note), wxAtof(m_Motors->xml_all_motors[1][count])));
+			++count;
+		}
 	}
+	CompareXMLWithConnectedDevices();
 	UpdateUniqueArray();
 }
 
@@ -648,12 +729,6 @@ void cSettings::UpdateUniqueArray()
 		m_Motors->unique_motors[0].Add(wxString::Format(wxT("%i"), motor.first));
 		m_Motors->unique_motors[1].Add(wxString::Format(wxT("%.2f"), motor.second));
 	}
-
-
-	//for (const auto& motor : m_Motors->unique_motors_set[0])
-		//m_Motors->unique_motors[0].Add(wxString::Format(wxT("%i"), (int)motor));
-	//for (const auto& range : m_Motors->unique_motors_set[1])
-		//m_Motors->unique_motors[1].Add(wxString::Format(wxT("%.2f"), range));
 }
 
 void cSettings::SelectMotorsAndRangesFromXMLFile()
@@ -818,20 +893,21 @@ void cSettings::WriteActualSelectedMotorsAndRangesIntoXMLFile()
 	document->parse<0 | rapidxml::parse_no_data_nodes>(&content[0]);
 	rapidxml::xml_node<>* motors_node = document->first_node("motors");
 
-	/*
-	rapidxml::xml_document<> document;
-	// Open *.xml file
-	std::ifstream xml_file(xml_file_path.mb_str());
-	// Preparing buffer
-	std::stringstream file_buffer;
-	file_buffer << xml_file.rdbuf();
-	xml_file.close();
-	std::string content(file_buffer.str());
-	document.parse<0 | rapidxml::parse_no_data_nodes>(&content[0]);
-	rapidxml::xml_node<>* motors_node = document.first_node("motors");
-	*/
 	if (!motors_node)
 		return;
+
+	int count{};
+	for (
+		rapidxml::xml_node<>* motor = motors_node->first_node()->first_node(); 
+		motor; 
+		motor = motor->next_sibling()
+		)
+	{
+		motor->first_node()->value(m_Motors->xml_all_motors[0][count]);
+		motor->first_node()->next_sibling()->value(m_Motors->xml_all_motors[1][count]);
+		++count;
+	}
+
 
 	uint8_t position_in_unique_array{};
 	auto xml_parser = [&](rapidxml::xml_node<>* motor_array, const int& i) 
@@ -854,13 +930,21 @@ void cSettings::WriteActualSelectedMotorsAndRangesIntoXMLFile()
 		}
 	};
 	/* Changing values of selected motors data in XML file */
-	int count{};
-	for (rapidxml::xml_node<>* detector = motors_node->first_node()->next_sibling()->first_node()->first_node(); detector; detector = detector->next_sibling())
+	count = 0;
+	for (
+		rapidxml::xml_node<>* detector = motors_node->first_node()->next_sibling()->first_node()->first_node(); 
+		detector; 
+		detector = detector->next_sibling()
+		)
 	{
 		xml_parser(detector, count);
 		++count;
 	}
-	for (rapidxml::xml_node<>* optics = motors_node->first_node()->next_sibling()->first_node()->next_sibling()->first_node(); optics; optics = optics->next_sibling())
+	for (
+		rapidxml::xml_node<>* optics = motors_node->first_node()->next_sibling()->first_node()->next_sibling()->first_node(); 
+		optics; 
+		optics = optics->next_sibling()
+		)
 	{
 		xml_parser(optics, count);
 		++count;

@@ -12,6 +12,11 @@ auto Motor::GetDeviceSerNum() const
 	return m_SerNum;
 }
 
+auto Motor::GetDeviceRange() const
+{
+	return m_MotorSettings->StageRange;
+}
+
 auto Motor::SetDeviceName(const char* device_name)
 {
 	size_t char_count{};
@@ -60,7 +65,8 @@ auto Motor::SetRange(const float min_motor_deg, const float max_motor_deg)
 	m_MotorSettings->MaxStagePos = max_motor_deg / deg_per_mm;
 
 	/* Set Whole Motor Range */
-	m_MotorSettings->MotorRange = (max_motor_deg - min_motor_deg) / deg_per_mm;
+	m_MotorSettings->MotorRange = max_motor_deg - min_motor_deg;
+	m_MotorSettings->StageRange = (max_motor_deg - min_motor_deg) / deg_per_mm;
 }
 
 auto Motor::UpdateCurPosThroughStanda()
@@ -217,9 +223,23 @@ auto Motor::GoToPos(const float stage_position)
 /* MotorArray */
 MotorArray::MotorArray()
 {
+	InitAllMotors();
 }
 
-auto MotorArray::InitAllMotors()
+auto MotorArray::FillNames()
+{
+	for (const auto& motor : m_MotorsArray)
+	{
+		m_NamesOfMotorsWithRanges.emplace(std::make_pair(motor.GetDeviceSerNum(), motor.GetDeviceRange()));
+	}
+}
+
+std::map<int, float> MotorArray::GetNamesWithRanges() const
+{
+	return m_NamesOfMotorsWithRanges;
+}
+
+bool MotorArray::InitAllMotors()
 {
 	result_t result_c;
 	result_c = set_bindy_key("keyfile.sqlite");
@@ -280,5 +300,5 @@ auto MotorArray::InitAllMotors()
 
 		close_device(&device_c);
 	}
-
+	FillNames();
 }

@@ -90,6 +90,7 @@ private:
 	void OnCancelBtn(wxCommandEvent& evt);
 
 	/* Working with XML data and operating with m_Motors variables */
+	auto CompareXMLWithConnectedDevices();
 	void ReadXMLFile();
 	void UpdateUniqueArray();
 	void SelectMotorsAndRangesFromXMLFile();
@@ -102,6 +103,7 @@ private:
 	const wxString xml_file_path = "src\\mtrs.xml";
 	wxButton* m_OkBtn{}, *m_CancelBtn{}, *m_RefreshBtn{};
 	std::unique_ptr<SettingsVariables::MotorSettingsArray> m_Motors{};
+	std::unique_ptr<MotorArray> m_PhysicalMotors{};
 	const int m_MotorsCount{ 6 };
 };
 
