@@ -5,6 +5,7 @@
 #include "wx/wx.h"
 
 #include <memory>
+#include <map>
 #include <set>
 #include <sstream>
 #include <fstream>
@@ -12,6 +13,8 @@
 #include "rapidxml.hpp"
 #include "rapidxml_utils.hpp"
 #include "rapidxml_print.hpp"
+
+#include "Motor.h"
 
 namespace SettingsVariables
 {
@@ -51,7 +54,8 @@ namespace SettingsVariables
 		wxArrayString xml_all_motors[2];
 		wxArrayString xml_selected_motors[2];
 
-		std::set<int> unique_motors_set[2];
+		std::map<int, float> unique_motors_map;
+		//std::set<float> unique_motors_set[2];
 		wxArrayString unique_motors[2];
 
 		MotorSettingsArray()

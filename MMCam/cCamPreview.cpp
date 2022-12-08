@@ -29,7 +29,7 @@ void cCamPreview::SetCameraCapturedImage(const uint32_t& exposure_time_us)
 	uint64_t read_data_size = m_ImageSize.GetWidth() * m_ImageSize.GetHeight();
 	m_ImageData = std::make_unique<uint16_t[]>(read_data_size);
 
-#ifdef _DEBUG
+#ifndef _DEBUG
 	std::ifstream in_file;
 	std::string raw_path = "src\\examples\\art_img_2048x2048_with_square.raw";
 	in_file.open(raw_path, std::fstream::in | std::fstream::binary);

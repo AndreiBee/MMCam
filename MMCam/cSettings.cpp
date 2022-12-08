@@ -622,14 +622,15 @@ void cSettings::ReadXMLFile()
 		xml_parser(optics);
 	}
 
-	/* Adding unique elements from xml_motors_list into std::set */
-	m_Motors->unique_motors_set[0].clear();
-	m_Motors->unique_motors_set[1].clear();
+	/* Adding unique elements from xml_motors_list into std::map */
+	m_Motors->unique_motors_map.clear();
+
 	int count{};
 	for (const auto& note : m_Motors->xml_all_motors[0])
 	{
-		m_Motors->unique_motors_set[0].emplace(wxAtoi(note));
-		m_Motors->unique_motors_set[1].emplace(wxAtoi(m_Motors->xml_all_motors[1][count]));
+		m_Motors->unique_motors_map.emplace(std::make_pair(wxAtoi(note), wxAtof(m_Motors->xml_all_motors[1][count])));
+		//m_Motors->unique_motors_set[0].emplace(wxAtoi(note));
+		//m_Motors->unique_motors_set[1].emplace(wxAtof(m_Motors->xml_all_motors[1][count]));
 		++count;
 	}
 	UpdateUniqueArray();
@@ -642,10 +643,17 @@ void cSettings::UpdateUniqueArray()
 	m_Motors->unique_motors[0].Add("None");
 	m_Motors->unique_motors[1].Add("None");
 
-	for (const auto& motor : m_Motors->unique_motors_set[0])
-		m_Motors->unique_motors[0].Add(wxString::Format(wxT("%i"),motor));
-	for (const auto& range : m_Motors->unique_motors_set[1])
-		m_Motors->unique_motors[1].Add(wxString::Format(wxT("%i"), range));
+	for (const auto& motor : m_Motors->unique_motors_map)
+	{
+		m_Motors->unique_motors[0].Add(wxString::Format(wxT("%i"), motor.first));
+		m_Motors->unique_motors[1].Add(wxString::Format(wxT("%.2f"), motor.second));
+	}
+
+
+	//for (const auto& motor : m_Motors->unique_motors_set[0])
+		//m_Motors->unique_motors[0].Add(wxString::Format(wxT("%i"), (int)motor));
+	//for (const auto& range : m_Motors->unique_motors_set[1])
+		//m_Motors->unique_motors[1].Add(wxString::Format(wxT("%.2f"), range));
 }
 
 void cSettings::SelectMotorsAndRangesFromXMLFile()
