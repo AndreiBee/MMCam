@@ -14,6 +14,76 @@ cSettings::cSettings(wxWindow* parent_frame)
 	CenterOnScreen();
 }
 
+float cSettings::GetActualDetectorXStagePos() const
+{
+	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Detector[0].current_selection[0] - 1);
+}
+
+float cSettings::GetActualDetectorYStagePos() const
+{
+	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Detector[1].current_selection[0] - 1);
+}
+
+float cSettings::GetActualDetectorZStagePos() const
+{
+	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Detector[2].current_selection[0] - 1);
+}
+
+float cSettings::GetActualOpticsXStagePos() const
+{
+	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Optics[0].current_selection[0] - 1);
+}
+
+float cSettings::GetActualOpticsYStagePos() const
+{
+	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Optics[1].current_selection[0] - 1);
+}
+
+float cSettings::GetActualOpticsZStagePos() const
+{
+	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Optics[2].current_selection[0] - 1);
+}
+
+float cSettings::CenterDetectorX()
+{
+	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Detector[0].current_selection[0] - 1);
+}
+
+float cSettings::HomeDetectorX()
+{
+	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Detector[0].current_selection[0] - 1);
+}
+
+float cSettings::CenterDetectorY()
+{
+	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Detector[1].current_selection[0] - 1);
+}
+
+float cSettings::HomeDetectorY()
+{
+	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Detector[1].current_selection[0] - 1);
+}
+
+float cSettings::CenterDetectorZ()
+{
+	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Detector[2].current_selection[0] - 1);
+}
+
+float cSettings::HomeDetectorZ()
+{
+	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Detector[2].current_selection[0] - 1);
+}
+
+float cSettings::CenterOpticsY()
+{
+	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Optics[1].current_selection[0] - 1);
+}
+
+float cSettings::HomeOpticsY()
+{
+	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Optics[1].current_selection[0] - 1);
+}
+
 void cSettings::CreateMainFrame()
 {
 	InitComponents();
@@ -573,6 +643,17 @@ void cSettings::OnCancelBtn(wxCommandEvent& evt)
 	SetPreviousStatesDataAsCurrentSelection();
 }
 
+unsigned int cSettings::FindSerialNumber
+(
+	const uint8_t selection_number, 
+	const SettingsVariables::MotorSettings* motor_settings
+) const
+{
+	wxString find_string{};
+	find_string = m_Motors->unique_motors[0][selection_number];
+	return (unsigned int)wxAtoi(find_string);
+}
+
 auto cSettings::CompareXMLWithConnectedDevices()
 {
 	auto raise_exception_msg = []() 
@@ -610,7 +691,7 @@ auto cSettings::CompareXMLWithConnectedDevices()
 		m_Motors->xml_selected_motors[1].Clear();
 
 		wxString motor_sn{}, motor_range{};
-		std::map<int, float>::iterator phys_mot_iter = physical_motors.begin();
+		std::map<unsigned int, float>::iterator phys_mot_iter = physical_motors.begin();
 		for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
 		{
 			if (motor < physical_motors.size())

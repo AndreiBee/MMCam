@@ -6,6 +6,14 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
 	EVT_MAXIMIZE(cMain::OnMaximizeButton)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_X_CENTER_BTN, cMain::OnCenterDetectorX)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_X_HOME_BTN, cMain::OnHomeDetectorX)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Y_CENTER_BTN, cMain::OnCenterDetectorY)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Y_HOME_BTN, cMain::OnHomeDetectorY)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Z_CENTER_BTN, cMain::OnCenterDetectorZ)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Z_HOME_BTN, cMain::OnHomeDetectorZ)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_CENTER_BTN, cMain::OnCenterOpticsY)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_HOME_BTN, cMain::OnHomeOpticsY)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_PREVIEW_BTN, cMain::OnPreviewCameraImage)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
 wxEND_EVENT_TABLE()
@@ -81,19 +89,19 @@ void cMain::InitDefaultStateWidgets()
 		{
 			m_X_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_absolute_value));
 			m_X_Detector->relative_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_relative_value));
-			m_X_Detector->DisableAllControls();
+			//m_X_Detector->DisableAllControls();
 		}
 		/* Y */
 		{
 			m_Y_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_absolute_value));
 			m_Y_Detector->relative_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_relative_value));
-			m_Y_Detector->DisableAllControls();
+			//m_Y_Detector->DisableAllControls();
 		}
 		/* Z */
 		{
 			m_Z_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_absolute_value));
 			m_Z_Detector->relative_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_relative_value));
-			m_Z_Detector->DisableAllControls();
+			//m_Z_Detector->DisableAllControls();
 		}
 	}
 	/* Disabling Optics Widgets */
@@ -108,7 +116,7 @@ void cMain::InitDefaultStateWidgets()
 		{
 			m_Y_Optics->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_absolute_value));
 			m_Y_Optics->relative_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), default_relative_value));
-			m_Y_Optics->DisableAllControls();
+			//m_Y_Optics->DisableAllControls();
 		}
 		/* Z */
 		{
@@ -1073,6 +1081,7 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 void cMain::OnOpenSettings(wxCommandEvent& evt)
 {
 	m_Settings->ShowModal();
+	UpdateStagePositions();
 	uint8_t show{ 1 };
 }
 
@@ -1122,10 +1131,91 @@ void cMain::OnExit(wxCloseEvent& evt)
 	// since the default event handler does call Destroy(), too
 }
 
+void cMain::UpdateStagePositions()
+{
+	m_X_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.4f"), m_Settings->GetActualDetectorXStagePos()));
+	m_Y_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.4f"), m_Settings->GetActualDetectorYStagePos()));
+	m_Z_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.4f"), m_Settings->GetActualDetectorZStagePos()));
+
+	m_Y_Optics->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.4f"), m_Settings->GetActualOpticsYStagePos()));
+}
+
 void cMain::OnExit(wxCommandEvent& evt)
 {
 	wxCloseEvent artificialExit(wxEVT_CLOSE_WINDOW);
 	ProcessEvent(artificialExit);
+}
+
+void cMain::OnCenterDetectorX(wxCommandEvent& evt)
+{
+	m_X_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->CenterDetectorX()
+		));
+}
+
+void cMain::OnHomeDetectorX(wxCommandEvent& evt)
+{	
+	m_X_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->HomeDetectorX()
+		));
+}
+
+void cMain::OnCenterDetectorY(wxCommandEvent& evt)
+{
+	m_Y_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->CenterDetectorY()
+		));
+}
+
+void cMain::OnHomeDetectorY(wxCommandEvent& evt)
+{
+	m_Y_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->HomeDetectorY()
+		));
+}
+
+void cMain::OnCenterDetectorZ(wxCommandEvent& evt)
+{
+	m_Z_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->CenterDetectorZ()
+		));
+}
+
+void cMain::OnHomeDetectorZ(wxCommandEvent& evt)
+{
+	m_Z_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->HomeDetectorZ()
+		));
+}
+
+void cMain::OnCenterOpticsY(wxCommandEvent& evt)
+{
+	m_Y_Optics->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->CenterOpticsY()
+		));
+}
+
+void cMain::OnHomeOpticsY(wxCommandEvent& evt)
+{
+	m_Y_Optics->absolute_text_ctrl->SetValue(
+		wxString::Format(
+			wxT("%.4f"), 
+			m_Settings->HomeOpticsY()
+		));
 }
 
 cMain::~cMain()

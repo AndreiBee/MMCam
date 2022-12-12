@@ -176,12 +176,27 @@ private:
 	void OnSetOutDirectoryBtn(wxCommandEvent& evt);
 
 	void OnOpenSettings(wxCommandEvent& evt);
+	void UpdateStagePositions();
 
 	void OnFullScreen(wxCommandEvent& evt);
 	void OnMaximizeButton(wxMaximizeEvent& evt);
 
 	void OnExit(wxCloseEvent& evt);
 	void OnExit(wxCommandEvent& evt);
+
+	/* Stepper Control Functions */
+	/* Detector X */
+	void OnCenterDetectorX(wxCommandEvent& evt);
+	void OnHomeDetectorX(wxCommandEvent& evt);
+	/* Detector Y */
+	void OnCenterDetectorY(wxCommandEvent& evt);
+	void OnHomeDetectorY(wxCommandEvent& evt);
+	/* Detector Z */
+	void OnCenterDetectorZ(wxCommandEvent& evt);
+	void OnHomeDetectorZ(wxCommandEvent& evt);
+	/* Optics Y */
+	void OnCenterOpticsY(wxCommandEvent& evt);
+	void OnHomeOpticsY(wxCommandEvent& evt);
 
 private:
 	/* Settings Menu */

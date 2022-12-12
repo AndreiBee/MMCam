@@ -36,6 +36,7 @@ public:
 	/* Getters */
 	auto GetDeviceSerNum() const;
 	auto GetDeviceRange() const;
+	auto GetDeviceActualStagePos() const;
 
 	/* Setters */
 	auto SetDeviceName(const char* device_name);
@@ -67,11 +68,16 @@ public:
 	auto FillNames();
 
 	/* Getter */
-	std::map<int, float> GetNamesWithRanges() const;
+	std::map<unsigned int, float> GetNamesWithRanges() const;
+	float GetActualStagePos(const int& motor_number) const;
+
+	/* Setter */
+	float GoMotorHome(const int& motor_number);
+	float GoMotorCenter(const int& motor_number);
 
 private:
 	std::vector<Motor> m_MotorsArray{};
-	std::map<int, float> m_NamesOfMotorsWithRanges{};
+	std::map<unsigned int, float> m_NamesOfMotorsWithRanges{};
 };
 
 #endif

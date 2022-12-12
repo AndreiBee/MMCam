@@ -54,7 +54,7 @@ namespace SettingsVariables
 		wxArrayString xml_all_motors[2];
 		wxArrayString xml_selected_motors[2];
 
-		std::map<int, float> unique_motors_map;
+		std::map<unsigned int, float> unique_motors_map;
 		//std::set<float> unique_motors_set[2];
 		wxArrayString unique_motors[2];
 
@@ -70,6 +70,30 @@ class cSettings final : public wxDialog
 {
 public:
 	cSettings(wxWindow* parent_frame);
+
+	/* Getters */
+	float GetActualDetectorXStagePos() const;
+	float GetActualDetectorYStagePos() const;
+	float GetActualDetectorZStagePos() const;
+
+	float GetActualOpticsXStagePos() const;
+	float GetActualOpticsYStagePos() const;
+	float GetActualOpticsZStagePos() const;
+
+	/* Setters */
+	/* Detector X */
+	float CenterDetectorX();
+	float HomeDetectorX();
+	/* Detector Y */
+	float CenterDetectorY();
+	float HomeDetectorY();
+	/* Detector Z */
+	float CenterDetectorZ();
+	float HomeDetectorZ();
+	/* Optics Y */
+	float CenterOpticsY();
+	float HomeOpticsY();
+
 
 private:
 	void CreateMainFrame();
@@ -88,6 +112,8 @@ private:
 	bool CheckIfUserSelectedAllRangesForAllSelectedMotors();
 	bool CheckIfUserSelectedAllMotorsForAllSelectedRanges();
 	void OnCancelBtn(wxCommandEvent& evt);
+
+	unsigned int FindSerialNumber(const uint8_t selection_number, const SettingsVariables::MotorSettings* motor_settings) const;
 
 	/* Working with XML data and operating with m_Motors variables */
 	auto CompareXMLWithConnectedDevices();

@@ -17,6 +17,11 @@ auto Motor::GetDeviceRange() const
 	return m_MotorSettings->StageRange;
 }
 
+auto Motor::GetDeviceActualStagePos() const
+{
+	return m_MotorSettings->StagePos;
+}
+
 auto Motor::SetDeviceName(const char* device_name)
 {
 	size_t char_count{};
@@ -26,8 +31,11 @@ auto Motor::SetDeviceName(const char* device_name)
 		++device_name;
 	}
 	device_name -= char_count;
-	m_DeviceName = std::make_unique<char[]>(char_count);
+
+	m_DeviceName = std::make_unique<char[]>(char_count + 1);
+	//strncpy(m_DeviceName.get(), device_name, char_count);
 	memcpy(m_DeviceName.get(), device_name, char_count);
+	m_DeviceName[char_count] = '\0';
 }
 
 auto Motor::SetSerNum(unsigned int s_n)
@@ -78,7 +86,7 @@ auto Motor::UpdateCurPosThroughStanda()
 auto Motor::GoCenter()
 {
 	device_t device_c;
-	device_c = open_device(&m_DeviceName[0]);
+	device_c = open_device(m_DeviceName.get());
 
 	{
 		if ((m_StandaSettings->Result = command_move_calb
@@ -125,7 +133,7 @@ auto Motor::GoCenter()
 auto Motor::GoHomeAndZero()
 {
 	device_t device_c;
-	device_c = open_device(&m_DeviceName[0]);
+	device_c = open_device(m_DeviceName.get());
 
 	{
 		if ((m_StandaSettings->Result = command_homezero(device_c) != result_ok)) return false;
@@ -234,9 +242,28 @@ auto MotorArray::FillNames()
 	}
 }
 
-std::map<int, float> MotorArray::GetNamesWithRanges() const
+std::map<unsigned int, float> MotorArray::GetNamesWithRanges() const
 {
 	return m_NamesOfMotorsWithRanges;
+}
+
+float MotorArray::GetActualStagePos(const int& motor_number) const
+{
+	return motor_number >= m_MotorsArray.size() ? 0.f : m_MotorsArray[motor_number].GetDeviceActualStagePos();
+}
+
+float MotorArray::GoMotorHome(const int& motor_number)
+{
+	if (motor_number >= m_MotorsArray.size()) return 0.f;
+	m_MotorsArray[motor_number].GoHomeAndZero();
+	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
+}
+
+float MotorArray::GoMotorCenter(const int& motor_number)
+{
+	if (motor_number >= m_MotorsArray.size()) return 0.f;
+	m_MotorsArray[motor_number].GoCenter();
+	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
 }
 
 bool MotorArray::InitAllMotors()
@@ -300,5 +327,6 @@ bool MotorArray::InitAllMotors()
 
 		close_device(&device_c);
 	}
+	free_enumerate_devices(devenum_c);
 	FillNames();
 }
