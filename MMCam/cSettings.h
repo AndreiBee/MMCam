@@ -89,18 +89,22 @@ public:
 	/* Setters */
 	/* Detector X */
 	float GoToAbsDetectorX(float absolute_position);
+	float GoOffsetDetectorX(float delta);
 	float CenterDetectorX();
 	float HomeDetectorX();
 	/* Detector Y */
 	float GoToAbsDetectorY(float absolute_position);
+	float GoOffsetDetectorY(float delta);
 	float CenterDetectorY();
 	float HomeDetectorY();
 	/* Detector Z */
 	float GoToAbsDetectorZ(float absolute_position);
+	float GoOffsetDetectorZ(float delta);
 	float CenterDetectorZ();
 	float HomeDetectorZ();
 	/* Optics Y */
 	float GoToAbsOpticsY(float absolute_position);
+	float GoOffsetOpticsY(float delta);
 	float CenterOpticsY();
 	float HomeOpticsY();
 

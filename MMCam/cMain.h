@@ -73,7 +73,7 @@ namespace MainFrameVariables
 		ID_RIGHT_SC_OPT_Z_HOME_BTN,
 		/* Camera */
 		ID_RIGHT_CAM_EXPOSURE_TE_CTL,
-		ID_RIGHT_CAM_PREVIEW_BTN,
+		ID_RIGHT_CAM_CAPTURE_BTN,
 		/* Measurement */
 		ID_RIGHT_MT_OUT_FLD_TE_CTL,
 		ID_RIGHT_MT_OUT_FLD_BTN,
@@ -189,18 +189,29 @@ private:
 	/* Detector X */
 	void OnEnterTextCtrlDetectorXAbsPos(wxCommandEvent& evt);
 	void OnSetDetectorXAbsPos(wxCommandEvent& evt);
+	void OnDecrementDetectorXAbsPos(wxCommandEvent& evt);
+	void OnIncrementDetectorXAbsPos(wxCommandEvent& evt);
 	void OnCenterDetectorX(wxCommandEvent& evt);
 	void OnHomeDetectorX(wxCommandEvent& evt);
 	/* Detector Y */
+	void OnEnterTextCtrlDetectorYAbsPos(wxCommandEvent& evt);
 	void OnSetDetectorYAbsPos(wxCommandEvent& evt);
+	void OnDecrementDetectorYAbsPos(wxCommandEvent& evt);
+	void OnIncrementDetectorYAbsPos(wxCommandEvent& evt);
 	void OnCenterDetectorY(wxCommandEvent& evt);
 	void OnHomeDetectorY(wxCommandEvent& evt);
 	/* Detector Z */
+	void OnEnterTextCtrlDetectorZAbsPos(wxCommandEvent& evt);
 	void OnSetDetectorZAbsPos(wxCommandEvent& evt);
+	void OnDecrementDetectorZAbsPos(wxCommandEvent& evt);
+	void OnIncrementDetectorZAbsPos(wxCommandEvent& evt);
 	void OnCenterDetectorZ(wxCommandEvent& evt);
 	void OnHomeDetectorZ(wxCommandEvent& evt);
 	/* Optics Y */
+	void OnEnterTextCtrlOpticsYAbsPos(wxCommandEvent& evt);
 	void OnSetOpticsYAbsPos(wxCommandEvent& evt);
+	void OnDecrementOpticsYAbsPos(wxCommandEvent& evt);
+	void OnIncrementOpticsYAbsPos(wxCommandEvent& evt);
 	void OnCenterOpticsY(wxCommandEvent& evt);
 	void OnHomeOpticsY(wxCommandEvent& evt);
 

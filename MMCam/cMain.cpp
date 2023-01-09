@@ -3,28 +3,39 @@
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CLOSE(cMain::OnExit)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_FILE_QUIT, cMain::OnExit)
+	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN, cMain::OnPreviewCameraImage)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
 	EVT_MAXIMIZE(cMain::OnMaximizeButton)
 	/* Detector X */
 	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_SC_DET_X_ABS_TE_CTL, cMain::OnEnterTextCtrlDetectorXAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_X_SET_BTN, cMain::OnSetDetectorXAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_X_DEC_BTN, cMain::OnDecrementDetectorXAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_X_INC_BTN, cMain::OnIncrementDetectorXAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_X_CENTER_BTN, cMain::OnCenterDetectorX)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_X_HOME_BTN, cMain::OnHomeDetectorX)
 	/* Detector Y */
+	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_SC_DET_Y_ABS_TE_CTL, cMain::OnEnterTextCtrlDetectorYAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Y_SET_BTN, cMain::OnSetDetectorYAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Y_DEC_BTN, cMain::OnDecrementDetectorYAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Y_INC_BTN, cMain::OnIncrementDetectorYAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Y_CENTER_BTN, cMain::OnCenterDetectorY)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Y_HOME_BTN, cMain::OnHomeDetectorY)
 	/* Detector Z */
+	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_SC_DET_Z_ABS_TE_CTL, cMain::OnEnterTextCtrlDetectorZAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Z_SET_BTN, cMain::OnSetDetectorZAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Z_DEC_BTN, cMain::OnDecrementDetectorZAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Z_INC_BTN, cMain::OnIncrementDetectorZAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Z_CENTER_BTN, cMain::OnCenterDetectorZ)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_DET_Z_HOME_BTN, cMain::OnHomeDetectorZ)
 	/* Optics Y */
+	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_SC_OPT_Y_ABS_TE_CTL, cMain::OnEnterTextCtrlOpticsYAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_SET_BTN, cMain::OnSetOpticsYAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_DEC_BTN, cMain::OnDecrementOpticsYAbsPos)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_INC_BTN, cMain::OnIncrementOpticsYAbsPos)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_CENTER_BTN, cMain::OnCenterOpticsY)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_HOME_BTN, cMain::OnHomeOpticsY)
 	/* Camera */
-	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_PREVIEW_BTN, cMain::OnPreviewCameraImage)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
 wxEND_EVENT_TABLE()
 
@@ -76,6 +87,7 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_file, wxT("&File"));
 
 	// Edit Menu
+	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN, wxT("Capture\tC"));
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
@@ -228,7 +240,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 				/* Absolute */
 				{
 					wxSizer* const abs_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Absolute [mm]");
-					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_DEFAULT);
 					abs_val.SetMin(-1000.f);
 					abs_val.SetMax(1000.f);
 					m_X_Detector->absolute_text_ctrl = new wxTextCtrl(
@@ -263,7 +275,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 						wxDefaultPosition, 
 						inc_dec_size);
 					m_X_Detector->decrement_btn->SetToolTip(wxT("Decrement distance"));
-					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_DEFAULT);
 					rel_val.SetMin(-1000.f);
 					rel_val.SetMax(1000.f);
 					m_X_Detector->relative_text_ctrl = new wxTextCtrl(
@@ -326,7 +338,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 				/* Absolute */
 				{
 					wxSizer* const abs_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Absolute [mm]");
-					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_DEFAULT);
 					abs_val.SetMin(-1000.f);
 					abs_val.SetMax(1000.f);
 					m_Y_Detector->absolute_text_ctrl = new wxTextCtrl(
@@ -361,7 +373,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 						wxDefaultPosition, 
 						inc_dec_size);
 					m_Y_Detector->decrement_btn->SetToolTip(wxT("Decrement distance"));
-					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_DEFAULT);
 					rel_val.SetMin(-1000.f);
 					rel_val.SetMax(1000.f);
 					m_Y_Detector->relative_text_ctrl = new wxTextCtrl(
@@ -424,7 +436,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 				/* Absolute */
 				{
 					wxSizer* const abs_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Absolute [mm]");
-					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_DEFAULT);
 					abs_val.SetMin(-1000.f);
 					abs_val.SetMax(1000.f);
 					m_Z_Detector->absolute_text_ctrl = new wxTextCtrl(
@@ -459,7 +471,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 						wxDefaultPosition, 
 						inc_dec_size);
 					m_Z_Detector->decrement_btn->SetToolTip(wxT("Decrement distance"));
-					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_DEFAULT);
 					rel_val.SetMin(-1000.f);
 					rel_val.SetMax(1000.f);
 					m_Z_Detector->relative_text_ctrl = new wxTextCtrl(
@@ -525,7 +537,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 				/* Absolute */
 				{
 					wxSizer* const abs_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Absolute [mm]");
-					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_DEFAULT);
 					abs_val.SetMin(-1000.f);
 					abs_val.SetMax(1000.f);
 					m_X_Optics->absolute_text_ctrl = new wxTextCtrl(
@@ -560,7 +572,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 						wxDefaultPosition, 
 						inc_dec_size);
 					m_X_Optics->decrement_btn->SetToolTip(wxT("Decrement distance"));
-					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_DEFAULT);
 					rel_val.SetMin(-1000.f);
 					rel_val.SetMax(1000.f);
 					m_X_Optics->relative_text_ctrl = new wxTextCtrl(
@@ -621,7 +633,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 				/* Absolute */
 				{
 					wxSizer* const abs_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Absolute [mm]");
-					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_DEFAULT);
 					abs_val.SetMin(-1000.f);
 					abs_val.SetMax(1000.f);
 					m_Y_Optics->absolute_text_ctrl = new wxTextCtrl(
@@ -656,7 +668,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 						wxDefaultPosition, 
 						inc_dec_size);
 					m_Y_Optics->decrement_btn->SetToolTip(wxT("Decrement distance"));
-					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_DEFAULT);
 					rel_val.SetMin(-1000.f);
 					rel_val.SetMax(1000.f);
 					m_Y_Optics->relative_text_ctrl = new wxTextCtrl(
@@ -717,7 +729,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 				/* Absolute */
 				{
 					wxSizer* const abs_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Absolute [mm]");
-					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	abs_val(3, NULL, wxNUM_VAL_DEFAULT);
 					abs_val.SetMin(-1000.f);
 					abs_val.SetMax(1000.f);
 					m_Z_Optics->absolute_text_ctrl = new wxTextCtrl(
@@ -752,7 +764,7 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 						wxDefaultPosition, 
 						inc_dec_size);
 					m_Z_Optics->decrement_btn->SetToolTip(wxT("Decrement distance"));
-					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+					wxFloatingPointValidator<float>	rel_val(3, NULL, wxNUM_VAL_DEFAULT);
 					rel_val.SetMin(-1000.f);
 					rel_val.SetMax(1000.f);
 					m_Z_Optics->relative_text_ctrl = new wxTextCtrl(
@@ -847,8 +859,8 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 		{
 			m_CamPreviewBtn = std::make_unique<wxButton>(
 				right_side_panel,
-				MainFrameVariables::ID_RIGHT_CAM_PREVIEW_BTN,
-				wxT("Preview"), 
+				MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN,
+				wxT("Capture (C)"), 
 				wxDefaultPosition, 
 				wxDefaultSize);
 			cam_static_box_sizer->AddStretchSpacer();
@@ -1072,7 +1084,9 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 
 void cMain::OnPreviewCameraImage(wxCommandEvent& evt)
 {
-	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() ? wxString("0") : m_CamExposure->GetValue();
+	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
+		? wxString("0") 
+		: m_CamExposure->GetValue();
 	int exposure_time = abs(wxAtoi(exposure_time_str));
 	m_CamPreview->SetCameraCapturedImage(exposure_time);
 }
@@ -1184,7 +1198,7 @@ void cMain::EnableUsedAndDisableNonUsedMotors()
 
 void cMain::OnEnterTextCtrlDetectorXAbsPos(wxCommandEvent& evt)
 {
-	wxCommandEvent enter_evt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_SC_DET_X_ABS_TE_CTL);
+	wxCommandEvent enter_evt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_SC_DET_X_SET_BTN);
 	ProcessEvent(enter_evt);
 }
 
@@ -1193,6 +1207,30 @@ void cMain::OnSetDetectorXAbsPos(wxCommandEvent& evt)
 	double absolute_position{};
 	if (!m_X_Detector->absolute_text_ctrl->GetValue().ToDouble(&absolute_position)) return;
 	m_Settings->GoToAbsDetectorX((float)absolute_position);
+}
+
+void cMain::OnDecrementDetectorXAbsPos(wxCommandEvent& evt)
+{
+	double delta_position{};
+	if (!m_X_Detector->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;
+	m_X_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetDetectorX(-(float)delta_position)
+		));
+}
+
+void cMain::OnIncrementDetectorXAbsPos(wxCommandEvent& evt)
+{	
+	double delta_position{};
+	if (!m_X_Detector->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;	
+	m_X_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetDetectorX((float)delta_position)
+		));
 }
 
 void cMain::OnCenterDetectorX(wxCommandEvent& evt)
@@ -1213,11 +1251,41 @@ void cMain::OnHomeDetectorX(wxCommandEvent& evt)
 		));
 }
 
+void cMain::OnEnterTextCtrlDetectorYAbsPos(wxCommandEvent& evt)
+{
+	wxCommandEvent enter_evt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_SC_DET_Y_SET_BTN);
+	ProcessEvent(enter_evt);
+}
+
 void cMain::OnSetDetectorYAbsPos(wxCommandEvent& evt)
 {	
 	double absolute_position{};
 	if (!m_Y_Detector->absolute_text_ctrl->GetValue().ToDouble(&absolute_position)) return;
 	m_Settings->GoToAbsDetectorY((float)absolute_position);
+}
+
+void cMain::OnDecrementDetectorYAbsPos(wxCommandEvent& evt)
+{	
+	double delta_position{};
+	if (!m_Y_Detector->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;
+	m_Y_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetDetectorY(-(float)delta_position)
+		));
+}
+
+void cMain::OnIncrementDetectorYAbsPos(wxCommandEvent& evt)
+{
+	double delta_position{};
+	if (!m_Y_Detector->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;	
+	m_Y_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetDetectorY((float)delta_position)
+		));
 }
 
 void cMain::OnCenterDetectorY(wxCommandEvent& evt)
@@ -1238,11 +1306,41 @@ void cMain::OnHomeDetectorY(wxCommandEvent& evt)
 		));
 }
 
+void cMain::OnEnterTextCtrlDetectorZAbsPos(wxCommandEvent& evt)
+{
+	wxCommandEvent enter_evt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_SC_DET_Z_SET_BTN);
+	ProcessEvent(enter_evt);
+}
+
 void cMain::OnSetDetectorZAbsPos(wxCommandEvent& evt)
 {	
 	double absolute_position{};
 	if (!m_Z_Detector->absolute_text_ctrl->GetValue().ToDouble(&absolute_position)) return;
 	m_Settings->GoToAbsDetectorZ((float)absolute_position);
+}
+
+void cMain::OnDecrementDetectorZAbsPos(wxCommandEvent& evt)
+{
+	double delta_position{};
+	if (!m_Z_Detector->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;
+	m_Z_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetDetectorZ(-(float)delta_position)
+		));
+}
+
+void cMain::OnIncrementDetectorZAbsPos(wxCommandEvent& evt)
+{
+	double delta_position{};
+	if (!m_Z_Detector->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;	
+	m_Z_Detector->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetDetectorZ((float)delta_position)
+		));
 }
 
 void cMain::OnCenterDetectorZ(wxCommandEvent& evt)
@@ -1263,11 +1361,41 @@ void cMain::OnHomeDetectorZ(wxCommandEvent& evt)
 		));
 }
 
+void cMain::OnEnterTextCtrlOpticsYAbsPos(wxCommandEvent& evt)
+{
+	wxCommandEvent enter_evt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_SC_OPT_Y_SET_BTN);
+	ProcessEvent(enter_evt);
+}
+
 void cMain::OnSetOpticsYAbsPos(wxCommandEvent& evt)
 {
 	double absolute_position{};
 	if (!m_Y_Optics->absolute_text_ctrl->GetValue().ToDouble(&absolute_position)) return;
 	m_Settings->GoToAbsOpticsY((float)absolute_position);
+}
+
+void cMain::OnDecrementOpticsYAbsPos(wxCommandEvent& evt)
+{
+	double delta_position{};
+	if (!m_Y_Optics->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;
+	m_Y_Optics->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetOpticsY(-(float)delta_position)
+		));
+}
+
+void cMain::OnIncrementOpticsYAbsPos(wxCommandEvent& evt)
+{
+	double delta_position{};
+	if (!m_Y_Optics->relative_text_ctrl->GetValue().ToDouble(&delta_position)) return;
+	m_Y_Optics->absolute_text_ctrl->SetValue(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			m_Settings->GoOffsetOpticsY((float)delta_position)
+		));
 }
 
 void cMain::OnCenterOpticsY(wxCommandEvent& evt)

@@ -83,6 +83,15 @@ float cSettings::GoToAbsDetectorX(float absolute_position)
 	);
 }
 
+float cSettings::GoOffsetDetectorX(float delta)
+{
+	return m_PhysicalMotors->GoMotorOffset
+	(
+		m_Motors->m_Detector[0].current_selection[0] - 1, 
+		delta
+	);
+}
+
 float cSettings::CenterDetectorX()
 {
 	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Detector[0].current_selection[0] - 1);
@@ -99,6 +108,15 @@ float cSettings::GoToAbsDetectorY(float absolute_position)
 	(
 		m_Motors->m_Detector[1].current_selection[0] - 1, 
 		absolute_position
+	);
+}
+
+float cSettings::GoOffsetDetectorY(float delta)
+{
+	return m_PhysicalMotors->GoMotorOffset
+	(
+		m_Motors->m_Detector[1].current_selection[0] - 1, 
+		delta
 	);
 }
 
@@ -121,6 +139,15 @@ float cSettings::GoToAbsDetectorZ(float absolute_position)
 	);
 }
 
+float cSettings::GoOffsetDetectorZ(float delta)
+{
+	return m_PhysicalMotors->GoMotorOffset
+	(
+		m_Motors->m_Detector[2].current_selection[0] - 1, 
+		delta
+	);
+}
+
 float cSettings::CenterDetectorZ()
 {
 	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Detector[2].current_selection[0] - 1);
@@ -137,6 +164,15 @@ float cSettings::GoToAbsOpticsY(float absolute_position)
 	(
 		m_Motors->m_Optics[1].current_selection[0] - 1, 
 		absolute_position
+	);
+}
+
+float cSettings::GoOffsetOpticsY(float delta)
+{
+	return m_PhysicalMotors->GoMotorOffset
+	(
+		m_Motors->m_Optics[1].current_selection[0] - 1, 
+		delta
 	);
 }
 
@@ -797,7 +833,7 @@ auto cSettings::CompareXMLWithConnectedDevices()
 	};
 
 
-	if (serial_numbers_in_xml != m_Motors->unique_motors_map.size())
+	if (serial_numbers_in_xml != m_Motors->unique_motors_map.size() || serial_numbers_in_xml == 0)
 	{
 		m_Motors->unique_motors_map = physical_motors;
 		default_state_of_motors();

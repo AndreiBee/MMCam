@@ -279,6 +279,16 @@ float MotorArray::GoMotorToAbsPos(const int& motor_number, float abs_pos)
 	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
 }
 
+float MotorArray::GoMotorOffset(const int& motor_number, float offset)
+{	
+	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
+	if (offset + m_MotorsArray[motor_number].GetDeviceActualStagePos() < 0.f || 
+		offset + m_MotorsArray[motor_number].GetDeviceActualStagePos() > m_MotorsArray[motor_number].GetDeviceRange()) 
+		return m_MotorsArray[motor_number].GetDeviceActualStagePos();
+	m_MotorsArray[motor_number].GoToPos(m_MotorsArray[motor_number].GetDeviceActualStagePos() + offset);
+	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
+}
+
 bool MotorArray::InitAllMotors()
 {
 	result_t result_c;

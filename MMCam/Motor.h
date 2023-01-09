@@ -76,6 +76,7 @@ public:
 	float GoMotorHome(const int& motor_number);
 	float GoMotorCenter(const int& motor_number);
 	float GoMotorToAbsPos(const int& motor_number, float abs_pos);
+	float GoMotorOffset(const int& motor_number, float offset);
 
 private:
 	std::vector<Motor> m_MotorsArray{};
