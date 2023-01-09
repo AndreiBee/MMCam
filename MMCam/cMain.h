@@ -135,6 +135,7 @@ namespace MainFrameVariables
 
 		MeasurementStage()
 		{
+			motors.Add("None");
 			motors.Add("Detector X");
 			motors.Add("Detector Y");
 			motors.Add("Detector Z");
@@ -149,6 +150,13 @@ namespace MainFrameVariables
 			start->Disable();
 			step->Disable();
 			finish->Disable();
+		}
+		void EnableAllControls()
+		{
+			stage->Enable();
+			start->Enable();
+			step->Enable();
+			finish->Enable();
 		}
 	};
 }
@@ -214,6 +222,11 @@ private:
 	void OnIncrementOpticsYAbsPos(wxCommandEvent& evt);
 	void OnCenterOpticsY(wxCommandEvent& evt);
 	void OnHomeOpticsY(wxCommandEvent& evt);
+
+	/* First Stage */
+	void OnFirstStageChoice(wxCommandEvent& evt);
+	/* Second Stage */
+	void OnSecondStageChoice(wxCommandEvent& evt);
 
 private:
 	/* Settings Menu */

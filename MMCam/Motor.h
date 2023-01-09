@@ -11,11 +11,11 @@ namespace MotorVariables
 {
 	struct Settings
 	{
-		float MotorPos{};
-		float MinMotorPos{}, MiddleMotorPos{}, MaxMotorPos{};
-		float StagePos{};
-		float MinStagePos{}, MiddleStagePos{}, MaxStagePos{};
-		float MotorRange{}, StageRange{};
+		float motorPos{};
+		float minMotorPos{}, middleMotorPos{}, maxMotorPos{};
+		float stagePos{};
+		float minStagePos{}, middleStagePos{}, maxStagePos{};
+		float motorRange{}, stageRange{};
 	};
 }
 
@@ -23,9 +23,10 @@ namespace StandaVariables
 {
 	struct C_Settings
 	{
-		result_t Result{};
-		calibration_t Calibration{};
-		status_calb_t State{};
+		result_t result{};
+		calibration_t calibration{};
+		status_t state{};
+		status_calb_t calb_state{};
 	};
 }
 
@@ -43,7 +44,8 @@ public:
 	auto SetSerNum(unsigned int s_n);
 	auto SetResult(result_t result);
 	auto SetCalibration(calibration_t calibration);
-	auto SetState(status_calb_t state);
+	auto SetState(status_t state);
+	auto SetCalbState(status_calb_t calb_state);
 	auto SetRange(const float min_motor_deg, const float max_motor_deg);
 
 

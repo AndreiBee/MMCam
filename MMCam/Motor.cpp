@@ -14,12 +14,12 @@ auto Motor::GetDeviceSerNum() const
 
 auto Motor::GetDeviceRange() const
 {
-	return m_MotorSettings->StageRange;
+	return m_MotorSettings->stageRange;
 }
 
 auto Motor::GetDeviceActualStagePos() const
 {
-	return m_MotorSettings->StagePos;
+	return m_MotorSettings->stagePos;
 }
 
 auto Motor::SetDeviceName(const char* device_name)
@@ -45,42 +45,47 @@ auto Motor::SetSerNum(unsigned int s_n)
 
 auto Motor::SetResult(result_t result)
 {
-	m_StandaSettings->Result = result;
+	m_StandaSettings->result = result;
 }
 
 auto Motor::SetCalibration(calibration_t calibration)
 {
-	m_StandaSettings->Calibration = calibration;
+	m_StandaSettings->calibration = calibration;
 }
 
-auto Motor::SetState(status_calb_t state)
+auto Motor::SetState(status_t state)
 {
-	m_StandaSettings->State = state;
+	m_StandaSettings->state = state;
+}
+
+auto Motor::SetCalbState(status_calb_t calb_state)
+{
+	m_StandaSettings->calb_state = calb_state;
 }
 
 auto Motor::SetRange(const float min_motor_deg, const float max_motor_deg)
 {
 	/* Min position */
-	m_MotorSettings->MinMotorPos = min_motor_deg;
-	m_MotorSettings->MinStagePos = min_motor_deg / deg_per_mm;
+	m_MotorSettings->minMotorPos = min_motor_deg;
+	m_MotorSettings->minStagePos = min_motor_deg / deg_per_mm;
 
 	/* Middle position */
-	m_MotorSettings->MiddleMotorPos = (max_motor_deg - min_motor_deg) / 2.f;
-	m_MotorSettings->MiddleStagePos = m_MotorSettings->MiddleMotorPos / deg_per_mm;
+	m_MotorSettings->middleMotorPos = (max_motor_deg - min_motor_deg) / 2.f;
+	m_MotorSettings->middleStagePos = m_MotorSettings->middleMotorPos / deg_per_mm;
 
 	/* Max position */
-	m_MotorSettings->MaxMotorPos = max_motor_deg;
-	m_MotorSettings->MaxStagePos = max_motor_deg / deg_per_mm;
+	m_MotorSettings->maxMotorPos = max_motor_deg;
+	m_MotorSettings->maxStagePos = max_motor_deg / deg_per_mm;
 
 	/* Set Whole Motor Range */
-	m_MotorSettings->MotorRange = max_motor_deg - min_motor_deg;
-	m_MotorSettings->StageRange = (max_motor_deg - min_motor_deg) / deg_per_mm;
+	m_MotorSettings->motorRange = max_motor_deg - min_motor_deg;
+	m_MotorSettings->stageRange = (max_motor_deg - min_motor_deg) / deg_per_mm;
 }
 
 auto Motor::UpdateCurPosThroughStanda()
 {
-	m_MotorSettings->MotorPos = m_StandaSettings->State.CurPosition;
-	m_MotorSettings->StagePos = m_StandaSettings->State.CurPosition / deg_per_mm;
+	m_MotorSettings->motorPos = m_StandaSettings->state.CurPosition;
+	m_MotorSettings->stagePos = m_StandaSettings->state.CurPosition / deg_per_mm;
 }
 
 auto Motor::GoCenter()
@@ -89,11 +94,11 @@ auto Motor::GoCenter()
 	device_c = open_device(m_DeviceName.get());
 
 	{
-		if ((m_StandaSettings->Result = command_move_calb
+		if ((m_StandaSettings->result = command_move_calb
 		(
 			device_c, 
-			m_MotorSettings->MiddleMotorPos, 
-			&m_StandaSettings->Calibration
+			m_MotorSettings->middleMotorPos, 
+			&m_StandaSettings->calibration
 		)
 			) != result_ok)
 		{
@@ -101,7 +106,7 @@ auto Motor::GoCenter()
 			return false;
 		}
 		/* Wait */
-		if ((m_StandaSettings->Result = command_wait_for_stop
+		if ((m_StandaSettings->result = command_wait_for_stop
 		(
 			device_c, 
 			100
@@ -112,11 +117,22 @@ auto Motor::GoCenter()
 			return false;
 		}
 		/* Get Status */
-		if ((m_StandaSettings->Result = get_status_calb
+		if ((m_StandaSettings->result = get_status
 		(
 			device_c, 
-			&m_StandaSettings->State, 
-			&m_StandaSettings->Calibration
+			&m_StandaSettings->state 
+		)
+			) != result_ok)
+		{
+			/* Error getting status */
+			return false;
+		}
+		/* Get Calibrated Status */
+		if ((m_StandaSettings->result = get_status_calb
+		(
+			device_c, 
+			&m_StandaSettings->calb_state, 
+			&m_StandaSettings->calibration
 		)
 			) != result_ok)
 		{
@@ -136,9 +152,9 @@ auto Motor::GoHomeAndZero()
 	device_c = open_device(m_DeviceName.get());
 
 	{
-		if ((m_StandaSettings->Result = command_homezero(device_c) != result_ok)) return false;
+		if ((m_StandaSettings->result = command_homezero(device_c) != result_ok)) return false;
 		/* Wait */
-		if ((m_StandaSettings->Result = command_wait_for_stop
+		if ((m_StandaSettings->result = command_wait_for_stop
 		(
 			device_c, 
 			100
@@ -149,11 +165,22 @@ auto Motor::GoHomeAndZero()
 			return false;
 		}
 		/* Get Status */
-		if ((m_StandaSettings->Result = get_status_calb
+		if ((m_StandaSettings->result = get_status
 		(
 			device_c, 
-			&m_StandaSettings->State, 
-			&m_StandaSettings->Calibration
+			&m_StandaSettings->state 
+		)
+			) != result_ok)
+		{
+			/* Error getting status */
+			return false;
+		}
+		/* Get Calibrated Status */
+		if ((m_StandaSettings->result = get_status_calb
+		(
+			device_c, 
+			&m_StandaSettings->calb_state, 
+			&m_StandaSettings->calibration
 		)
 			) != result_ok)
 		{
@@ -173,11 +200,11 @@ auto Motor::GoToPos(const float stage_position)
 	device_c = open_device(&m_DeviceName[0]);
 
 	/* Get Status */
-	if ((m_StandaSettings->Result = get_status_calb
+	if ((m_StandaSettings->result = get_status_calb
 	(
 		device_c, 
-		&m_StandaSettings->State, 
-		&m_StandaSettings->Calibration
+		&m_StandaSettings->calb_state, 
+		&m_StandaSettings->calibration
 	)
 		) != result_ok)
 	{
@@ -186,21 +213,21 @@ auto Motor::GoToPos(const float stage_position)
 	}
 
 	/* If stage_position is outside of motor's range -> return */
-	if (stage_position < m_MotorSettings->MinStagePos || 
-		stage_position > m_MotorSettings->MaxStagePos)
+	if (stage_position < m_MotorSettings->minStagePos || 
+		stage_position > m_MotorSettings->maxStagePos)
 		return false;
 
 	{
 		float motor_position = stage_position * deg_per_mm;
-		if ((m_StandaSettings->Result = command_move_calb
+		if ((m_StandaSettings->result = command_move_calb
 		(
 			device_c, 
 			motor_position, 
-			&m_StandaSettings->Calibration
+			&m_StandaSettings->calibration
 		) != result_ok)) 
 			return false;
 		/* Wait */
-		if ((m_StandaSettings->Result = command_wait_for_stop
+		if ((m_StandaSettings->result = command_wait_for_stop
 		(
 			device_c, 
 			100
@@ -211,11 +238,22 @@ auto Motor::GoToPos(const float stage_position)
 			return false;
 		}
 		/* Get Status */
-		if ((m_StandaSettings->Result = get_status_calb
+		if ((m_StandaSettings->result = get_status
 		(
 			device_c, 
-			&m_StandaSettings->State, 
-			&m_StandaSettings->Calibration
+			&m_StandaSettings->state 
+		)
+			) != result_ok)
+		{
+			/* Error getting status */
+			return false;
+		}
+		/* Get Calibrated Status */
+		if ((m_StandaSettings->result = get_status_calb
+		(
+			device_c, 
+			&m_StandaSettings->calb_state, 
+			&m_StandaSettings->calibration
 		)
 			) != result_ok)
 		{
@@ -337,11 +375,8 @@ bool MotorArray::InitAllMotors()
 		m_MotorsArray[i].SetCalibration(calibration_c);
 
 		/* Get Status */
-		if ((result_c = get_status_calb(device_c, &state_calb_c, &calibration_c)) != result_ok)
-		{
-			return false;
-		}
-		m_MotorsArray[i].SetState(state_calb_c);
+		if ((result_c = get_status_calb(device_c, &state_calb_c, &calibration_c)) != result_ok) return false;
+		m_MotorsArray[i].SetState(state_c);
 
 		get_edges_settings_calb(device_c, &edges_settings_calb_c, &calibration_c);
 		m_MotorsArray[i].SetRange(edges_settings_calb_c.LeftBorder, edges_settings_calb_c.RightBorder);

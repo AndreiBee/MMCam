@@ -37,6 +37,10 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_HOME_BTN, cMain::OnHomeOpticsY)
 	/* Camera */
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
+	/* First Stage */
+	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_FIRST_STAGE_CHOICE, cMain::OnFirstStageChoice)
+	/* Second Stage */
+	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, cMain::OnSecondStageChoice)
 wxEND_EVENT_TABLE()
 
 cMain::cMain(const wxString& title_) 
@@ -1004,7 +1008,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					m_SecondStage->motors);
-				m_SecondStage->stage->SetSelection(1);
+				m_SecondStage->stage->SetSelection(0);
 				stage_static_box_sizer->Add(m_SecondStage->stage, 0, wxEXPAND);
 				second_axis_static_box_sizer->Add(stage_static_box_sizer, 0, wxEXPAND);
 			}
@@ -1100,6 +1104,8 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 		return;
 
 	m_OutDirTextCtrl->SetValue(save_dialog.GetPath());
+	m_FirstStage->EnableAllControls();
+	m_SecondStage->EnableAllControls();
 }
 
 void cMain::OnOpenSettings(wxCommandEvent& evt)
@@ -1341,6 +1347,61 @@ void cMain::OnIncrementDetectorZAbsPos(wxCommandEvent& evt)
 			wxT("%.3f"), 
 			m_Settings->GoOffsetDetectorZ((float)delta_position)
 		));
+}
+
+void cMain::OnFirstStageChoice(wxCommandEvent& evt)
+{
+	auto first_stage_selection = m_FirstStage->stage->GetCurrentSelection() - 1;
+	double start_stage_value{}, step_stage_value{}, finish_stage_value{};
+	switch (first_stage_selection)
+	{
+	/* Detector */
+	case 0:
+		if (!m_X_Detector->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 1:
+		if (!m_Y_Detector->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 2:
+		if (!m_Z_Detector->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	/* Optics */
+	case 3:
+		if (!m_X_Optics->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 4:
+		if (!m_Y_Optics->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 5:
+		if (!m_Z_Optics->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	default:
+		break;
+	}
+	/* Set Start To Current position of motor */
+	m_FirstStage->start->SetValue
+	(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			(float)start_stage_value
+		)
+	);
+	/* Set Finish To Current position of motor + Step */
+	if (!m_FirstStage->step->GetValue().ToDouble(&step_stage_value)) return;
+	finish_stage_value = start_stage_value + step_stage_value;
+	m_FirstStage->finish->SetValue
+	(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			(float)finish_stage_value
+		)
+	);
+}
+
+void cMain::OnSecondStageChoice(wxCommandEvent& evt)
+{
 }
 
 void cMain::OnCenterDetectorZ(wxCommandEvent& evt)
