@@ -177,6 +177,7 @@ private:
 
 	void OnOpenSettings(wxCommandEvent& evt);
 	void UpdateStagePositions();
+	void EnableUsedAndDisableNonUsedMotors();
 
 	void OnFullScreen(wxCommandEvent& evt);
 	void OnMaximizeButton(wxMaximizeEvent& evt);
@@ -186,15 +187,20 @@ private:
 
 	/* Stepper Control Functions */
 	/* Detector X */
+	void OnEnterTextCtrlDetectorXAbsPos(wxCommandEvent& evt);
+	void OnSetDetectorXAbsPos(wxCommandEvent& evt);
 	void OnCenterDetectorX(wxCommandEvent& evt);
 	void OnHomeDetectorX(wxCommandEvent& evt);
 	/* Detector Y */
+	void OnSetDetectorYAbsPos(wxCommandEvent& evt);
 	void OnCenterDetectorY(wxCommandEvent& evt);
 	void OnHomeDetectorY(wxCommandEvent& evt);
 	/* Detector Z */
+	void OnSetDetectorZAbsPos(wxCommandEvent& evt);
 	void OnCenterDetectorZ(wxCommandEvent& evt);
 	void OnHomeDetectorZ(wxCommandEvent& evt);
 	/* Optics Y */
+	void OnSetOpticsYAbsPos(wxCommandEvent& evt);
 	void OnCenterOpticsY(wxCommandEvent& evt);
 	void OnHomeOpticsY(wxCommandEvent& evt);
 

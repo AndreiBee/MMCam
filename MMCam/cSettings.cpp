@@ -14,9 +14,19 @@ cSettings::cSettings(wxWindow* parent_frame)
 	CenterOnScreen();
 }
 
+bool cSettings::DetectorXHasSerialNumber() const
+{
+	return m_PhysicalMotors->MotorHasSerialNumber(m_Motors->m_Detector[0].current_selection[0] - 1);
+}
+
 float cSettings::GetActualDetectorXStagePos() const
 {
 	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Detector[0].current_selection[0] - 1);
+}
+
+bool cSettings::DetectorYHasSerialNumber() const
+{
+	return m_PhysicalMotors->MotorHasSerialNumber(m_Motors->m_Detector[1].current_selection[0] - 1);
 }
 
 float cSettings::GetActualDetectorYStagePos() const
@@ -24,9 +34,19 @@ float cSettings::GetActualDetectorYStagePos() const
 	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Detector[1].current_selection[0] - 1);
 }
 
+bool cSettings::DetectorZHasSerialNumber() const
+{
+	return m_PhysicalMotors->MotorHasSerialNumber(m_Motors->m_Detector[2].current_selection[0] - 1);
+}
+
 float cSettings::GetActualDetectorZStagePos() const
 {
 	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Detector[2].current_selection[0] - 1);
+}
+
+bool cSettings::OpticsXHasSerialNumber() const
+{
+	return m_PhysicalMotors->MotorHasSerialNumber(m_Motors->m_Optics[0].current_selection[0] - 1);
 }
 
 float cSettings::GetActualOpticsXStagePos() const
@@ -34,14 +54,33 @@ float cSettings::GetActualOpticsXStagePos() const
 	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Optics[0].current_selection[0] - 1);
 }
 
+bool cSettings::OpticsYHasSerialNumber() const
+{
+	return m_PhysicalMotors->MotorHasSerialNumber(m_Motors->m_Optics[1].current_selection[0] - 1);
+}
+
 float cSettings::GetActualOpticsYStagePos() const
 {
 	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Optics[1].current_selection[0] - 1);
 }
 
+bool cSettings::OpticsZHasSerialNumber() const
+{
+	return m_PhysicalMotors->MotorHasSerialNumber(m_Motors->m_Optics[2].current_selection[0] - 1);
+}
+
 float cSettings::GetActualOpticsZStagePos() const
 {
 	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Optics[2].current_selection[0] - 1);
+}
+
+float cSettings::GoToAbsDetectorX(float absolute_position)
+{
+	return m_PhysicalMotors->GoMotorToAbsPos
+	(
+		m_Motors->m_Detector[0].current_selection[0] - 1, 
+		absolute_position
+	);
 }
 
 float cSettings::CenterDetectorX()
@@ -54,6 +93,15 @@ float cSettings::HomeDetectorX()
 	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Detector[0].current_selection[0] - 1);
 }
 
+float cSettings::GoToAbsDetectorY(float absolute_position)
+{
+	return m_PhysicalMotors->GoMotorToAbsPos
+	(
+		m_Motors->m_Detector[1].current_selection[0] - 1, 
+		absolute_position
+	);
+}
+
 float cSettings::CenterDetectorY()
 {
 	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Detector[1].current_selection[0] - 1);
@@ -64,6 +112,15 @@ float cSettings::HomeDetectorY()
 	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Detector[1].current_selection[0] - 1);
 }
 
+float cSettings::GoToAbsDetectorZ(float absolute_position)
+{
+	return m_PhysicalMotors->GoMotorToAbsPos
+	(
+		m_Motors->m_Detector[2].current_selection[0] - 1, 
+		absolute_position
+	);
+}
+
 float cSettings::CenterDetectorZ()
 {
 	return m_PhysicalMotors->GoMotorCenter(m_Motors->m_Detector[2].current_selection[0] - 1);
@@ -72,6 +129,15 @@ float cSettings::CenterDetectorZ()
 float cSettings::HomeDetectorZ()
 {
 	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Detector[2].current_selection[0] - 1);
+}
+
+float cSettings::GoToAbsOpticsY(float absolute_position)
+{
+	return m_PhysicalMotors->GoMotorToAbsPos
+	(
+		m_Motors->m_Optics[1].current_selection[0] - 1, 
+		absolute_position
+	);
 }
 
 float cSettings::CenterOpticsY()

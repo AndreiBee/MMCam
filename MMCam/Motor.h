@@ -70,10 +70,12 @@ public:
 	/* Getter */
 	std::map<unsigned int, float> GetNamesWithRanges() const;
 	float GetActualStagePos(const int& motor_number) const;
+	bool MotorHasSerialNumber(const int& motor_number) const;
 
 	/* Setter */
 	float GoMotorHome(const int& motor_number);
 	float GoMotorCenter(const int& motor_number);
+	float GoMotorToAbsPos(const int& motor_number, float abs_pos);
 
 private:
 	std::vector<Motor> m_MotorsArray{};

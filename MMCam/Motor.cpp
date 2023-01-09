@@ -249,20 +249,33 @@ std::map<unsigned int, float> MotorArray::GetNamesWithRanges() const
 
 float MotorArray::GetActualStagePos(const int& motor_number) const
 {
-	return motor_number >= m_MotorsArray.size() ? 0.f : m_MotorsArray[motor_number].GetDeviceActualStagePos();
+	return motor_number >= m_MotorsArray.size() || motor_number < 0 ? 0.f : m_MotorsArray[motor_number].GetDeviceActualStagePos();
+}
+
+bool MotorArray::MotorHasSerialNumber(const int& motor_number) const
+{
+	return motor_number >= m_MotorsArray.size() || motor_number < 0 ? false : m_MotorsArray[motor_number].GetDeviceSerNum();
 }
 
 float MotorArray::GoMotorHome(const int& motor_number)
 {
-	if (motor_number >= m_MotorsArray.size()) return 0.f;
+	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
 	m_MotorsArray[motor_number].GoHomeAndZero();
 	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
 }
 
 float MotorArray::GoMotorCenter(const int& motor_number)
 {
-	if (motor_number >= m_MotorsArray.size()) return 0.f;
+	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
 	m_MotorsArray[motor_number].GoCenter();
+	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
+}
+
+float MotorArray::GoMotorToAbsPos(const int& motor_number, float abs_pos)
+{
+	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
+	if (abs_pos < 0.f || abs_pos > m_MotorsArray[motor_number].GetDeviceRange()) return abs_pos;
+	m_MotorsArray[motor_number].GoToPos(abs_pos);
 	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
 }
 

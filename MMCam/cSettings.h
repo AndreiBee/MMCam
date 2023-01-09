@@ -72,25 +72,35 @@ public:
 	cSettings(wxWindow* parent_frame);
 
 	/* Getters */
+	bool DetectorXHasSerialNumber() const;
 	float GetActualDetectorXStagePos() const;
+	bool DetectorYHasSerialNumber() const;
 	float GetActualDetectorYStagePos() const;
+	bool DetectorZHasSerialNumber() const;
 	float GetActualDetectorZStagePos() const;
 
+	bool OpticsXHasSerialNumber() const;
 	float GetActualOpticsXStagePos() const;
+	bool OpticsYHasSerialNumber() const;
 	float GetActualOpticsYStagePos() const;
+	bool OpticsZHasSerialNumber() const;
 	float GetActualOpticsZStagePos() const;
 
 	/* Setters */
 	/* Detector X */
+	float GoToAbsDetectorX(float absolute_position);
 	float CenterDetectorX();
 	float HomeDetectorX();
 	/* Detector Y */
+	float GoToAbsDetectorY(float absolute_position);
 	float CenterDetectorY();
 	float HomeDetectorY();
 	/* Detector Z */
+	float GoToAbsDetectorZ(float absolute_position);
 	float CenterDetectorZ();
 	float HomeDetectorZ();
 	/* Optics Y */
+	float GoToAbsOpticsY(float absolute_position);
 	float CenterOpticsY();
 	float HomeOpticsY();
 
