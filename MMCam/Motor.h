@@ -62,7 +62,7 @@ private:
 	const float deg_per_mm{ 800.f }; // Hardcoded
 	std::unique_ptr<char[]> m_DeviceName{};
 	unsigned int m_SerNum{};
-	const long long wait_delay_milliseconds{ 1500 };
+	const long long wait_delay_milliseconds{ 500 };
 };
 
 class MotorArray final

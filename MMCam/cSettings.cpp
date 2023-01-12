@@ -604,6 +604,28 @@ void cSettings::UpdateRangesTextCtrls()
 
 void cSettings::OnRefreshBtn(wxCommandEvent& evt)
 {
+	SelectMotorsAndRangesOnWXChoice();
+	for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
+	{
+		if (motor < m_MotorsCount / 2)
+		{
+			m_Motors->m_Detector[motor].current_selection[0] = 0;
+			m_Motors->m_Detector[motor].current_selection[1] = 0;
+			m_Motors->m_Detector[motor].motors->SetSelection(0);
+			m_Motors->m_Detector[motor].ranges->SetLabel("None");
+			m_Motors->m_Detector[motor].prev_selection[0] = 0;
+			m_Motors->m_Detector[motor].prev_selection[1] = 0;
+		}
+		else
+		{
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[0] = 0;
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = 0;
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->SetSelection(0);
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel("None");
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[0] = 0;
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1] = 0;
+		}
+	}
 }
 
 void cSettings::OnOkBtn(wxCommandEvent& evt)
