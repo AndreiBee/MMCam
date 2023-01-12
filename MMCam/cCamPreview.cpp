@@ -57,18 +57,22 @@ void cCamPreview::SetCameraCapturedImage(const uint32_t& exposure_time_us)
 		}
 	}
 
-	m_IsImageSet = true;
-	m_IsGraphicsBitmapSet = false;
-
 	auto temp_zoom = m_Zoom;
 	auto temp_pan_offset = m_PanOffset;
 	auto temp_start_draw_pos = m_StartDrawPos;
 	m_Zoom = 1.0;
 	m_PanOffset = {};
 	ChangeSizeOfImageInDependenceOnCanvasSize();
-	m_Zoom = temp_zoom;
-	m_PanOffset = temp_pan_offset;
-	m_StartDrawPos = temp_start_draw_pos;
+	if (m_IsImageSet)
+	{
+		m_Zoom = temp_zoom;
+		m_PanOffset = temp_pan_offset;
+		m_StartDrawPos = temp_start_draw_pos;
+	}
+
+	m_IsImageSet = true;
+	m_IsGraphicsBitmapSet = false;
+
 	Refresh();
 }
 

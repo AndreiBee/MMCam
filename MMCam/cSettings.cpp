@@ -74,6 +74,17 @@ float cSettings::GetActualOpticsZStagePos() const
 	return m_PhysicalMotors->GetActualStagePos(m_Motors->m_Optics[2].current_selection[0] - 1);
 }
 
+bool cSettings::IsCapturingFinished() const
+{
+	return m_Progress->is_finished;
+}
+
+void cSettings::ProvideProgressInfo(wxString* msg, int* prgrs)
+{
+	*msg = "Capturing " + wxString::Format(wxT("%i"), m_Progress->current_capture + 1) + " of " + wxString::Format(wxT("%i"), m_Progress->whole_captures_num) + " images";
+	*prgrs = 100.f * (float)(m_Progress->current_capture + 1) / (float)m_Progress->whole_captures_num;
+}
+
 float cSettings::GoToAbsDetectorX(float absolute_position)
 {
 	return m_PhysicalMotors->GoMotorToAbsPos
@@ -184,6 +195,13 @@ float cSettings::CenterOpticsY()
 float cSettings::HomeOpticsY()
 {
 	return m_PhysicalMotors->GoMotorHome(m_Motors->m_Optics[1].current_selection[0] - 1);
+}
+
+void cSettings::SetCurrentProgress(const int& curr_capturing_num, const int& whole_capturing_num)
+{
+	m_Progress->current_capture = curr_capturing_num;
+	m_Progress->whole_captures_num = whole_capturing_num;
+	m_Progress->is_finished = curr_capturing_num >= whole_capturing_num ? true : false;
 }
 
 void cSettings::CreateMainFrame()

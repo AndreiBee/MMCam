@@ -64,6 +64,12 @@ namespace SettingsVariables
 			m_Optics = std::make_unique<MotorSettings[]>(3);
 		}
 	};
+
+	struct ProgressValues
+	{
+		int current_capture{}, whole_captures_num{};
+		bool is_finished{};
+	};
 }
 
 class cSettings final : public wxDialog
@@ -86,6 +92,10 @@ public:
 	bool OpticsZHasSerialNumber() const;
 	float GetActualOpticsZStagePos() const;
 
+	/* Progress Getter */
+	bool IsCapturingFinished() const;
+	void ProvideProgressInfo(wxString* msg, int* prgrs);
+
 	/* Setters */
 	/* Detector X */
 	float GoToAbsDetectorX(float absolute_position);
@@ -107,7 +117,8 @@ public:
 	float GoOffsetOpticsY(float delta);
 	float CenterOpticsY();
 	float HomeOpticsY();
-
+	/* Progress */
+	void SetCurrentProgress(const int& curr_capturing_num, const int& whole_capturing_num);
 
 private:
 	void CreateMainFrame();
@@ -145,6 +156,7 @@ private:
 	std::unique_ptr<SettingsVariables::MotorSettingsArray> m_Motors{};
 	std::unique_ptr<MotorArray> m_PhysicalMotors{};
 	const int m_MotorsCount{ 6 };
+	std::unique_ptr<SettingsVariables::ProgressValues> m_Progress = std::make_unique<SettingsVariables::ProgressValues>();
 };
 
 #endif // !CSETTINGS_H

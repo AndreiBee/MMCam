@@ -41,6 +41,10 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_FIRST_STAGE_CHOICE, cMain::OnFirstStageChoice)
 	/* Second Stage */
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, cMain::OnSecondStageChoice)
+	/* Start Capturing */
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT, cMain::OnStartCapturingButton)
+	/* Progress */
+	EVT_THREAD(MainFrameVariables::ID_PROGRESS_CAPTURING, cMain::UpdateProgress)
 wxEND_EVENT_TABLE()
 
 cMain::cMain(const wxString& title_) 
@@ -48,6 +52,10 @@ cMain::cMain(const wxString& title_)
 {
 	CreateMainFrame();
 	InitDefaultStateWidgets();
+
+	/* Creating, but not showing ProgressBar */
+	CreateProgressBar();
+
 	CenterOnScreen();
 
 	Show();
@@ -172,6 +180,8 @@ void cMain::InitDefaultStateWidgets()
 			m_SecondStage->finish->ChangeValue(wxString::Format(wxT("%.3f"), default_finish));
 			m_SecondStage->DisableAllControls();
 		}
+		/* Start Capturing */
+		m_StartMeasurement->Disable();
 	}
 }
 
@@ -1083,7 +1093,33 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 		mmt_static_box_sizer->Add(directions_static_box_sizer, 0, wxEXPAND);
 	}
 
+	/* Start Capturing */
+	{
+		wxSizer* const horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
+
+		wxSizer* const capturing_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Capturing");
+		m_StartMeasurement = std::make_unique<wxButton>
+			(
+				right_side_panel,
+				MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT,
+				wxT("Start Capturing")					
+			);
+		horizontal_sizer->AddStretchSpacer();
+		horizontal_sizer->Add(capturing_sizer);
+		capturing_sizer->Add(m_StartMeasurement.get());
+		mmt_static_box_sizer->Add(horizontal_sizer, 0, wxEXPAND);
+	}
+
 	right_side_panel_sizer->Add(mmt_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
+}
+
+void cMain::CreateProgressBar()
+{
+	wxSize size_of_progress_bar{ 400, 190 };
+	wxPoint start_point_progress_bar{ this->GetPosition().x + this->GetSize().x / 2 - size_of_progress_bar.x / 2, this->GetPosition().y + this->GetSize().y / 2 - size_of_progress_bar.y / 2 };
+	m_ProgressBar = std::make_unique<ProgressBar>(this, start_point_progress_bar, size_of_progress_bar);
+	//m_ProgressBar = new ProgressBar(this, start_point_progress_bar, size_of_progress_bar);
+	//m_ProgressBar->SetIcon(logo_xpm);
 }
 
 void cMain::OnPreviewCameraImage(wxCommandEvent& evt)
@@ -1105,7 +1141,8 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 
 	m_OutDirTextCtrl->SetValue(save_dialog.GetPath());
 	m_FirstStage->EnableAllControls();
-	m_SecondStage->EnableAllControls();
+	//m_SecondStage->EnableAllControls();
+	m_StartMeasurement->Enable();
 }
 
 void cMain::OnOpenSettings(wxCommandEvent& evt)
@@ -1402,6 +1439,174 @@ void cMain::OnFirstStageChoice(wxCommandEvent& evt)
 
 void cMain::OnSecondStageChoice(wxCommandEvent& evt)
 {
+	auto second_stage_selection = m_SecondStage->stage->GetCurrentSelection() - 1;
+	double start_stage_value{}, step_stage_value{}, finish_stage_value{};
+	switch (second_stage_selection)
+	{
+	/* Detector */
+	case 0:
+		if (!m_X_Detector->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 1:
+		if (!m_Y_Detector->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 2:
+		if (!m_Z_Detector->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	/* Optics */
+	case 3:
+		if (!m_X_Optics->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 4:
+		if (!m_Y_Optics->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	case 5:
+		if (!m_Z_Optics->absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+		break;
+	default:
+		break;
+	}
+	/* Set Start To Current position of motor */
+	m_SecondStage->start->SetValue
+	(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			(float)start_stage_value
+		)
+	);
+	/* Set Finish To Current position of motor + Step */
+	if (!m_SecondStage->step->GetValue().ToDouble(&step_stage_value)) return;
+	finish_stage_value = start_stage_value + step_stage_value;
+	m_SecondStage->finish->SetValue
+	(
+		wxString::Format
+		(
+			wxT("%.3f"), 
+			(float)finish_stage_value
+		)
+	);
+}
+
+void cMain::OnStartCapturingButton(wxCommandEvent& evt)
+{
+	auto raise_exception_msg = [](wxString axis) 
+	{
+		wxString title = "Finish position error";
+		wxMessageBox(
+			wxT
+			(
+				"Finish position of " + axis + " axis is not correct!"
+				"\nPlease, check if STEP and FINISH values are correct!"
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	auto first_axis = std::make_unique<MainFrameVariables::AxisMeasurement>();
+	auto second_axis = std::make_unique<MainFrameVariables::AxisMeasurement>();
+	double start_first_stage_value{}, step_first_stage_value{}, finish_first_stage_value{};
+	double start_second_stage_value{}, step_second_stage_value{}, finish_second_stage_value{};
+	int first_stage_step_count{}, second_stage_step_count{};
+	/* Checking if user selected None as a stage */
+	{
+		/* Checking first stage */
+		{
+			if (m_FirstStage->stage->GetCurrentSelection() == 0) return;
+			else first_axis->axis_number = m_FirstStage->stage->GetCurrentSelection() - 1;
+		}
+		/* Checking Start, Step and Finish values */
+		{
+			if (!m_FirstStage->start->GetValue().ToDouble(&start_first_stage_value)) return;
+			first_axis->start = (float)start_first_stage_value;
+			if (!m_FirstStage->step->GetValue().ToDouble(&step_first_stage_value)) return;
+			first_axis->step = (float)step_first_stage_value;
+			if (!m_FirstStage->finish->GetValue().ToDouble(&finish_first_stage_value)) return;
+			first_axis->finish = (float)finish_first_stage_value;
+			if (
+				(finish_first_stage_value - start_first_stage_value < 0.0 && step_first_stage_value > 0.0)
+				|| (finish_first_stage_value - start_first_stage_value > 0.0 && step_first_stage_value < 0.0)
+				) 
+				raise_exception_msg("first");
+			first_axis->step_number = (finish_first_stage_value - start_first_stage_value) / step_first_stage_value + 1;
+		}
+		/* Checking second stage */
+		if (m_SecondStage->stage->GetCurrentSelection() - 1 == first_axis->axis_number) return;
+		/* 
+		if (m_SecondStage->stage->GetCurrentSelection() == 0) return;
+		else selected_second_stage = m_SecondStage->stage->GetCurrentSelection() - 1;		
+		*/
+	}
+	{
+		m_StartCalculationTime = std::chrono::steady_clock::now();
+		wxPoint start_point_progress_bar{ this->GetPosition().x + this->GetSize().x / 2 - m_ProgressBar->GetSize().x / 2, this->GetPosition().y + this->GetSize().y / 2 - m_ProgressBar->GetSize().y / 2 };
+		m_ProgressBar->SetPosition(start_point_progress_bar);
+		m_ProgressBar->Show();
+
+		m_AppProgressIndicator = std::make_unique<wxAppProgressIndicator>(this, 100);
+	}
+
+	/* Worker and Progress Threads */
+	{
+		WorkerThread* worker_thread = new WorkerThread(m_Settings, first_axis.release(), second_axis.release());
+		ProgressThread* progress_thread = new ProgressThread(m_Settings, this);
+
+		if (worker_thread->CreateThread() != wxTHREAD_NO_ERROR)
+		{
+			delete worker_thread;
+			worker_thread = nullptr;
+			return;
+		}
+		if (progress_thread->CreateThread() != wxTHREAD_NO_ERROR)
+		{
+			delete progress_thread;
+			progress_thread = nullptr;
+			return;
+		}
+		if (progress_thread->GetThread()->Run() != wxTHREAD_NO_ERROR)
+		{
+			delete progress_thread;
+			progress_thread = nullptr;
+			return;
+		}
+		if (worker_thread->GetThread()->Run() != wxTHREAD_NO_ERROR)
+		{
+			delete worker_thread;
+			worker_thread = nullptr;
+			return;
+		}
+	}
+}
+
+void cMain::UpdateProgress(wxThreadEvent& evt)
+{
+	int progress = evt.GetInt();
+	wxString msg = evt.GetString();
+	unsigned long long elapsed_seconds{};
+
+	if (progress != -1)
+	{
+		auto current_time = std::chrono::steady_clock::now();
+		elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(current_time - m_StartCalculationTime).count();
+		m_ProgressBar->UpdateProgressWithMessage(msg, progress);
+		m_AppProgressIndicator->SetValue(progress);
+		m_ProgressBar->UpdateElapsedTime(elapsed_seconds);
+		m_ProgressBar->UpdateEstimatedTime(progress, elapsed_seconds);
+	}
+	else
+	{
+		m_ProgressBar->Hide();
+		m_ProgressBar->UpdateProgressWithMessage("", 0);
+		m_ProgressBar->UpdateElapsedTime(0);
+		m_ProgressBar->UpdateEstimatedTime(0, 0);
+		m_AppProgressIndicator->~wxAppProgressIndicator();
+	}
+}
+
+bool cMain::Cancelled()
+{
+	wxCriticalSectionLocker lock(m_CSCancelled);
+	return m_Cancelled;
 }
 
 void cMain::OnCenterDetectorZ(wxCommandEvent& evt)
@@ -1481,3 +1686,325 @@ cMain::~cMain()
 {
 	delete m_MenuBar;
 }
+
+/* Start Worker Thread */
+WorkerThread::WorkerThread
+(
+	cSettings* settings, 
+	MainFrameVariables::AxisMeasurement* first_axis, 
+	MainFrameVariables::AxisMeasurement* second_axis
+) 
+	: m_Settings(settings), m_FirstAxis(first_axis), m_SecondAxis(second_axis)
+{}
+
+WorkerThread::~WorkerThread()
+{
+	m_Settings = nullptr;
+	delete m_FirstAxis;
+	m_FirstAxis = nullptr;
+	delete m_SecondAxis;
+	m_SecondAxis = nullptr;
+}
+
+wxThread::ExitCode WorkerThread::Entry()
+{
+	m_Settings->SetCurrentProgress(0, m_FirstAxis->step_number);
+
+	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
+	{
+		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
+		switch (m_FirstAxis->axis_number)
+		{
+		/* Detector */
+		case 0:
+			m_Settings->GoToAbsDetectorX(m_FirstAxis->start + i * m_FirstAxis->step);
+			break;
+		case 1:
+			m_Settings->GoToAbsDetectorY(m_FirstAxis->start + i * m_FirstAxis->step);
+			break;
+		case 2:
+			m_Settings->GoToAbsDetectorZ(m_FirstAxis->start + i * m_FirstAxis->step);
+			break;
+		/* Optics */
+		case 3:
+			break;
+		case 4:
+			m_Settings->GoToAbsOpticsY(m_FirstAxis->start + i * m_FirstAxis->step);
+			break;
+		case 5:
+			break;
+		default:
+			break;
+		}
+		/* Take Photo And Save Data on Disk */
+
+		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
+	}
+
+#ifdef ENABLE_SECOND_AXIS
+	switch (m_SecondAxis->axis_number)
+	{
+	/* Detector */
+	case 0:
+		m_Settings->GoToAbsDetectorX(m_FirstAxis->start);
+		break;
+	case 1:
+		m_Settings->GoToAbsDetectorY(m_FirstAxis->start);
+		break;
+	case 2:
+		m_Settings->GoToAbsDetectorZ(m_FirstAxis->start);
+		break;
+	/* Optics */
+	case 3:
+		break;
+	case 4:
+		m_Settings->GoToAbsOpticsY(m_FirstAxis->start);
+		break;
+	case 5:
+		break;
+	default:
+		break;
+	}
+#endif // FALSE
+
+	m_Settings->SetCurrentProgress(m_FirstAxis->step_number, m_FirstAxis->step_number);
+
+	return (wxThread::ExitCode)0;
+}
+/* ___End Worker Thread___ */
+
+/* ___Start Progress Thread___ */
+ProgressThread::ProgressThread(
+	cSettings* settings,
+	cMain* main_frame)
+	: m_Frame(main_frame), m_Settings(settings)
+{}
+
+wxThread::ExitCode ProgressThread::Entry()
+{
+	m_Progress = 0;
+	m_ProgressMsg = "";
+	while (!m_Settings->IsCapturingFinished())
+	{
+		wxThreadEvent calc_event(wxEVT_THREAD, MainFrameVariables::ID_PROGRESS_CAPTURING);
+		m_Settings->ProvideProgressInfo(&m_ProgressMsg, &m_Progress);
+
+		calc_event.SetInt(m_Progress);
+		calc_event.SetString(m_ProgressMsg);
+
+		wxQueueEvent(m_Frame, calc_event.Clone());
+
+		wxThread::This()->Sleep(100);
+	}
+	wxThreadEvent evt(wxEVT_THREAD, MainFrameVariables::ID_PROGRESS_CAPTURING);
+	evt.SetInt(-1);
+	wxQueueEvent(m_Frame, evt.Clone());
+
+	return (wxThread::ExitCode)0;
+}
+
+ProgressThread::~ProgressThread()
+{
+	m_Frame = nullptr;
+	m_Settings = nullptr;
+}
+/* ___End Progress Thread___ */
+
+/* ___Start ProgressBar___ */
+BEGIN_EVENT_TABLE(ProgressBar, wxFrame)
+END_EVENT_TABLE()
+
+ProgressBar::ProgressBar(wxWindow* parent, const wxPoint& pos, const wxSize& size)
+	: wxFrame(parent, wxID_ANY, wxT("Progress"), pos, size, wxFRAME_FLOAT_ON_PARENT), m_MainSize(size)
+{
+	CreateProgressBar();
+}
+
+void ProgressBar::UpdateProgressWithMessage(const wxString& msg, const int& progress)
+{
+	m_ProgressPanel->SetProgress(progress);
+	m_ProgressPanel->SetComment(msg);
+}
+
+void ProgressBar::UpdateElapsedTime(const uint64_t& elapsed_seconds)
+{
+	m_ProgressPanel->SetElapsedTime(elapsed_seconds);
+}
+
+void ProgressBar::UpdateEstimatedTime(const int& prgs, const uint64_t& elapsed_seconds)
+{
+	m_ProgressPanel->SetEstimatedTime(prgs, elapsed_seconds);
+}
+
+void ProgressBar::CreateProgressBar()
+{
+	wxSizer* const main_sizer = new wxBoxSizer(wxVERTICAL);
+	m_ProgressPanel = new ProgressPanel(this, m_MainSize);
+	main_sizer->Add(m_ProgressPanel, wxSizerFlags(1).Expand().Border());
+	this->SetBackgroundColour(wxColour(255, 255, 255));
+	SetSizerAndFit(main_sizer);
+}
+
+ProgressBar::~ProgressBar()
+{
+	//m_ProgressPanel->Destroy();
+}
+/* ___End ProgressBar___ */
+
+/* ___Start ProgressPanel___ */
+BEGIN_EVENT_TABLE(ProgressPanel, wxPanel)
+EVT_PAINT(ProgressPanel::PaintEvent)
+EVT_SIZE(ProgressPanel::OnSize)
+END_EVENT_TABLE()
+
+ProgressPanel::ProgressPanel(
+	wxFrame* parent, const wxSize& size)
+	: wxPanel(parent)
+{
+	this->SetDoubleBuffered(true);
+	this->SetBackgroundColour(wxColour(*wxWHITE));
+
+	this->SetMinSize(size);
+	//SetSize(size);
+	//Refresh();
+}
+
+void ProgressPanel::SetSize(const wxSize& new_size)
+{
+	m_Width = new_size.x;
+	m_Height = new_size.y;
+	Refresh();
+}
+
+void ProgressPanel::SetProgress(const int& progress)
+{
+	m_Progress = progress <= 100 ? progress : 100;
+}
+
+void ProgressPanel::SetElapsedTime(const int& elapsed_time)
+{
+	m_ElapsedTime = elapsed_time;
+
+	m_ElapsedHours = elapsed_time / 3600;
+	m_ElapsedMinutes = elapsed_time / 60 - m_ElapsedHours * 60;
+	m_ElapsedSeconds = elapsed_time - m_ElapsedHours * 3600 - m_ElapsedMinutes * 60;
+}
+
+void ProgressPanel::SetEstimatedTime(const int& progress, const int& elapsed_time)
+{
+	if (progress > 0 && progress != m_PreviousEstimateProgress)
+	{
+		m_EstimatedTime = (double)elapsed_time / (double)progress * 100.0 - elapsed_time;
+		m_PreviousEstimateProgress = progress;
+	}
+	else if (progress == 0)
+	{
+		/* Reset Estimated time variables */
+		m_EstimatedTime = 0;
+		m_PreviousEstimateProgress = 0;
+	}
+
+	Refresh();
+}
+
+void ProgressPanel::SetComment(const wxString& progress_comment)
+{
+	m_ProgressComment = progress_comment;
+}
+
+void ProgressPanel::PaintEvent(wxPaintEvent& evt)
+{
+	wxBufferedPaintDC dc(this);
+	Render(dc);
+}
+
+void ProgressPanel::Render(wxBufferedPaintDC& dc)
+{
+	dc.Clear();
+	wxGraphicsContext* gc{};
+	gc = wxGraphicsContext::Create(dc);
+	if (gc)
+	{
+		int borderWidthProgressRectangle{ 1 };
+		gc->SetPen(wxPen(wxColour(0, 0, 0), borderWidthProgressRectangle));
+		wxFont font = wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT);
+		gc->SetFont(font, *wxBLACK);
+		wxGraphicsPath path = gc->CreatePath();
+
+		wxDouble widthText{}, heightText{};
+		wxString text_01("Progress");
+		gc->GetTextExtent(text_01, &widthText, &heightText);
+
+		wxDouble drawPointXText = this->GetSize().x / 2 - widthText / 2;
+		wxDouble offsetYText{ 10 };
+		wxDouble drawPointYText = offsetYText;
+		gc->DrawText(text_01, drawPointXText, drawPointYText);
+
+		// Progress in percents
+		drawPointYText += heightText + offsetYText;
+		wxString text_progress = wxString::Format(wxT("%i"), m_Progress) + "%";
+		gc->GetTextExtent(text_progress, &widthText, &heightText);
+		drawPointXText = this->GetSize().x / 2 - widthText / 2;
+		gc->DrawText(text_progress, drawPointXText, drawPointYText);
+
+		int leftAndRightOffsetRectangle{ 10 }; // [%]
+		wxPoint startUpperLeftBorderRectangle{ this->GetSize().x * leftAndRightOffsetRectangle / 100, (int)(drawPointYText + heightText + offsetYText) };
+		wxSize sizeBorderRectangle{ this->GetSize().x - this->GetSize().x * leftAndRightOffsetRectangle / 100 * 2, 40 };
+
+		unsigned char red{}, green{}, blue{};
+		green = (unsigned char)(255 * (int)m_Progress / 100);
+		red = 255 - green;
+		wxColour currentRectangleColour{ red, green, blue };
+
+		gc->SetBrush(wxBrush(currentRectangleColour));
+		wxDouble widthProgress = (100 - (wxDouble)m_Progress) * (wxDouble)sizeBorderRectangle.x / 100.0;
+		path.AddRectangle(
+			(wxDouble)startUpperLeftBorderRectangle.x + (wxDouble)sizeBorderRectangle.x - widthProgress,
+			startUpperLeftBorderRectangle.y,
+			widthProgress,
+			(wxDouble)sizeBorderRectangle.y);
+		//gc->FillPath(path);
+
+		path.AddRectangle(
+			startUpperLeftBorderRectangle.x,
+			startUpperLeftBorderRectangle.y,
+			sizeBorderRectangle.x,
+			sizeBorderRectangle.y);
+		// Drawing buffered path
+		gc->DrawPath(path);
+
+		// Progress comment
+		gc->GetTextExtent(m_ProgressComment, &widthText, &heightText);
+		drawPointXText = (wxDouble)startUpperLeftBorderRectangle.x + 5.0;
+		drawPointYText = (wxDouble)startUpperLeftBorderRectangle.y + (wxDouble)sizeBorderRectangle.y + offsetYText;
+		gc->DrawText(m_ProgressComment, drawPointXText, drawPointYText);
+
+		// Elapsed time
+		{
+			wxString elapsed_text("Elapsed time: ");
+			wxString elapsed_hours = m_ElapsedHours >= 10 ? wxString::Format(wxT("%i"), m_ElapsedHours) : wxString::Format(wxT("0%i"), m_ElapsedHours);
+			wxString elapsed_minutes = m_ElapsedMinutes >= 10 ? wxString::Format(wxT("%i"), m_ElapsedMinutes) : wxString::Format(wxT("0%i"), m_ElapsedMinutes);
+			wxString elapsed_seconds = m_ElapsedSeconds >= 10 ? wxString::Format(wxT("%i"), m_ElapsedSeconds) : wxString::Format(wxT("0%i"), m_ElapsedSeconds);
+			elapsed_text += elapsed_hours + ":" + elapsed_minutes + ":" + elapsed_seconds;
+
+			drawPointYText += heightText + offsetYText;
+			gc->GetTextExtent(elapsed_text, &widthText, &heightText);
+			drawPointXText = (wxDouble)startUpperLeftBorderRectangle.x + 5.0;
+			gc->DrawText(elapsed_text, drawPointXText, drawPointYText);
+		}
+
+		delete gc;
+	}
+}
+
+void ProgressPanel::OnSize(wxSizeEvent& evt)
+{
+	int newWidth{ evt.GetSize().x }, newHeight{ evt.GetSize().y };
+	if (newWidth != m_Width || newHeight != m_Height)
+	{
+		m_Width = newWidth;
+		m_Height = newHeight;
+		Refresh();
+	}
+}
+/* ___End ProgressPanel___ */

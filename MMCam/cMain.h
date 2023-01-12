@@ -5,9 +5,12 @@
 #include "wx/wx.h"
 #include "wx/tglbtn.h"
 #include "wx/valnum.h"
+#include "wx/thread.h"
+#include "wx/appprogress.h"
 
 #include <string>
 #include <memory>
+#include <chrono>
 
 #include "cCamPreview.h"
 #include "cSettings.h"
@@ -85,7 +88,9 @@ namespace MainFrameVariables
 		ID_RIGHT_MT_SECOND_STAGE_START,
 		ID_RIGHT_MT_SECOND_STAGE_STEP,
 		ID_RIGHT_MT_SECOND_STAGE_FINISH,
-		ID_RIGHT_MT_START_MEASUREMENT
+		ID_RIGHT_MT_START_MEASUREMENT,
+		/* Progress */
+		ID_PROGRESS_CAPTURING,
 	};
 	struct MenuBar
 	{
@@ -159,8 +164,21 @@ namespace MainFrameVariables
 			finish->Enable();
 		}
 	};
+	/* Struct to transfer axis data to WorkerThread */
+	struct AxisMeasurement
+	{
+		int axis_number{ -1 };
+		float start{}, step{}, finish{};
+		int step_number{};
+	};
 }
 
+class ProgressBar;
+class ProgressPanel;
+class WorkerThread;
+class ProgressThread;
+
+/* ___Start cMain___ */
 class cMain final : public wxFrame
 {
 public:
@@ -179,6 +197,9 @@ private:
 	void CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 	void CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
+
+	/* ProgressBar */
+	void CreateProgressBar();
 
 	void OnPreviewCameraImage(wxCommandEvent& evt);
 	void OnSetOutDirectoryBtn(wxCommandEvent& evt);
@@ -227,6 +248,11 @@ private:
 	void OnFirstStageChoice(wxCommandEvent& evt);
 	/* Second Stage */
 	void OnSecondStageChoice(wxCommandEvent& evt);
+	/* Start Capturing */
+	void OnStartCapturingButton(wxCommandEvent& evt);
+	/* Progress */
+	void UpdateProgress(wxThreadEvent& evt);
+	bool Cancelled();
 
 private:
 	/* Settings Menu */
@@ -249,8 +275,101 @@ private:
 	std::unique_ptr<MainFrameVariables::MeasurementStage> m_FirstStage{}, m_SecondStage{};
 	std::unique_ptr<wxButton> m_StartMeasurement{};
 
+	/* Progress */
+	bool m_Cancelled{}, m_DataCalculatedInThisApp{};
+	wxCriticalSection m_CSCancelled{};
+	std::unique_ptr<ProgressBar> m_ProgressBar{};
+	std::chrono::steady_clock::time_point m_StartCalculationTime;
+	std::unique_ptr<wxAppProgressIndicator> m_AppProgressIndicator{};
+
+	int m_Progress{};
+	wxString m_ProgressMsg{};
+
 	wxDECLARE_EVENT_TABLE();
 };
+/* ___End cMain___ */
+
+/* ___Start Worker Theread___ */
+class WorkerThread final: public wxThreadHelper
+{
+public:
+	WorkerThread
+	(
+		cSettings* settings, 
+		MainFrameVariables::AxisMeasurement* first_axis, 
+		MainFrameVariables::AxisMeasurement* second_axis
+	);
+	~WorkerThread();
+
+	virtual void* Entry();
+
+private:
+	cSettings* m_Settings{};
+	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
+};
+/* ___End Worker Thread___ */
+
+/* ___Start Progress Thread___ */
+class ProgressThread final : public wxThreadHelper
+{
+public:
+	ProgressThread(cSettings* settings, cMain* main_frame);
+	virtual void* Entry();
+	~ProgressThread();
+
+private:
+	cSettings* m_Settings{};
+	cMain* m_Frame{};
+	int m_Progress{};
+	wxString m_ProgressMsg{};
+};
+/* ___End  Progress Thread___ */
+
+/* ___Start ProgressBar___ */
+class ProgressBar final : public wxFrame
+{
+public:
+	ProgressBar(wxWindow* parent, const wxPoint& pos, const wxSize& size);
+	void UpdateProgressWithMessage(const wxString& msg, const int& progress);
+	void UpdateElapsedTime(const uint64_t& elapsed_seconds);
+	void UpdateEstimatedTime(const int& prgs, const uint64_t& estimated_seconds);
+	~ProgressBar();
+private:
+	void CreateProgressBar();
+
+private:
+	ProgressPanel* m_ProgressPanel{};
+	wxSize m_MainSize{};
+
+	DECLARE_EVENT_TABLE()
+};
+/* ___End ProgressBar___ */
+
+/* ___Start ProgressPanel___ */
+class ProgressPanel final : public wxPanel
+{
+public:
+	ProgressPanel(wxFrame* parent, const wxSize& size);
+	void SetSize(const wxSize& new_size);
+	void SetProgress(const int& progress);
+	void SetElapsedTime(const int& elapsed_time);
+	void SetEstimatedTime(const int& progress, const int& estimated_time);
+	void SetComment(const wxString& progress_comment);
+
+private:
+	void PaintEvent(wxPaintEvent& evt);
+	void Render(wxBufferedPaintDC& dc);
+	void OnSize(wxSizeEvent& evt);
+
+private:
+	int m_Width{}, m_Height{};
+	int m_Progress{}, m_PreviousEstimateProgress{};
+	int m_ElapsedTime{}, m_EstimatedTime{}; // Time in seconds
+	int m_ElapsedHours{}, m_ElapsedMinutes{}, m_ElapsedSeconds{};
+	wxString m_ProgressComment{ "Moving to start position" };
+
+	DECLARE_EVENT_TABLE()
+};
+/* ___End ProgressPanel___ */
 
 #endif // !CMAIN_H
-
