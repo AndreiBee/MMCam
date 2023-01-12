@@ -4,6 +4,8 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <thread>
+#include <chrono>
 #include <ximc.h>
 
 
@@ -60,6 +62,7 @@ private:
 	const float deg_per_mm{ 800.f }; // Hardcoded
 	std::unique_ptr<char[]> m_DeviceName{};
 	unsigned int m_SerNum{};
+	const long long wait_delay_milliseconds{ 1500 };
 };
 
 class MotorArray final

@@ -942,7 +942,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			{
 				wxSizer* const start_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Start");
 
-				wxFloatingPointValidator<float>	start_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				wxFloatingPointValidator<float>	start_val(3, NULL, wxNUM_VAL_DEFAULT);
 				start_val.SetMin(-1000.0);
 				start_val.SetMax(1000.0);
 
@@ -964,7 +964,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			{
 				wxSizer* const step_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Step");
 
-				wxFloatingPointValidator<float>	step_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				wxFloatingPointValidator<float>	step_val(3, NULL, wxNUM_VAL_DEFAULT);
 				step_val.SetMin(-1000.0);
 				step_val.SetMax(1000.0);
 
@@ -985,7 +985,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			{
 				wxSizer* const finish_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Finish");
 
-				wxFloatingPointValidator<float>	finish_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				wxFloatingPointValidator<float>	finish_val(3, NULL, wxNUM_VAL_DEFAULT);
 				finish_val.SetMin(-1000.0);
 				finish_val.SetMax(1000.0);
 
@@ -1027,7 +1027,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			{
 				wxSizer* const start_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Start");
 
-				wxFloatingPointValidator<float>	start_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				wxFloatingPointValidator<float>	start_val(3, NULL, wxNUM_VAL_DEFAULT);
 				start_val.SetMin(-1000.0);
 				start_val.SetMax(1000.0);
 
@@ -1049,7 +1049,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			{
 				wxSizer* const step_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Step");
 
-				wxFloatingPointValidator<float>	step_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				wxFloatingPointValidator<float>	step_val(3, NULL, wxNUM_VAL_DEFAULT);
 				step_val.SetMin(-1000.0);
 				step_val.SetMax(1000.0);
 
@@ -1070,7 +1070,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			{
 				wxSizer* const finish_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Finish");
 
-				wxFloatingPointValidator<float>	finish_val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+				wxFloatingPointValidator<float>	finish_val(3, NULL, wxNUM_VAL_DEFAULT);
 				finish_val.SetMin(-1000.0);
 				finish_val.SetMax(1000.0);
 
@@ -1544,6 +1544,9 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 		m_ProgressBar->Show();
 
 		m_AppProgressIndicator = std::make_unique<wxAppProgressIndicator>(this, 100);
+
+		this->Disable();
+		//m_StartMeasurement->Disable();
 	}
 
 	/* Worker and Progress Threads */
@@ -1600,6 +1603,7 @@ void cMain::UpdateProgress(wxThreadEvent& evt)
 		m_ProgressBar->UpdateElapsedTime(0);
 		m_ProgressBar->UpdateEstimatedTime(0, 0);
 		m_AppProgressIndicator->~wxAppProgressIndicator();
+		this->Enable();
 	}
 }
 

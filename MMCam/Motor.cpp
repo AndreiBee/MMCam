@@ -105,7 +105,7 @@ auto Motor::GoCenter()
 			/* Error command_move_calb */
 			return false;
 		}
-		/* Wait */
+		/* Wait to Stop */
 		if ((m_StandaSettings->result = command_wait_for_stop
 		(
 			device_c, 
@@ -116,6 +116,8 @@ auto Motor::GoCenter()
 			/* Error command_wait_for_stop */
 			return false;
 		}
+		/* Wait for elimination of vibrations */
+		std::this_thread::sleep_for(std::chrono::milliseconds(wait_delay_milliseconds));
 		/* Get Status */
 		if ((m_StandaSettings->result = get_status
 		(
@@ -153,7 +155,7 @@ auto Motor::GoHomeAndZero()
 
 	{
 		if ((m_StandaSettings->result = command_homezero(device_c) != result_ok)) return false;
-		/* Wait */
+		/* Wait to Stop */
 		if ((m_StandaSettings->result = command_wait_for_stop
 		(
 			device_c, 
@@ -164,6 +166,8 @@ auto Motor::GoHomeAndZero()
 			/* Error command_wait_for_stop */
 			return false;
 		}
+		/* Wait for elimination of vibrations */
+		std::this_thread::sleep_for(std::chrono::milliseconds(wait_delay_milliseconds));
 		/* Get Status */
 		if ((m_StandaSettings->result = get_status
 		(
@@ -226,7 +230,7 @@ auto Motor::GoToPos(const float stage_position)
 			&m_StandaSettings->calibration
 		) != result_ok)) 
 			return false;
-		/* Wait */
+		/* Wait to Stop */
 		if ((m_StandaSettings->result = command_wait_for_stop
 		(
 			device_c, 
@@ -237,6 +241,8 @@ auto Motor::GoToPos(const float stage_position)
 			/* Error command_wait_for_stop */
 			return false;
 		}
+		/* Wait for elimination of vibrations */
+		std::this_thread::sleep_for(std::chrono::milliseconds(wait_delay_milliseconds));
 		/* Get Status */
 		if ((m_StandaSettings->result = get_status
 		(
