@@ -148,6 +148,7 @@
     <ClInclude Include="cMain.h" />
     <ClInclude Include="cSettings.h" />
     <ClInclude Include="Motor.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cApp.cpp" />
@@ -155,6 +156,12 @@
     <ClCompile Include="cMain.cpp" />
     <ClCompile Include="cSettings.cpp" />
     <ClCompile Include="Motor.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="MMCam.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\logo.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
