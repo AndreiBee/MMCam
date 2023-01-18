@@ -12,6 +12,7 @@ END_EVENT_TABLE()
 cCamPreview::cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer) 
 	: wxPanel(parent_frame)
 {
+	m_XimeaCameraControl = std::make_unique<XimeaControl>();
 	SetDoubleBuffered(true);
 #ifdef _DEBUG
 	SetBackgroundColour(wxColor(210, 185, 155));
@@ -23,13 +24,13 @@ cCamPreview::cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer)
 
 void cCamPreview::SetCameraCapturedImage(const uint32_t& exposure_time_us)
 {
-	m_ImageSize.SetWidth(2048);
-	m_ImageSize.SetHeight(2048);
+	//m_ImageSize.SetWidth(2048);
+	//m_ImageSize.SetHeight(2048);
 
-	uint64_t read_data_size = m_ImageSize.GetWidth() * m_ImageSize.GetHeight();
-	m_ImageData = std::make_unique<uint16_t[]>(read_data_size);
+	//uint64_t read_data_size = m_ImageSize.GetWidth() * m_ImageSize.GetHeight();
+	//m_ImageData = std::make_unique<uint16_t[]>(read_data_size);
 
-#ifdef _DEBUG
+#ifdef ZERO
 	std::ifstream in_file;
 	std::string raw_path = "src\\examples\\art_img_2048x2048_with_square.raw";
 	in_file.open(raw_path, std::fstream::in | std::fstream::binary);
@@ -43,16 +44,20 @@ void cCamPreview::SetCameraCapturedImage(const uint32_t& exposure_time_us)
 	}
 #endif // _DEBUG
 	
-	m_Image = std::make_unique<wxImage>(m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
-	uint16_t current_value{}, max_uint16_t{ 65535 }, half_max_uint16_t{ 32768 }, max_char_uint16_t{ 256 };
+	//m_Image = std::make_unique<wxImage>(m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
+	auto image_ptr = m_XimeaCameraControl->GetImage(exposure_time_us);
+	auto image_width = m_XimeaCameraControl->GetImageWidth();
+	auto image_height = m_XimeaCameraControl->GetImageHeight();
+	unsigned char current_value{};
+	uint16_t max_uint16_t{ 65535 }, half_max_uint16_t{ 32768 }, max_char_uint16_t{ 256 };
 	unsigned char red{}, green{}, blue{}, range{ 128 };
-	for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
+	for (auto y{ 0 }; y < image_height; ++y)
 	{
-		for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
+		for (auto x{ 0 }; x < image_width; ++x)
 		{
-			current_value = m_ImageData[y * m_ImageSize.GetWidth() + x];
+			current_value = image_ptr[y * image_width + x];
 			/* Matlab implementation of JetColormap */
-			CalculateMatlabJetColormapPixelRGB(current_value, red, green, blue);
+			CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
 			m_Image->SetRGB(x, y, red, green, blue);
 		}
 	}
@@ -76,7 +81,24 @@ void cCamPreview::SetCameraCapturedImage(const uint32_t& exposure_time_us)
 	Refresh();
 }
 
-void cCamPreview::CalculateMatlabJetColormapPixelRGB(const uint16_t& value, unsigned char& r, unsigned char& g, unsigned char& b)
+void cCamPreview::CalculateMatlabJetColormapPixelRGB8bit
+(
+	const unsigned char& value, 
+	unsigned char& r, 
+	unsigned char& g, 
+	unsigned char& b
+)
+{
+
+}
+
+void cCamPreview::CalculateMatlabJetColormapPixelRGB16bit
+(
+	const uint16_t& value, 
+	unsigned char& r, 
+	unsigned char& g, 
+	unsigned char& b
+)
 {
 	uint16_t x0{ 7967 }, x1{ 24415 }, x2{ 40863 }, x3{ 57311 }, x4{ 65535 };
 	if (value < x0)

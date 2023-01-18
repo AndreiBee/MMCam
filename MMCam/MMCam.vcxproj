@@ -113,13 +113,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(XIMC);$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(XIMEA);$(XIMC);$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(WXWIN320)\lib\vc_x64_lib;$(XIMC)\win64;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(XIMEA);$(WXWIN320)\lib\vc_x64_lib;$(XIMC)\win64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xiapi64.lib;libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,15 +131,15 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(XIMC);$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(XIMEA);$(XIMC);$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(WXWIN320)\lib\vc_x64_lib;$(XIMC)\win64;</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(XIMEA);$(WXWIN320)\lib\vc_x64_lib;$(XIMC)\win64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xiapi64.lib;libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -149,6 +149,7 @@
     <ClInclude Include="cSettings.h" />
     <ClInclude Include="Motor.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="XimeaControl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cApp.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="cMain.cpp" />
     <ClCompile Include="cSettings.cpp" />
     <ClCompile Include="Motor.cpp" />
+    <ClCompile Include="XimeaControl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MMCam.rc" />

@@ -10,6 +10,8 @@
 #include <fstream>
 #include <string>
 
+#include "XimeaControl.h"
+
 class cCamPreview final : public wxPanel
 {
 public:
@@ -25,7 +27,8 @@ private:
 	void DrawCameraCapturedImage(wxGraphicsContext* gc_);
 	void OnSize(wxSizeEvent& evt);
 	void ChangeSizeOfImageInDependenceOnCanvasSize();
-	void CalculateMatlabJetColormapPixelRGB(const uint16_t& value, unsigned char& r, unsigned char& g, unsigned char& b);
+	void CalculateMatlabJetColormapPixelRGB16bit(const uint16_t& value, unsigned char& r, unsigned char& g, unsigned char& b);
+	void CalculateMatlabJetColormapPixelRGB8bit(const unsigned char& value, unsigned char& r, unsigned char& g, unsigned char& b);
 	void OnMouseMoved(wxMouseEvent& evt);
 	/* Zooming */
 	void OnMouseWheelMoved(wxMouseEvent& evt);
@@ -53,6 +56,8 @@ private:
 
 	/* Zoom */
 	double m_Zoom{}, m_ZoomOnOriginalSizeImage{};
+
+	std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
 
 	DECLARE_EVENT_TABLE();
 };
