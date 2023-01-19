@@ -1545,6 +1545,7 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 		m_StartCalculationTime = std::chrono::steady_clock::now();
 		wxPoint start_point_progress_bar{ this->GetPosition().x + this->GetSize().x / 2 - m_ProgressBar->GetSize().x / 2, this->GetPosition().y + this->GetSize().y / 2 - m_ProgressBar->GetSize().y / 2 };
 		m_ProgressBar->SetPosition(start_point_progress_bar);
+		m_Settings->ResetCapturing();
 		m_ProgressBar->Show();
 
 		m_AppProgressIndicator = std::make_unique<wxAppProgressIndicator>(this, 100);
@@ -1593,6 +1594,8 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 		}
 		if (worker_thread->GetThread()->Run() != wxTHREAD_NO_ERROR)
 		{
+			delete progress_thread;
+			progress_thread = nullptr;
 			delete worker_thread;
 			worker_thread = nullptr;
 			return;
@@ -1635,15 +1638,14 @@ bool cMain::Cancelled()
 
 void cMain::UpdateAllAxisGlobalPositions()
 {
-	double global_axis_position{};
 	/* Detectors */
-	if (!m_X_Detector->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
-	if (!m_Y_Detector->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
-	if (!m_Z_Detector->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
+	m_X_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorXStagePos()));
+	m_Y_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorYStagePos()));
+	m_Z_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorZStagePos()));
 	/* Optics */
-	if (!m_X_Optics->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
-	if (!m_Y_Optics->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
-	if (!m_Z_Optics->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
+	m_X_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualOpticsXStagePos()));
+	m_Y_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualOpticsYStagePos()));
+	m_Z_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualOpticsZStagePos()));
 }
 
 void cMain::OnCenterDetectorZ(wxCommandEvent& evt)

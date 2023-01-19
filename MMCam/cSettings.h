@@ -97,6 +97,9 @@ public:
 	bool IsCapturingFinished() const;
 	void ProvideProgressInfo(wxString* msg, int* prgrs);
 
+	/* Progress Setter */
+	void ResetCapturing();
+
 	/* Setters */
 	/* Detector X */
 	float GoToAbsDetectorX(float absolute_position);

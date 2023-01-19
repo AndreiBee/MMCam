@@ -85,6 +85,11 @@ void cSettings::ProvideProgressInfo(wxString* msg, int* prgrs)
 	*prgrs = 100.f * (float)(m_Progress->current_capture + 1) / (float)m_Progress->whole_captures_num;
 }
 
+void cSettings::ResetCapturing()
+{
+	m_Progress->is_finished = false;
+}
+
 float cSettings::GoToAbsDetectorX(float absolute_position)
 {
 	return m_PhysicalMotors->GoMotorToAbsPos
