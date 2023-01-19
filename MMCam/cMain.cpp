@@ -36,6 +36,8 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_CENTER_BTN, cMain::OnCenterOpticsY)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_HOME_BTN, cMain::OnHomeOpticsY)
 	/* Camera */
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN, cMain::OnPreviewCameraImage)
+	/* Set Out Folder */
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
 	/* First Stage */
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_FIRST_STAGE_CHOICE, cMain::OnFirstStageChoice)
@@ -52,17 +54,17 @@ cMain::cMain(const wxString& title_)
 {
 	CreateMainFrame();
 	InitDefaultStateWidgets();
+	SetIcon(logo_xpm);
 
 	/* Creating, but not showing ProgressBar */
 	CreateProgressBar();
+	m_ProgressBar->SetIcon(logo_xpm);
 
 	CenterOnScreen();
-
 	Show();
-#ifdef _DEBUG
+
 	wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS);
 	ProcessEvent(art_evt);
-#endif // _DEBUG
 }
 
 void cMain::CreateMainFrame()
@@ -76,6 +78,7 @@ void cMain::InitComponents()
 {
 	/* Settings Frame */
 	m_Settings = new cSettings(this);
+	m_Settings->SetIcon(logo_xpm);
 	/* Detector */
 	m_X_Detector = std::make_unique<MainFrameVariables::StepperControl>();
 	m_Y_Detector = std::make_unique<MainFrameVariables::StepperControl>();
@@ -855,7 +858,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 			m_CamExposure = std::make_unique<wxTextCtrl>(
 				right_side_panel, 
 				MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TE_CTL, 
-				wxT("10000000"), 
+				wxT("1000"), 
 				wxDefaultPosition, 
 				exposure_size, 
 				wxTE_CENTRE, 
@@ -1128,7 +1131,8 @@ void cMain::OnPreviewCameraImage(wxCommandEvent& evt)
 		? wxString("0") 
 		: m_CamExposure->GetValue();
 	int exposure_time = abs(wxAtoi(exposure_time_str));
-	m_CamPreview->SetCameraCapturedImage(exposure_time);
+	auto data_ptr = std::make_unique<unsigned char>();
+	m_CamPreview->SetCameraCapturedImage(data_ptr.get(), exposure_time);
 }
 
 void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
@@ -1490,7 +1494,7 @@ void cMain::OnSecondStageChoice(wxCommandEvent& evt)
 
 void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 {
-	auto raise_exception_msg = [](wxString axis) 
+	constexpr auto raise_exception_msg = [](wxString axis) 
 	{
 		wxString title = "Finish position error";
 		wxMessageBox(
@@ -1551,7 +1555,22 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 
 	/* Worker and Progress Threads */
 	{
-		WorkerThread* worker_thread = new WorkerThread(m_Settings, first_axis.release(), second_axis.release());
+		auto out_dir = m_OutDirTextCtrl->GetValue();
+
+		wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
+			? wxString("0") 
+			: m_CamExposure->GetValue();
+		unsigned long exposure_time = abs(wxAtoi(exposure_time_str));
+
+		WorkerThread* worker_thread = new WorkerThread
+		(
+			m_Settings, 
+			m_CamPreview.get(),
+			out_dir,
+			exposure_time,
+			first_axis.release(), 
+			second_axis.release()
+		);
 		ProgressThread* progress_thread = new ProgressThread(m_Settings, this);
 
 		if (worker_thread->CreateThread() != wxTHREAD_NO_ERROR)
@@ -1603,6 +1622,7 @@ void cMain::UpdateProgress(wxThreadEvent& evt)
 		m_ProgressBar->UpdateElapsedTime(0);
 		m_ProgressBar->UpdateEstimatedTime(0, 0);
 		m_AppProgressIndicator->~wxAppProgressIndicator();
+		UpdateAllAxisGlobalPositions();
 		this->Enable();
 	}
 }
@@ -1611,6 +1631,19 @@ bool cMain::Cancelled()
 {
 	wxCriticalSectionLocker lock(m_CSCancelled);
 	return m_Cancelled;
+}
+
+void cMain::UpdateAllAxisGlobalPositions()
+{
+	double global_axis_position{};
+	/* Detectors */
+	if (!m_X_Detector->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
+	if (!m_Y_Detector->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
+	if (!m_Z_Detector->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
+	/* Optics */
+	if (!m_X_Optics->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
+	if (!m_Y_Optics->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
+	if (!m_Z_Optics->absolute_text_ctrl->GetValue().ToDouble(&global_axis_position)) return;
 }
 
 void cMain::OnCenterDetectorZ(wxCommandEvent& evt)
@@ -1695,15 +1728,25 @@ cMain::~cMain()
 WorkerThread::WorkerThread
 (
 	cSettings* settings, 
+	cCamPreview* camera_preview_panel,
+	const wxString& path, 
+	const unsigned long& exp_time_us,
 	MainFrameVariables::AxisMeasurement* first_axis, 
 	MainFrameVariables::AxisMeasurement* second_axis
 ) 
-	: m_Settings(settings), m_FirstAxis(first_axis), m_SecondAxis(second_axis)
+	: 
+	m_Settings(settings), 
+	m_CameraPreview{camera_preview_panel}, 
+	m_ImagePath(path), 
+	m_ExposureTimeUS(exp_time_us),
+	m_FirstAxis(first_axis), 
+	m_SecondAxis(second_axis)
 {}
 
 WorkerThread::~WorkerThread()
 {
 	m_Settings = nullptr;
+	m_CameraPreview = nullptr;
 	delete m_FirstAxis;
 	m_FirstAxis = nullptr;
 	delete m_SecondAxis;
@@ -1714,6 +1757,7 @@ wxThread::ExitCode WorkerThread::Entry()
 {
 	m_Settings->SetCurrentProgress(0, m_FirstAxis->step_number);
 
+	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
 	{
 		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
@@ -1721,19 +1765,19 @@ wxThread::ExitCode WorkerThread::Entry()
 		{
 		/* Detector */
 		case 0:
-			m_Settings->GoToAbsDetectorX(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsDetectorX(m_FirstAxis->start + i * m_FirstAxis->step);
 			break;
 		case 1:
-			m_Settings->GoToAbsDetectorY(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsDetectorY(m_FirstAxis->start + i * m_FirstAxis->step);
 			break;
 		case 2:
-			m_Settings->GoToAbsDetectorZ(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsDetectorZ(m_FirstAxis->start + i * m_FirstAxis->step);
 			break;
 		/* Optics */
 		case 3:
 			break;
 		case 4:
-			m_Settings->GoToAbsOpticsY(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsOpticsY(m_FirstAxis->start + i * m_FirstAxis->step);
 			break;
 		case 5:
 			break;
@@ -1741,6 +1785,13 @@ wxThread::ExitCode WorkerThread::Entry()
 			break;
 		}
 		/* Take Photo And Save Data on Disk */
+		m_CameraPreview->CaptureAndSaveDataFromCamera
+		(
+			m_ExposureTimeUS, 
+			m_ImagePath, 
+			i + 1, 
+			first_axis_position 
+		);
 
 		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
 	}

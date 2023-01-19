@@ -21,7 +21,7 @@ public:
 	~XimeaControl();
 private:
 	bool m_IsCameraOpen{};
-	XI_IMG m_Image{};
+	XI_IMG m_Image;
 	HANDLE m_CamHandler{};
 	XI_RETURN m_State{};
 };

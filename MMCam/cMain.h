@@ -18,6 +18,8 @@
 #include "src/img/center.xpm"
 #include "src/img/home.xpm"
 
+#include "src/img/logo.xpm"
+
 namespace MainFrameVariables
 {
 	enum
@@ -254,6 +256,8 @@ private:
 	void UpdateProgress(wxThreadEvent& evt);
 	bool Cancelled();
 
+	void UpdateAllAxisGlobalPositions();
+
 private:
 	/* Settings Menu */
 	cSettings* m_Settings{};
@@ -296,6 +300,9 @@ public:
 	WorkerThread
 	(
 		cSettings* settings, 
+		cCamPreview* camera_preview_panel,
+		const wxString& path, 
+		const unsigned long& exp_time_us,
 		MainFrameVariables::AxisMeasurement* first_axis, 
 		MainFrameVariables::AxisMeasurement* second_axis
 	);
@@ -305,6 +312,9 @@ public:
 
 private:
 	cSettings* m_Settings{};
+	cCamPreview* m_CameraPreview{};
+	wxString m_ImagePath{};
+	unsigned long m_ExposureTimeUS{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
 };
 /* ___End Worker Thread___ */

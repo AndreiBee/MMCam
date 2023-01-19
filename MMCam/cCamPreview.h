@@ -9,6 +9,10 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <format>
+#include <algorithm>
+
+#include <opencv2/opencv.hpp>
 
 #include "XimeaControl.h"
 
@@ -16,7 +20,8 @@ class cCamPreview final : public wxPanel
 {
 public:
 	cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer);
-	void SetCameraCapturedImage(const uint32_t& exposure_time_us);
+	void SetCameraCapturedImage(unsigned char* p_data, const unsigned long& exposure_time_us = 0);
+	void CaptureAndSaveDataFromCamera(const unsigned long& exposure_time_us, const wxString& path, const int& frame_number, const float& first_axis_position, const float& second_axis_position = 0.f);;
 
 private:
 	void InitDefaultComponents();
@@ -46,7 +51,7 @@ private:
 	bool m_IsGraphicsBitmapSet{}, m_IsImageSet{};
 	std::unique_ptr<wxGraphicsBitmap> m_GraphicsBitmapImage{};
 	std::unique_ptr<wxImage> m_Image{};
-	std::unique_ptr<uint16_t[]> m_ImageData{};
+	std::unique_ptr<unsigned char[]> m_ImageData{};
 	wxSize m_ImageSize{}, m_ImageOnCanvasSize{}, m_CanvasSize{};
 	wxRealPoint m_NotZoomedGraphicsBitmapOffset{}, m_StartDrawPos{};
 	wxRealPoint m_CursorPosOnCanvas{};

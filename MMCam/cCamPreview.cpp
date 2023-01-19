@@ -22,63 +22,93 @@ cCamPreview::cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer)
 	parent_sizer->Add(this, 1, wxEXPAND);
 }
 
-void cCamPreview::SetCameraCapturedImage(const uint32_t& exposure_time_us)
+void cCamPreview::SetCameraCapturedImage(unsigned char* p_data, const unsigned long& exposure_time_us)
 {
-	//m_ImageSize.SetWidth(2048);
-	//m_ImageSize.SetHeight(2048);
+	if (exposure_time_us)
+		p_data = m_XimeaCameraControl->GetImage(exposure_time_us);
+	if (!p_data) return;
 
-	//uint64_t read_data_size = m_ImageSize.GetWidth() * m_ImageSize.GetHeight();
-	//m_ImageData = std::make_unique<uint16_t[]>(read_data_size);
-
-#ifdef ZERO
-	std::ifstream in_file;
-	std::string raw_path = "src\\examples\\art_img_2048x2048_with_square.raw";
-	in_file.open(raw_path, std::fstream::in | std::fstream::binary);
-	if (in_file.is_open())
-	{
-		//uint16_t curr_val{};
-		//in_file.read((char*)&curr_val, sizeof(uint16_t));
-		in_file.seekg(0, std::ios::beg);
-		in_file.read((char*)m_ImageData.get(), read_data_size * sizeof(uint16_t));
-		in_file.close();
-	}
-#endif // _DEBUG
-	
-	//m_Image = std::make_unique<wxImage>(m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
-	auto image_ptr = m_XimeaCameraControl->GetImage(exposure_time_us);
-	auto image_width = m_XimeaCameraControl->GetImageWidth();
-	auto image_height = m_XimeaCameraControl->GetImageHeight();
+	m_ImageSize.SetWidth(m_XimeaCameraControl->GetImageWidth());
+	m_ImageSize.SetHeight(m_XimeaCameraControl->GetImageHeight());
+	if (!m_IsImageSet)
+		m_Image = std::make_unique<wxImage>(m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
 	unsigned char current_value{};
 	uint16_t max_uint16_t{ 65535 }, half_max_uint16_t{ 32768 }, max_char_uint16_t{ 256 };
 	unsigned char red{}, green{}, blue{}, range{ 128 };
-	for (auto y{ 0 }; y < image_height; ++y)
+	for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
 	{
-		for (auto x{ 0 }; x < image_width; ++x)
+		for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
 		{
-			current_value = image_ptr[y * image_width + x];
+			current_value = p_data[y * m_ImageSize.GetWidth() + x];
 			/* Matlab implementation of JetColormap */
 			CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
 			m_Image->SetRGB(x, y, red, green, blue);
 		}
 	}
 
-	auto temp_zoom = m_Zoom;
-	auto temp_pan_offset = m_PanOffset;
-	auto temp_start_draw_pos = m_StartDrawPos;
-	m_Zoom = 1.0;
-	m_PanOffset = {};
-	ChangeSizeOfImageInDependenceOnCanvasSize();
-	if (m_IsImageSet)
+	/* 
+	Saving previous values for correct displaying of the image in the same place, 
+	where it was before capturing.
+	*/
 	{
-		m_Zoom = temp_zoom;
-		m_PanOffset = temp_pan_offset;
-		m_StartDrawPos = temp_start_draw_pos;
+		auto temp_zoom = m_Zoom;
+		auto temp_pan_offset = m_PanOffset;
+		auto temp_start_draw_pos = m_StartDrawPos;
+		m_Zoom = 1.0;
+		m_PanOffset = {};
+		ChangeSizeOfImageInDependenceOnCanvasSize();
+		if (m_IsImageSet)
+		{
+			m_Zoom = temp_zoom;
+			m_PanOffset = temp_pan_offset;
+			m_StartDrawPos = temp_start_draw_pos;
+		}
 	}
 
 	m_IsImageSet = true;
 	m_IsGraphicsBitmapSet = false;
-
 	Refresh();
+}
+
+void cCamPreview::CaptureAndSaveDataFromCamera
+(
+	const unsigned long& exposure_time_us, 
+	const wxString& path, 
+	const int& frame_number, 
+	const float& first_axis_position, 
+	const float& second_axis_position
+)
+{
+	auto image_ptr = m_XimeaCameraControl->GetImage(exposure_time_us);
+	if (!image_ptr) return;
+
+	/* Save Captured Image */
+	{
+		std::string first_axis_position_str = std::format("{:.3f}", first_axis_position);
+		std::replace(first_axis_position_str.begin(), first_axis_position_str.end(), '.', '_');
+
+		std::string second_axis_position_str = std::format("{:.3f}", second_axis_position);
+		std::replace(second_axis_position_str.begin(), second_axis_position_str.end(), '.', '_');
+		
+		const std::string file_name = std::string(path.mb_str()) + std::string("\\") +
+			std::string("img_") + 
+			std::to_string(frame_number) + std::string("_") + 
+			std::to_string(exposure_time_us) + std::string("us") 
+			+ std::string("_1A_") + first_axis_position_str 
+			+ std::string("_2A_") + second_axis_position_str 
+			+ std::string(".tif");
+
+		cv::Mat cv_img
+		(
+			cv::Size(m_XimeaCameraControl->GetImageWidth(), m_XimeaCameraControl->GetImageHeight()),
+			CV_8UC1, 
+			image_ptr, 
+			cv::Mat::AUTO_STEP
+		);
+		cv::imwrite(file_name, cv_img);
+	}
+
+	SetCameraCapturedImage(image_ptr);
 }
 
 void cCamPreview::CalculateMatlabJetColormapPixelRGB8bit
@@ -89,7 +119,37 @@ void cCamPreview::CalculateMatlabJetColormapPixelRGB8bit
 	unsigned char& b
 )
 {
-
+	unsigned char x0_8bit{ 31 }, x1_8bit{ 95 }, x2_8bit{ 159 }, x3_8bit{ 223 }, x4_8bit{ 255 };
+	if (value < x0_8bit)
+	{
+		r = 0;
+		g = 0;
+		b = 255 * 0.51563f + (float)value * (255.0f - 255 * 0.51563f) / (float)x0_8bit;
+	}
+	else if (value >= x0_8bit && value <= x1_8bit)
+	{
+		r = 0;
+		g = (float)(value - x0_8bit) * 255.0f / (float)(x1_8bit - x0_8bit);
+		b = 255;
+	}
+	else if (value > x1_8bit && value < x2_8bit)
+	{
+		r = (float)(value - x1_8bit) * 255.0f / (float)(x2_8bit - x1_8bit);
+		g = 255;
+		b = (float)(x2_8bit - value) * 255.0f / (float)(x2_8bit - x1_8bit);
+	}
+	else if (value >= x2_8bit && value <= x3_8bit)
+	{
+		r = 255;
+		g = (float)(x3_8bit - value) * 255.0f / (float)(x3_8bit - x2_8bit);
+		b = 0;
+	}
+	else if (value > x3_8bit)
+	{
+		r = 255.0f * 0.5f + (float)(x4_8bit - value) * (255.0f - 255.0f * 0.5f) / (float)(x4_8bit - x3_8bit);
+		g = 0;
+		b = 0;
+	}
 }
 
 void cCamPreview::CalculateMatlabJetColormapPixelRGB16bit
