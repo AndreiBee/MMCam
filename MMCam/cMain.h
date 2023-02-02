@@ -107,6 +107,14 @@ namespace MainFrameVariables
 			menu_edit(new wxMenu()),
 			menu_window(new wxMenu()),
 			menu_help(new wxMenu()) {};
+		~MenuBar()
+		{
+			menu_file->~wxMenu();
+			menu_edit->~wxMenu();
+			menu_window->~wxMenu();
+			menu_help->~wxMenu();
+			menu_bar->~wxMenuBar();
+		}
 	};
 	struct StepperControl
 	{
@@ -185,9 +193,6 @@ class cMain final : public wxFrame
 {
 public:
 	cMain(const wxString& title_);
-
-	~cMain();
-
 private:
 	void CreateMainFrame();
 	void InitComponents();
@@ -260,9 +265,9 @@ private:
 
 private:
 	/* Settings Menu */
-	cSettings* m_Settings{};
+	std::unique_ptr<cSettings> m_Settings{};
 	/* Menu Bar */
-	MainFrameVariables::MenuBar* m_MenuBar{};
+	std::unique_ptr<MainFrameVariables::MenuBar> m_MenuBar{};
 	/* Preview Panel */
 	std::unique_ptr<cCamPreview> m_CamPreview{};
 	/* Steppers Control */

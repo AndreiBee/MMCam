@@ -2,6 +2,7 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 #include <memory>
+#include <algorithm>
 #include <map>
 #include <vector>
 #include <thread>
@@ -55,6 +56,29 @@ public:
 	auto GoCenter();
 	auto GoHomeAndZero();
 	auto GoToPos(const float stage_position);
+
+	/* Move constructor */
+	Motor(Motor&& other) noexcept 
+		: m_MotorSettings(std::move(other.m_MotorSettings)), 
+		m_StandaSettings(std::move(other.m_StandaSettings)), 
+		m_DeviceName(std::move(other.m_DeviceName)),
+		m_SerNum(other.m_SerNum)
+	{
+		other.m_MotorSettings = nullptr;
+		other.m_StandaSettings = nullptr;
+		other.m_DeviceName = nullptr;
+		other.m_SerNum = 0;
+	};
+
+	/* Move assignment */
+	auto& operator=(Motor&& other) noexcept
+	{
+		m_MotorSettings.reset(other.m_MotorSettings.release());
+		m_StandaSettings.reset(other.m_StandaSettings.release());
+		m_DeviceName.reset(other.m_DeviceName.release());
+		m_SerNum = other.m_SerNum;
+		return *this;
+	};
 
 private:
 	std::unique_ptr<MotorVariables::Settings> m_MotorSettings{};

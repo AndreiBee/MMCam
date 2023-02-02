@@ -490,17 +490,17 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 	/* Control Buttons */
 	{
-		m_RefreshBtn = new wxButton(motors_panel, wxID_ANY, wxT("Refresh"));
+		m_RefreshBtn = std::make_unique<wxButton>(motors_panel, wxID_ANY, wxT("Refresh"));
 
-		m_OkBtn = new wxButton(motors_panel, wxID_ANY, wxT("OK"));
+		m_OkBtn = std::make_unique<wxButton>(motors_panel, wxID_ANY, wxT("OK"));
 
-		m_CancelBtn = new wxButton(motors_panel, wxID_ANY, wxT("Cancel"));
+		m_CancelBtn = std::make_unique<wxButton>(motors_panel, wxID_ANY, wxT("Cancel"));
 
 		wxBoxSizer* btns_sizer = new wxBoxSizer(wxHORIZONTAL);
-		btns_sizer->Add(m_RefreshBtn);
+		btns_sizer->Add(m_RefreshBtn.get());
 		btns_sizer->AddStretchSpacer();
-		btns_sizer->Add(m_OkBtn, 0, wxRIGHT, 2);
-		btns_sizer->Add(m_CancelBtn);
+		btns_sizer->Add(m_OkBtn.get(), 0, wxRIGHT, 2);
+		btns_sizer->Add(m_CancelBtn.get());
 
 		motors_panel_sizer->Add(btns_sizer, 0, wxEXPAND | wxALL, 2);
 	}

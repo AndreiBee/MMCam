@@ -46,6 +46,10 @@ namespace SettingsVariables
 		wxChoice* motors{}; 
 		wxStaticText* ranges{};
 		uint8_t current_selection[2], prev_selection[2];
+		~MotorSettings()
+		{
+			motors->~wxChoice();
+		}
 	};
 
 	struct MotorSettingsArray
@@ -156,7 +160,7 @@ private:
 
 private:
 	const wxString xml_file_path = "src\\mtrs.xml";
-	wxButton* m_OkBtn{}, *m_CancelBtn{}, *m_RefreshBtn{};
+	std::unique_ptr<wxButton> m_OkBtn{}, m_CancelBtn{}, m_RefreshBtn{};
 	std::unique_ptr<SettingsVariables::MotorSettingsArray> m_Motors{};
 	std::unique_ptr<MotorArray> m_PhysicalMotors{};
 	const int m_MotorsCount{ 6 };

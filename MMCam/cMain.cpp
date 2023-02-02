@@ -77,7 +77,7 @@ void cMain::CreateMainFrame()
 void cMain::InitComponents()
 {
 	/* Settings Frame */
-	m_Settings = new cSettings(this);
+	m_Settings = std::make_unique<cSettings>(this);
 	m_Settings->SetIcon(logo_xpm);
 	/* Detector */
 	m_X_Detector = std::make_unique<MainFrameVariables::StepperControl>();
@@ -94,7 +94,7 @@ void cMain::InitComponents()
 
 void cMain::CreateMenuBarOnFrame()
 {
-	m_MenuBar = new MainFrameVariables::MenuBar();
+	m_MenuBar = std::make_unique<MainFrameVariables::MenuBar>();
 	this->SetMenuBar(m_MenuBar->menu_bar);
 
 	// File Menu
@@ -851,7 +851,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 
 			wxIntegerValidator<int>	exposure_val(NULL, wxNUM_VAL_ZERO_AS_BLANK);
 			exposure_val.SetMin(1);
-			exposure_val.SetMax(10000000);
+			exposure_val.SetMax(1000000000);
 
 			wxSize exposure_size = { 64, 20 };
 
@@ -1565,14 +1565,14 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 
 		WorkerThread* worker_thread = new WorkerThread
 		(
-			m_Settings, 
+			m_Settings.get(),
 			m_CamPreview.get(),
 			out_dir,
 			exposure_time,
 			first_axis.release(), 
 			second_axis.release()
 		);
-		ProgressThread* progress_thread = new ProgressThread(m_Settings, this);
+		ProgressThread* progress_thread = new ProgressThread(m_Settings.get(), this);
 
 		if (worker_thread->CreateThread() != wxTHREAD_NO_ERROR)
 		{
@@ -1719,11 +1719,6 @@ void cMain::OnHomeOpticsY(wxCommandEvent& evt)
 			wxT("%.3f"), 
 			m_Settings->HomeOpticsY()
 		));
-}
-
-cMain::~cMain()
-{
-	delete m_MenuBar;
 }
 
 /* Start Worker Thread */

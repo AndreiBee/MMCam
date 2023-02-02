@@ -391,6 +391,12 @@ bool MotorArray::InitAllMotors()
 
 		close_device(&device_c);
 	}
+	
+	std::sort(m_MotorsArray.begin(), m_MotorsArray.end(), [](Motor& left, Motor& right)
+		{
+			return (left.GetDeviceSerNum() < right.GetDeviceSerNum());
+		});
+
 	free_enumerate_devices(devenum_c);
 	FillNames();
 }
