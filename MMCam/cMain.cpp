@@ -847,18 +847,18 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 	{
 		wxSizer* const settings_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Settings");
 		{
-			wxSizer* const exposure_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Exposure [us]");
+			wxSizer* const exposure_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Exposure [ms]");
 
 			wxIntegerValidator<int>	exposure_val(NULL, wxNUM_VAL_ZERO_AS_BLANK);
 			exposure_val.SetMin(1);
-			exposure_val.SetMax(1000000000);
+			exposure_val.SetMax(1000000);
 
 			wxSize exposure_size = { 64, 20 };
 
 			m_CamExposure = std::make_unique<wxTextCtrl>(
 				right_side_panel, 
 				MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TE_CTL, 
-				wxT("1000"), 
+				wxT("10"), 
 				wxDefaultPosition, 
 				exposure_size, 
 				wxTE_CENTRE, 
@@ -1119,7 +1119,11 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 void cMain::CreateProgressBar()
 {
 	wxSize size_of_progress_bar{ 400, 190 };
-	wxPoint start_point_progress_bar{ this->GetPosition().x + this->GetSize().x / 2 - size_of_progress_bar.x / 2, this->GetPosition().y + this->GetSize().y / 2 - size_of_progress_bar.y / 2 };
+	wxPoint start_point_progress_bar
+	{ 
+		this->GetPosition().x + this->GetSize().x - size_of_progress_bar.x, 
+		this->GetPosition().y + this->GetSize().y - size_of_progress_bar.y 
+	};
 	m_ProgressBar = std::make_unique<ProgressBar>(this, start_point_progress_bar, size_of_progress_bar);
 	//m_ProgressBar = new ProgressBar(this, start_point_progress_bar, size_of_progress_bar);
 	//m_ProgressBar->SetIcon(logo_xpm);
@@ -1130,7 +1134,7 @@ void cMain::OnPreviewCameraImage(wxCommandEvent& evt)
 	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
 		? wxString("0") 
 		: m_CamExposure->GetValue();
-	int exposure_time = abs(wxAtoi(exposure_time_str));
+	int exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate exposure time to [us]
 	auto data_ptr = std::make_unique<unsigned char>();
 	m_CamPreview->SetCameraCapturedImage(data_ptr.get(), exposure_time);
 }
@@ -1543,7 +1547,11 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 	}
 	{
 		m_StartCalculationTime = std::chrono::steady_clock::now();
-		wxPoint start_point_progress_bar{ this->GetPosition().x + this->GetSize().x / 2 - m_ProgressBar->GetSize().x / 2, this->GetPosition().y + this->GetSize().y / 2 - m_ProgressBar->GetSize().y / 2 };
+		wxPoint start_point_progress_bar
+		{ 
+			this->GetPosition().x + this->GetSize().x - m_ProgressBar->GetSize().x, 
+			this->GetPosition().y + this->GetSize().y - m_ProgressBar->GetSize().y 
+		};
 		m_ProgressBar->SetPosition(start_point_progress_bar);
 		m_Settings->ResetCapturing();
 		m_ProgressBar->Show();
@@ -1561,7 +1569,7 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 		wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
 			? wxString("0") 
 			: m_CamExposure->GetValue();
-		unsigned long exposure_time = abs(wxAtoi(exposure_time_str));
+		unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
 
 		WorkerThread* worker_thread = new WorkerThread
 		(
@@ -1754,6 +1762,13 @@ wxThread::ExitCode WorkerThread::Entry()
 {
 	m_Settings->SetCurrentProgress(0, m_FirstAxis->step_number);
 
+	auto now = std::chrono::system_clock::now();
+	auto cur_time = std::chrono::system_clock::to_time_t(now);
+	auto str_time = std::string(std::ctime(&cur_time)).substr(11, 8);
+	auto cur_hours = str_time.substr(0, 2);
+	auto cur_mins = str_time.substr(3, 2);
+	auto cur_secs = str_time.substr(6, 2);
+
 	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
 	{
@@ -1786,6 +1801,9 @@ wxThread::ExitCode WorkerThread::Entry()
 		(
 			m_ExposureTimeUS, 
 			m_ImagePath, 
+			cur_hours,
+			cur_mins,
+			cur_secs,
 			i + 1, 
 			first_axis_position 
 		);

@@ -74,6 +74,9 @@ void cCamPreview::CaptureAndSaveDataFromCamera
 (
 	const unsigned long& exposure_time_us, 
 	const wxString& path, 
+	const std::string& start_hours,
+	const std::string& start_minutes,
+	const std::string& start_seconds,
 	const int& frame_number, 
 	const float& first_axis_position, 
 	const float& second_axis_position
@@ -93,6 +96,9 @@ void cCamPreview::CaptureAndSaveDataFromCamera
 		const std::string file_name = std::string(path.mb_str()) + std::string("\\") +
 			std::string("img_") + 
 			std::to_string(frame_number) + std::string("_") + 
+			start_hours + std::string("H_") + 
+			start_minutes + std::string("M_") + 
+			start_seconds + std::string("S_") + 
 			std::to_string(exposure_time_us) + std::string("us") 
 			+ std::string("_1A_") + first_axis_position_str 
 			+ std::string("_2A_") + second_axis_position_str 

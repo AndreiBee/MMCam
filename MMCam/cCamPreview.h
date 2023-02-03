@@ -21,7 +21,17 @@ class cCamPreview final : public wxPanel
 public:
 	cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer);
 	void SetCameraCapturedImage(unsigned char* p_data, const unsigned long& exposure_time_us = 0);
-	void CaptureAndSaveDataFromCamera(const unsigned long& exposure_time_us, const wxString& path, const int& frame_number, const float& first_axis_position, const float& second_axis_position = 0.f);;
+	void CaptureAndSaveDataFromCamera
+	(
+		const unsigned long& exposure_time_us, 
+		const wxString& path, 
+		const std::string& start_hours,
+		const std::string& start_minutes,
+		const std::string& start_seconds,
+		const int& frame_number, 
+		const float& first_axis_position, 
+		const float& second_axis_position = 0.f
+	);
 
 private:
 	void InitDefaultComponents();
