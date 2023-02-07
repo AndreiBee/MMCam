@@ -15,6 +15,7 @@
 #include "cCamPreview.h"
 #include "cSettings.h"
 
+#include "src/img/cross_hair.xpm"
 #include "src/img/center.xpm"
 #include "src/img/home.xpm"
 
@@ -24,8 +25,10 @@ namespace MainFrameVariables
 {
 	enum
 	{
+		/* Menu Bar */
 		ID_MENUBAR_FILE_QUIT,
 		ID_MENUBAR_EDIT_SETTINGS,
+		ID_MENUBAR_TOOLS_CROSSHAIR,
 		ID_MENUBAR_WINDOW_FULLSCREEN,
 		ID_MENUBAR_HELP_ABOUT,
 		/* Detector X */
@@ -78,7 +81,8 @@ namespace MainFrameVariables
 		ID_RIGHT_SC_OPT_Z_HOME_BTN,
 		/* Camera */
 		ID_RIGHT_CAM_EXPOSURE_TE_CTL,
-		ID_RIGHT_CAM_CAPTURE_BTN,
+		ID_RIGHT_CAM_MANUFACTURER_CHOICE,
+		ID_RIGHT_CAM_SINGLE_SHOT_BTN,
 		/* Measurement */
 		ID_RIGHT_MT_OUT_FLD_TE_CTL,
 		ID_RIGHT_MT_OUT_FLD_BTN,
@@ -99,23 +103,36 @@ namespace MainFrameVariables
 		wxMenuBar* menu_bar{};
 		wxMenu* menu_file{};
 		wxMenu* menu_edit{};
+		wxMenu* menu_tools{};
+		wxMenu* submenu_intensity_profile{};
 		wxMenu* menu_window{};
 		wxMenu* menu_help{};
 		MenuBar() :
 			menu_bar(new wxMenuBar()),
 			menu_file(new wxMenu()),
 			menu_edit(new wxMenu()),
+			menu_tools(new wxMenu()),
+			submenu_intensity_profile(new wxMenu()),
 			menu_window(new wxMenu()),
 			menu_help(new wxMenu()) {};
 		~MenuBar()
 		{
 			menu_file->~wxMenu();
 			menu_edit->~wxMenu();
+			submenu_intensity_profile->~wxMenu();
+			menu_tools->~wxMenu();
 			menu_window->~wxMenu();
 			menu_help->~wxMenu();
 			menu_bar->~wxMenuBar();
 		}
 	};
+	
+	struct ToolBar
+	{
+		wxToolBar* tool_bar{};
+		ToolBar() {};
+	};
+
 	struct StepperControl
 	{
 		wxTextCtrl* absolute_text_ctrl{}, *relative_text_ctrl{};
@@ -188,7 +205,7 @@ class ProgressPanel;
 class WorkerThread;
 class ProgressThread;
 
-/* ___Start cMain___ */
+/* ___ Start cMain ___ */
 class cMain final : public wxFrame
 {
 public:
@@ -198,6 +215,7 @@ private:
 	void InitComponents();
 	void InitDefaultStateWidgets();
 	void CreateMenuBarOnFrame();
+	void CreateVerticalToolBar();
 	void CreateLeftAndRightSide();
 	void CreateLeftSide(wxSizer* left_side_sizer);
 	void CreateRightSide(wxSizer* right_side_sizer);
@@ -205,6 +223,7 @@ private:
 	void CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 
+	void UnCheckAllTools();
 	/* ProgressBar */
 	void CreateProgressBar();
 
@@ -214,6 +233,8 @@ private:
 	void OnOpenSettings(wxCommandEvent& evt);
 	void UpdateStagePositions();
 	void EnableUsedAndDisableNonUsedMotors();
+
+	void OnCrossHairButton(wxCommandEvent& evt);
 
 	void OnFullScreen(wxCommandEvent& evt);
 	void OnMaximizeButton(wxMaximizeEvent& evt);
@@ -268,6 +289,8 @@ private:
 	std::unique_ptr<cSettings> m_Settings{};
 	/* Menu Bar */
 	std::unique_ptr<MainFrameVariables::MenuBar> m_MenuBar{};
+	/* Tool Bar */
+	std::unique_ptr<MainFrameVariables::ToolBar> m_VerticalToolBar{};
 	/* Preview Panel */
 	std::unique_ptr<cCamPreview> m_CamPreview{};
 	/* Steppers Control */
@@ -276,7 +299,9 @@ private:
 
 	/* Camera */
 	std::unique_ptr<wxTextCtrl> m_CamExposure{};
-	std::unique_ptr<wxButton> m_CamPreviewBtn{};
+	std::unique_ptr<wxChoice> m_ManufacturerChoice{};
+	wxArrayString m_ManufacturersArray{};
+	std::unique_ptr<wxButton> m_SingleShotBtn{};
 
 	/* Measurement */
 	std::unique_ptr<wxTextCtrl> m_OutDirTextCtrl{};
@@ -294,11 +319,32 @@ private:
 	int m_Progress{};
 	wxString m_ProgressMsg{};
 
+	/* CrossHair */
+	bool m_IsCrossHairChecked{};
+
 	wxDECLARE_EVENT_TABLE();
 };
-/* ___End cMain___ */
+/* ___ End cMain ___ */
 
-/* ___Start Worker Theread___ */
+/* ___ Start Live Capturing Theread ___ */
+class LiveCapturing final: public wxThreadHelper
+{
+public:
+	LiveCapturing
+	(
+		cCamPreview* cam_preview_window
+	);
+	~LiveCapturing();
+
+	virtual void* Entry();
+
+private:
+	cCamPreview* m_CamPreviewWindow{};
+};
+/* ___ End Worker Thread ___ */
+
+
+/* ___ Start Worker Theread ___ */
 class WorkerThread final: public wxThreadHelper
 {
 public:
@@ -322,9 +368,9 @@ private:
 	unsigned long m_ExposureTimeUS{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
 };
-/* ___End Worker Thread___ */
+/* ___ End Worker Thread ___ */
 
-/* ___Start Progress Thread___ */
+/* ___ Start Progress Thread ___ */
 class ProgressThread final : public wxThreadHelper
 {
 public:
@@ -338,9 +384,9 @@ private:
 	int m_Progress{};
 	wxString m_ProgressMsg{};
 };
-/* ___End  Progress Thread___ */
+/* ___ End  Progress Thread ___ */
 
-/* ___Start ProgressBar___ */
+/* ___ Start ProgressBar ___ */
 class ProgressBar final : public wxFrame
 {
 public:
@@ -358,9 +404,9 @@ private:
 
 	DECLARE_EVENT_TABLE()
 };
-/* ___End ProgressBar___ */
+/* ___ End ProgressBar ___ */
 
-/* ___Start ProgressPanel___ */
+/* ___ Start ProgressPanel ___ */
 class ProgressPanel final : public wxPanel
 {
 public:
@@ -385,6 +431,6 @@ private:
 
 	DECLARE_EVENT_TABLE()
 };
-/* ___End ProgressPanel___ */
+/* ___ End ProgressPanel ___ */
 
 #endif // !CMAIN_H

@@ -20,6 +20,8 @@ class cCamPreview final : public wxPanel
 {
 public:
 	cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer);
+	auto SetXIMEAAsCurrentCamera() -> void;
+	auto SetMoravianInstrumentsAsCurrentCamera() -> void;
 	void SetCameraCapturedImage(unsigned char* p_data, const unsigned long& exposure_time_us = 0);
 	void CaptureAndSaveDataFromCamera
 	(
@@ -73,6 +75,9 @@ private:
 	double m_Zoom{}, m_ZoomOnOriginalSizeImage{};
 
 	std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
+	bool m_XimeaSelected{};
+
+	bool m_MoravianInstrumentsSelected{};
 
 	DECLARE_EVENT_TABLE();
 };

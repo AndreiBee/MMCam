@@ -22,6 +22,7 @@ auto XimeaControl::InitializeCamera() -> bool
 
 auto XimeaControl::GetImage(const int exposure_us) -> unsigned char*
 {
+	if (!m_CamHandler) return nullptr;
 	m_State = xiSetParamInt(m_CamHandler, XI_PRM_EXPOSURE, exposure_us);
 	if (m_State != XI_OK) return nullptr;
 	m_State = xiStartAcquisition(m_CamHandler);

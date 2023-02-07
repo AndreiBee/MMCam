@@ -3,8 +3,9 @@
 wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CLOSE(cMain::OnExit)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_FILE_QUIT, cMain::OnExit)
-	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN, cMain::OnPreviewCameraImage)
+	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnPreviewCameraImage)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, cMain::OnCrossHairButton)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
 	EVT_MAXIMIZE(cMain::OnMaximizeButton)
 	/* Detector X */
@@ -36,7 +37,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_CENTER_BTN, cMain::OnCenterOpticsY)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_SC_OPT_Y_HOME_BTN, cMain::OnHomeOpticsY)
 	/* Camera */
-	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN, cMain::OnPreviewCameraImage)
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnPreviewCameraImage)
 	/* Set Out Folder */
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
 	/* First Stage */
@@ -71,6 +72,7 @@ void cMain::CreateMainFrame()
 {
 	InitComponents();
 	CreateMenuBarOnFrame();
+	CreateVerticalToolBar();
 	CreateLeftAndRightSide();
 }
 
@@ -99,14 +101,22 @@ void cMain::CreateMenuBarOnFrame()
 
 	// File Menu
 	m_MenuBar->menu_file->Append(MainFrameVariables::ID_MENUBAR_FILE_QUIT, wxT("Quit\tCtrl+Q"));
+	// Append File Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_file, wxT("&File"));
 
 	// Edit Menu
-	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN, wxT("Capture\tC"));
+	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, wxT("Single Shot\tS"));
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
 
+	// Intensity Profile SubMenu
+	m_MenuBar->submenu_intensity_profile->AppendCheckItem(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, wxT("Crosshair\tC"));
+	// Append Submenu Selection Tools to the Tools Menu
+	m_MenuBar->menu_tools->Append(wxID_ANY, wxT("&Intensity Profile"), m_MenuBar->submenu_intensity_profile);
+	// Append Tools Menu to the Menu Bar
+	m_MenuBar->menu_bar->Append(m_MenuBar->menu_tools, wxT("&Tools"));
+	
 	// Window Menu
 	m_MenuBar->menu_window->Append(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, wxT("Full screen mode\tF11"), wxEmptyString, wxITEM_CHECK);
 	// Append Window Menu to the Menu Bar
@@ -162,6 +172,12 @@ void cMain::InitDefaultStateWidgets()
 			m_Z_Optics->DisableAllControls();
 		}
 	}
+	/* Camera initialization */
+	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("MI"))
+		m_CamPreview->SetMoravianInstrumentsAsCurrentCamera();
+	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("XIMEA"))
+		m_CamPreview->SetXIMEAAsCurrentCamera();
+
 	/* Disabling Measurement Controls */
 	{
 		//m_OutDirTextCtrl->Disable();
@@ -211,6 +227,7 @@ void cMain::CreateLeftAndRightSide()
 
 void cMain::CreateLeftSide(wxSizer* left_side_sizer)
 {
+	left_side_sizer->Add(m_VerticalToolBar->tool_bar, 0, wxEXPAND);
 	m_CamPreview = std::make_unique<cCamPreview>(this, left_side_sizer);
 }
 
@@ -845,6 +862,23 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 	wxSizer* const cam_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Camera");
 
 	{
+		wxSizer* const manufacturer_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Manufacturer");
+		{
+			m_ManufacturersArray.Add("MI");
+			m_ManufacturersArray.Add("XIMEA");
+			m_ManufacturerChoice = std::make_unique<wxChoice>
+				(
+					right_side_panel,
+					MainFrameVariables::ID_RIGHT_CAM_MANUFACTURER_CHOICE,
+					wxDefaultPosition, wxDefaultSize, m_ManufacturersArray
+				);
+			m_ManufacturerChoice->SetSelection(1);
+			manufacturer_box_sizer->AddStretchSpacer();
+			manufacturer_box_sizer->Add(m_ManufacturerChoice.get(), 0, wxCENTER);
+			manufacturer_box_sizer->AddStretchSpacer();
+		}
+		cam_static_box_sizer->Add(manufacturer_box_sizer, 0, wxEXPAND);
+
 		wxSizer* const settings_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Settings");
 		{
 			wxSizer* const exposure_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Exposure [ms]");
@@ -870,18 +904,18 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 
 			settings_static_box_sizer->Add(exposure_static_box_sizer, 0, wxEXPAND);
 		}
-		cam_static_box_sizer->Add(settings_static_box_sizer, 0, wxEXPAND);
+		cam_static_box_sizer->Add(settings_static_box_sizer, 0, wxEXPAND | wxLEFT, 2);
 
 		/* Preview */
 		{
-			m_CamPreviewBtn = std::make_unique<wxButton>(
+			m_SingleShotBtn = std::make_unique<wxButton>(
 				right_side_panel,
-				MainFrameVariables::ID_RIGHT_CAM_CAPTURE_BTN,
-				wxT("Capture (C)"), 
+				MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN,
+				wxT("Single Shot (S)"), 
 				wxDefaultPosition, 
 				wxDefaultSize);
 			cam_static_box_sizer->AddStretchSpacer();
-			cam_static_box_sizer->Add(m_CamPreviewBtn.get(), 0, wxALIGN_CENTER | wxRIGHT, 2);
+			cam_static_box_sizer->Add(m_SingleShotBtn.get(), 0, wxALIGN_CENTER | wxRIGHT, 2);
 		}
 	}
 
@@ -1339,6 +1373,28 @@ void cMain::OnIncrementDetectorYAbsPos(wxCommandEvent& evt)
 		));
 }
 
+void cMain::CreateVerticalToolBar()
+{
+	m_VerticalToolBar = std::make_unique<MainFrameVariables::ToolBar>();
+	m_VerticalToolBar->tool_bar = new wxToolBar
+	(
+		this, 
+		wxID_ANY, 
+		wxDefaultPosition, 
+		wxDefaultSize, 
+		wxTB_VERTICAL
+	);
+
+	// CrossHair
+	wxImage crosshairToolImage = wxImage(cross_hair_xpm);
+	wxBitmap crosshairToolBitmap = wxBitmap(crosshairToolImage);
+	m_VerticalToolBar->tool_bar->AddCheckTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, _("Crosshair"), crosshairToolBitmap);
+	m_VerticalToolBar->tool_bar->SetToolShortHelp(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, wxT("Crosshair (C)"));
+
+	m_VerticalToolBar->tool_bar->SetToolBitmapSize(wxSize(30, 30));
+	m_VerticalToolBar->tool_bar->Realize();
+}
+
 void cMain::OnCenterDetectorY(wxCommandEvent& evt)
 {
 	m_Y_Detector->absolute_text_ctrl->SetValue(
@@ -1392,6 +1448,17 @@ void cMain::OnIncrementDetectorZAbsPos(wxCommandEvent& evt)
 			wxT("%.3f"), 
 			m_Settings->GoOffsetDetectorZ((float)delta_position)
 		));
+}
+
+void cMain::UnCheckAllTools()
+{
+	/* Unchecking CrossHair Button */
+	m_VerticalToolBar->tool_bar->ToggleTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
+	m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
+	//m_PreviewPanel->SetCrossHairButtonActive(false);
+	//m_SecondRightSideNotebook->x_pos_crosshair->Disable();
+	//m_SecondRightSideNotebook->y_pos_crosshair->Disable();
+	//m_SecondRightSideNotebook->export_crosshair_data->Disable();
 }
 
 void cMain::OnFirstStageChoice(wxCommandEvent& evt)
@@ -1611,6 +1678,22 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 	}
 }
 
+void cMain::OnCrossHairButton(wxCommandEvent& evt)
+{
+	UnCheckAllTools();
+	if (!m_IsCrossHairChecked)
+	{
+		m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
+		m_VerticalToolBar->tool_bar->ToggleTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
+		m_IsCrossHairChecked = true;
+		//m_PreviewPanel->SetCrossHairButtonActive(true);
+	}
+	else
+	{
+		m_IsCrossHairChecked = false;
+	}
+}
+
 void cMain::UpdateProgress(wxThreadEvent& evt)
 {
 	int progress = evt.GetInt();
@@ -1729,7 +1812,27 @@ void cMain::OnHomeOpticsY(wxCommandEvent& evt)
 		));
 }
 
-/* Start Worker Thread */
+/* ___ Start Live Capturing Thread ___ */
+LiveCapturing::LiveCapturing
+(
+	cCamPreview* cam_preview_window
+) 
+{
+
+}
+
+wxThread::ExitCode LiveCapturing::Entry()
+{
+	return (wxThread::ExitCode)0;
+}
+
+LiveCapturing::~LiveCapturing()
+{
+	m_CamPreviewWindow = nullptr;
+}
+/* ___ End Live Capturing Thread ___ */
+
+/* ___ Start Worker Thread ___ */
 WorkerThread::WorkerThread
 (
 	cSettings* settings, 
@@ -1841,9 +1944,9 @@ wxThread::ExitCode WorkerThread::Entry()
 
 	return (wxThread::ExitCode)0;
 }
-/* ___End Worker Thread___ */
+/* ___ End Worker Thread ___ */
 
-/* ___Start Progress Thread___ */
+/* ___ Start Progress Thread ___ */
 ProgressThread::ProgressThread(
 	cSettings* settings,
 	cMain* main_frame)
@@ -1878,9 +1981,9 @@ ProgressThread::~ProgressThread()
 	m_Frame = nullptr;
 	m_Settings = nullptr;
 }
-/* ___End Progress Thread___ */
+/* ___ End Progress Thread ___ */
 
-/* ___Start ProgressBar___ */
+/* ___ Start ProgressBar ___ */
 BEGIN_EVENT_TABLE(ProgressBar, wxFrame)
 END_EVENT_TABLE()
 
@@ -1919,9 +2022,9 @@ ProgressBar::~ProgressBar()
 {
 	//m_ProgressPanel->Destroy();
 }
-/* ___End ProgressBar___ */
+/* ___ End ProgressBar ___ */
 
-/* ___Start ProgressPanel___ */
+/* ___ Start ProgressPanel ___ */
 BEGIN_EVENT_TABLE(ProgressPanel, wxPanel)
 EVT_PAINT(ProgressPanel::PaintEvent)
 EVT_SIZE(ProgressPanel::OnSize)
@@ -2077,4 +2180,4 @@ void ProgressPanel::OnSize(wxSizeEvent& evt)
 		Refresh();
 	}
 }
-/* ___End ProgressPanel___ */
+/* ___ End ProgressPanel ___ */

@@ -12,7 +12,7 @@ END_EVENT_TABLE()
 cCamPreview::cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer) 
 	: wxPanel(parent_frame)
 {
-	m_XimeaCameraControl = std::make_unique<XimeaControl>();
+	//m_XimeaCameraControl = std::make_unique<XimeaControl>();
 	SetDoubleBuffered(true);
 #ifdef _DEBUG
 	SetBackgroundColour(wxColor(210, 185, 155));
@@ -22,10 +22,27 @@ cCamPreview::cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer)
 	parent_sizer->Add(this, 1, wxEXPAND);
 }
 
+auto cCamPreview::SetXIMEAAsCurrentCamera() -> void
+{
+	m_MoravianInstrumentsSelected = false;
+	m_XimeaSelected = true;
+	m_XimeaCameraControl = std::make_unique<XimeaControl>();
+}
+
+auto cCamPreview::SetMoravianInstrumentsAsCurrentCamera() -> void
+{
+	m_MoravianInstrumentsSelected = true;
+	m_XimeaSelected = false;
+}
+
 void cCamPreview::SetCameraCapturedImage(unsigned char* p_data, const unsigned long& exposure_time_us)
 {
 	if (exposure_time_us)
-		p_data = m_XimeaCameraControl->GetImage(exposure_time_us);
+	{
+		if (m_XimeaSelected) p_data = m_XimeaCameraControl->GetImage(exposure_time_us);
+		else if (m_MoravianInstrumentsSelected) p_data = nullptr;
+	}
+		
 	if (!p_data) return;
 
 	m_ImageSize.SetWidth(m_XimeaCameraControl->GetImageWidth());
