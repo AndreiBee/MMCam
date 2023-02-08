@@ -5,6 +5,12 @@ XimeaControl::XimeaControl()
 	InitializeCamera();
 }
 
+XimeaControl::XimeaControl(const int exposure_us)
+{
+	InitializeCamera();
+	if (exposure_us) m_State = xiSetParamInt(m_CamHandler, XI_PRM_EXPOSURE, exposure_us);
+}
+
 auto XimeaControl::InitializeCamera() -> bool
 {
 	memset(&m_Image, 0, sizeof(m_Image));
@@ -15,16 +21,15 @@ auto XimeaControl::InitializeCamera() -> bool
 
 	/* Opening Camera */
 	m_State = xiOpenDevice(0, &m_CamHandler);
-	if (m_State == XI_OK) m_IsCameraOpen = true;
+	m_IsCameraOpen = m_State == XI_OK ? true : false;
 
 	return m_State == XI_OK ? true : false;
 }
 
 auto XimeaControl::GetImage(const int exposure_us) -> unsigned char*
 {
-	if (!m_CamHandler) return nullptr;
-	m_State = xiSetParamInt(m_CamHandler, XI_PRM_EXPOSURE, exposure_us);
-	if (m_State != XI_OK) return nullptr;
+	if (!m_CamHandler || !m_IsCameraOpen) return nullptr;
+
 	m_State = xiStartAcquisition(m_CamHandler);
 	if (m_State != XI_OK) return nullptr;
 
@@ -38,12 +43,21 @@ auto XimeaControl::GetImage(const int exposure_us) -> unsigned char*
 
 auto XimeaControl::GetImageWidth() const -> unsigned long
 {
-	return m_Image.width;
+	int img_width{};
+	xiGetParamInt(m_CamHandler, XI_PRM_AEAG_ROI_WIDTH, &img_width);
+	return img_width;
 }
 
 auto XimeaControl::GetImageHeight() const -> unsigned long
 {
-	return m_Image.height;
+	int img_height{};
+	xiGetParamInt(m_CamHandler, XI_PRM_AEAG_ROI_HEIGHT, &img_height);
+	return img_height;
+}
+
+auto XimeaControl::IsCameraInitialized() const -> bool
+{
+	return m_IsCameraOpen;
 }
 
 auto XimeaControl::CloseCamera() -> bool

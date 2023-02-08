@@ -16,13 +16,25 @@
 
 #include "XimeaControl.h"
 
+namespace CameraPreviewVariables
+{
+	enum 
+	{
+		XIMEA_CAM,
+		MORAVIAN_INSTRUMENTS_CAM,
+	};
+}
+
 class cCamPreview final : public wxPanel
 {
 public:
 	cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer);
+	auto SetImageSize(const wxSize& img_size) -> void;
+	auto GetImagePtr() const -> wxImage*;
+	auto GetImageSize() const->wxSize;
 	auto SetXIMEAAsCurrentCamera() -> void;
 	auto SetMoravianInstrumentsAsCurrentCamera() -> void;
-	void SetCameraCapturedImage(unsigned char* p_data, const unsigned long& exposure_time_us = 0);
+	auto SetCameraCapturedImage() -> void;
 	void CaptureAndSaveDataFromCamera
 	(
 		const unsigned long& exposure_time_us, 
@@ -62,7 +74,7 @@ private:
 	int m_Width{}, m_Height{};
 	bool m_IsGraphicsBitmapSet{}, m_IsImageSet{};
 	std::unique_ptr<wxGraphicsBitmap> m_GraphicsBitmapImage{};
-	std::unique_ptr<wxImage> m_Image{};
+	std::shared_ptr<wxImage> m_Image{};
 	std::unique_ptr<unsigned char[]> m_ImageData{};
 	wxSize m_ImageSize{}, m_ImageOnCanvasSize{}, m_CanvasSize{};
 	wxRealPoint m_NotZoomedGraphicsBitmapOffset{}, m_StartDrawPos{};

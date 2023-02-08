@@ -22,6 +22,23 @@ cCamPreview::cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer)
 	parent_sizer->Add(this, 1, wxEXPAND);
 }
 
+auto cCamPreview::SetImageSize(const wxSize& img_size) -> void
+{
+	m_Image = std::make_shared<wxImage>();
+	m_Image->Create(img_size);
+	m_ImageSize = img_size;
+}
+
+auto cCamPreview::GetImagePtr() const -> wxImage*
+{
+	return m_Image.get();
+}
+
+auto cCamPreview::GetImageSize() const -> wxSize
+{
+	return m_ImageSize;
+}
+
 auto cCamPreview::SetXIMEAAsCurrentCamera() -> void
 {
 	m_MoravianInstrumentsSelected = false;
@@ -35,34 +52,8 @@ auto cCamPreview::SetMoravianInstrumentsAsCurrentCamera() -> void
 	m_XimeaSelected = false;
 }
 
-void cCamPreview::SetCameraCapturedImage(unsigned char* p_data, const unsigned long& exposure_time_us)
+void cCamPreview::SetCameraCapturedImage()
 {
-	if (exposure_time_us)
-	{
-		if (m_XimeaSelected) p_data = m_XimeaCameraControl->GetImage(exposure_time_us);
-		else if (m_MoravianInstrumentsSelected) p_data = nullptr;
-	}
-		
-	if (!p_data) return;
-
-	m_ImageSize.SetWidth(m_XimeaCameraControl->GetImageWidth());
-	m_ImageSize.SetHeight(m_XimeaCameraControl->GetImageHeight());
-	if (!m_IsImageSet)
-		m_Image = std::make_unique<wxImage>(m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
-	unsigned char current_value{};
-	uint16_t max_uint16_t{ 65535 }, half_max_uint16_t{ 32768 }, max_char_uint16_t{ 256 };
-	unsigned char red{}, green{}, blue{}, range{ 128 };
-	for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
-	{
-		for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
-		{
-			current_value = p_data[y * m_ImageSize.GetWidth() + x];
-			/* Matlab implementation of JetColormap */
-			CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
-			m_Image->SetRGB(x, y, red, green, blue);
-		}
-	}
-
 	/* 
 	Saving previous values for correct displaying of the image in the same place, 
 	where it was before capturing.
@@ -131,7 +122,7 @@ void cCamPreview::CaptureAndSaveDataFromCamera
 		cv::imwrite(file_name, cv_img);
 	}
 
-	SetCameraCapturedImage(image_ptr);
+	//SetCameraCapturedImage(image_ptr);
 }
 
 void cCamPreview::CalculateMatlabJetColormapPixelRGB8bit
@@ -349,8 +340,11 @@ void cCamPreview::CreateGraphicsBitmapImage(wxGraphicsContext* gc_)
 {
 	if (!m_IsGraphicsBitmapSet && m_IsImageSet)
 	{
-		m_GraphicsBitmapImage = std::make_unique<wxGraphicsBitmap>(gc_->CreateBitmapFromImage(*m_Image));;
-		m_IsGraphicsBitmapSet = true;
+		if (m_Image)
+		{
+			m_GraphicsBitmapImage = std::make_unique<wxGraphicsBitmap>(gc_->CreateBitmapFromImage(*m_Image));;
+			m_IsGraphicsBitmapSet = true;
+		}
 	}
 }
 
@@ -364,9 +358,10 @@ void cCamPreview::DrawCameraCapturedImage(wxGraphicsContext* gc_)
 
 		gc_->SetInterpolationQuality(interpolation_quality);
 		gc_->Scale(m_Zoom / m_ZoomOnOriginalSizeImage, m_Zoom / m_ZoomOnOriginalSizeImage);
-		gc_->DrawBitmap(*m_GraphicsBitmapImage.get(),
-			m_StartDrawPos.x, m_StartDrawPos.y,
-			m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
+		if (m_GraphicsBitmapImage)
+			gc_->DrawBitmap(*m_GraphicsBitmapImage.get(),
+				m_StartDrawPos.x, m_StartDrawPos.y,
+				m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
 	}
 }
 

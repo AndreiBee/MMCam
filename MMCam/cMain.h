@@ -210,6 +210,8 @@ class cMain final : public wxFrame
 {
 public:
 	cMain(const wxString& title_);
+	auto StopLiveCapturing() -> bool;
+	auto LiveCapturingFinishedCapturingAndDrawing(bool is_finished) -> void;
 private:
 	void CreateMainFrame();
 	void InitComponents();
@@ -227,7 +229,11 @@ private:
 	/* ProgressBar */
 	void CreateProgressBar();
 
-	void OnPreviewCameraImage(wxCommandEvent& evt);
+	/* Live Capturing */
+	void StartLiveCapturing();
+
+	void ChangeCameraManufacturerChoice(wxCommandEvent& evt);
+	void OnSingleShotCameraImage(wxCommandEvent& evt);
 	void OnSetOutDirectoryBtn(wxCommandEvent& evt);
 
 	void OnOpenSettings(wxCommandEvent& evt);
@@ -276,6 +282,8 @@ private:
 	void OnFirstStageChoice(wxCommandEvent& evt);
 	/* Second Stage */
 	void OnSecondStageChoice(wxCommandEvent& evt);
+	/* Changed Exposure value */
+	void ExposureValueChanged(wxCommandEvent& evt);
 	/* Start Capturing */
 	void OnStartCapturingButton(wxCommandEvent& evt);
 	/* Progress */
@@ -322,6 +330,10 @@ private:
 	/* CrossHair */
 	bool m_IsCrossHairChecked{};
 
+	/* Live Capturing */
+	bool m_StopLiveCapturing{};
+	bool m_LiveCapturingEndedDrawingOnCamPreview{};
+
 	wxDECLARE_EVENT_TABLE();
 };
 /* ___ End cMain ___ */
@@ -332,17 +344,35 @@ class LiveCapturing final: public wxThreadHelper
 public:
 	LiveCapturing
 	(
-		cCamPreview* cam_preview_window
+		cMain* main_frame,
+		cCamPreview* cam_preview_window,
+		const unsigned short& camera_type,
+		const int exposure_us
 	);
 	~LiveCapturing();
 
 	virtual void* Entry();
 
 private:
+	auto CaptureImage(wxImage* image_ptr) -> bool;
+
+	void CalculateMatlabJetColormapPixelRGB8bit
+	(
+		const unsigned char& value,
+		unsigned char& r,
+		unsigned char& g,
+		unsigned char& b
+	);
+
+private:
+	cMain* m_MainFrame{};
 	cCamPreview* m_CamPreviewWindow{};
+	unsigned short m_CameraType{};
+	int m_ExposureUS{};
+	std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
+	wxSize m_ImageSize{};
 };
 /* ___ End Worker Thread ___ */
-
 
 /* ___ Start Worker Theread ___ */
 class WorkerThread final: public wxThreadHelper

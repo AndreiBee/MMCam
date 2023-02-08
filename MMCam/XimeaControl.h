@@ -13,10 +13,12 @@ class XimeaControl final
 {
 public:
 	XimeaControl();
+	XimeaControl(const int exposure_us);
 	auto InitializeCamera() -> bool;
-	auto GetImage(const int exposure_us) -> unsigned char*;
+	auto GetImage(const int exposure_us = 0) -> unsigned char*;
 	auto GetImageWidth() const -> unsigned long;
 	auto GetImageHeight() const -> unsigned long;
+	auto IsCameraInitialized() const -> bool;
 	auto CloseCamera() -> bool;
 	~XimeaControl();
 private:
