@@ -157,6 +157,7 @@ private:
 	void UpdatePreviousStatesData();
 	void SetPreviousStatesDataAsCurrentSelection();
 	void WriteActualSelectedMotorsAndRangesIntoXMLFile();
+	void ResetAllMotorsAndRangesInXMLFile();
 
 private:
 	const wxString xml_file_path = "src\\mtrs.xml";
