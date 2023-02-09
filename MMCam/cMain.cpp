@@ -40,6 +40,8 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_CAM_MANUFACTURER_CHOICE, cMain::ChangeCameraManufacturerChoice)
 	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TE_CTL, cMain::ExposureValueChanged)
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnSingleShotCameraImage)
+	EVT_TEXT(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL, cMain::OnXPosCrossHairTextCtrl)
+	EVT_TEXT(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL, cMain::OnYPosCrossHairTextCtrl)
 	/* Set Out Folder */
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
 	/* First Stage */
@@ -115,6 +117,7 @@ void cMain::CreateMenuBarOnFrame()
 
 	// Edit Menu
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, wxT("Single Shot\tS"));
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
@@ -183,9 +186,9 @@ void cMain::InitDefaultStateWidgets()
 	}
 	/* Camera initialization */
 	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("MI"))
-		m_CamPreview->SetMoravianInstrumentsAsCurrentCamera();
+		m_CameraType = CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM;
 	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("XIMEA"))
-		m_CamPreview->SetXIMEAAsCurrentCamera();
+		m_CameraType = CameraPreviewVariables::XIMEA_CAM;
 
 	/* Disabling Measurement Controls */
 	{
@@ -892,7 +895,8 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 					MainFrameVariables::ID_RIGHT_CAM_MANUFACTURER_CHOICE,
 					wxDefaultPosition, wxDefaultSize, m_ManufacturersArray
 				);
-			m_ManufacturerChoice->SetSelection(1);
+			m_ManufacturerChoice->SetSelection(CameraPreviewVariables::XIMEA_CAM);
+			m_CameraType = CameraPreviewVariables::XIMEA_CAM;
 			manufacturer_box_sizer->AddStretchSpacer();
 			manufacturer_box_sizer->Add(m_ManufacturerChoice.get(), 0, wxCENTER);
 			manufacturer_box_sizer->AddStretchSpacer();
@@ -936,6 +940,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 				wxT("Single Shot (S)"), 
 				wxDefaultPosition, 
 				wxDefaultSize);
+			m_SingleShotBtn->Disable();
 			first_row_sizer->AddStretchSpacer();
 			first_row_sizer->Add(m_SingleShotBtn.get(), 0, wxALIGN_CENTER | wxRIGHT, 2);
 		}
@@ -1241,8 +1246,60 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 		? wxString("0") 
 		: m_CamExposure->GetValue();
 	int exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate exposure time to [us]
-	auto data_ptr = std::make_unique<unsigned char>();
-	//m_CamPreview->SetCameraCapturedImage(data_ptr.get(), exposure_time);
+
+	m_StopLiveCapturing = true;
+	{
+		while (!m_LiveCapturingEndedDrawingOnCamPreview)
+		{
+			wxThread::This()->Sleep(10);
+		}
+		wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
+			? wxString("0") 
+			: m_CamExposure->GetValue();
+		unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
+
+		auto now = std::chrono::system_clock::now();
+		auto cur_time = std::chrono::system_clock::to_time_t(now);
+		auto str_time = std::string(std::ctime(&cur_time)).substr(11, 8);
+		auto cur_hours = str_time.substr(0, 2);
+		auto cur_mins = str_time.substr(3, 2);
+		auto cur_secs = str_time.substr(6, 2);
+
+		auto out_dir = m_OutDirTextCtrl->GetValue();
+		const std::string file_name = std::string(out_dir.mb_str()) + std::string("\\") +
+			std::string("ss_") + 
+			cur_hours + std::string("H_") + 
+			cur_mins + std::string("M_") + 
+			cur_secs + std::string("S_") + 
+			std::to_string(exposure_time) + std::string("us") 
+			+ std::string(".tif");
+
+		/* Moravian Instruments */
+		if (m_CameraType == CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM)
+		{
+			return;
+		}
+		/* XIMEA */
+		if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
+		{
+			auto ximea_control = std::make_unique<XimeaControl>(exposure_time);
+			auto image_size = wxSize{ (int)ximea_control->GetImageWidth(), (int)ximea_control->GetImageHeight() };
+			unsigned char* data_ptr{};
+			data_ptr = ximea_control->GetImage();
+			if (!data_ptr) return;
+
+			cv::Mat cv_img
+			(
+				cv::Size(image_size.GetWidth(), image_size.GetHeight()),
+				CV_8UC1, 
+				data_ptr, 
+				cv::Mat::AUTO_STEP
+			);
+			cv::imwrite(file_name, cv_img);
+		}
+	}
+	m_StopLiveCapturing = false;
+	StartLiveCapturing();
 }
 
 void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
@@ -1256,6 +1313,8 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 	m_OutDirTextCtrl->SetValue(save_dialog.GetPath());
 	m_FirstStage->EnableAllControls();
 	//m_SecondStage->EnableAllControls();
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
+	m_SingleShotBtn->Enable();
 	m_StartMeasurement->Enable();
 }
 
@@ -1532,6 +1591,17 @@ auto cMain::LiveCapturingFinishedCapturingAndDrawing(bool is_finished) -> void
 	m_LiveCapturingEndedDrawingOnCamPreview = is_finished;
 }
 
+auto cMain::WorkerThreadFinished(bool is_finished) -> void
+{
+	if (is_finished)
+	{
+		m_StopLiveCapturing = false;
+		StartLiveCapturing();
+	}
+	else
+		m_StopLiveCapturing = true;
+}
+
 void cMain::UnCheckAllTools()
 {
 	/* Unchecking CrossHair Button */
@@ -1659,6 +1729,13 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 			wxICON_ERROR);
 	};
 
+	m_StopLiveCapturing = true;	
+	while (!m_LiveCapturingEndedDrawingOnCamPreview)
+	{
+		wxThread::This()->Sleep(10);
+	}
+
+
 	auto first_axis = std::make_unique<MainFrameVariables::AxisMeasurement>();
 	auto second_axis = std::make_unique<MainFrameVariables::AxisMeasurement>();
 	double start_first_stage_value{}, step_first_stage_value{}, finish_first_stage_value{};
@@ -1721,8 +1798,10 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 
 		WorkerThread* worker_thread = new WorkerThread
 		(
+			this,
 			m_Settings.get(),
 			m_CamPreview.get(),
+			m_CameraType,
 			out_dir,
 			exposure_time,
 			first_axis.release(), 
@@ -1769,9 +1848,9 @@ void cMain::StartLiveCapturing()
 	unsigned short camera_type{};
 
 	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("MI"))
-		camera_type = CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM;
+		m_CameraType = CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM;
 	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("XIMEA"))
-		camera_type = CameraPreviewVariables::XIMEA_CAM;
+		m_CameraType = CameraPreviewVariables::XIMEA_CAM;
 
 	LiveCapturing* live_capturing = new LiveCapturing
 	(
@@ -1812,6 +1891,13 @@ void cMain::OnCrossHairButton(wxCommandEvent& evt)
 		m_CamPreview->SetCrossHairButtonActive(true);
 		m_CrossHairPosXTxtCtrl->Enable();
 		m_CrossHairPosYTxtCtrl->Enable();
+		{
+			auto img_size = m_CamPreview->GetImageSize();
+			//m_CamPreview->SetXCrossHairPosFromParentWindow(img_size.GetWidth() / 2);
+			//m_CamPreview->SetYCrossHairPosFromParentWindow(img_size.GetHeight() / 2);
+			m_CrossHairPosXTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetWidth() / 2));
+			m_CrossHairPosYTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetHeight() / 2));
+		}
 	}
 	else
 	{
@@ -1873,6 +1959,20 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 	}
 	m_StopLiveCapturing = false;
 	StartLiveCapturing();
+}
+
+void cMain::OnXPosCrossHairTextCtrl(wxCommandEvent& evt)
+{
+	wxString str_x_pos = m_CrossHairPosXTxtCtrl->IsEmpty() ? wxString("1") : m_CrossHairPosXTxtCtrl->GetValue();
+	int x_pos = wxAtoi(str_x_pos);
+	m_CamPreview->SetXCrossHairPosFromParentWindow(x_pos);
+}
+
+void cMain::OnYPosCrossHairTextCtrl(wxCommandEvent& evt)
+{
+	wxString str_y_pos = m_CrossHairPosYTxtCtrl->IsEmpty() ? wxString("1") : m_CrossHairPosYTxtCtrl->GetValue();
+	int y_pos = wxAtoi(str_y_pos);
+	m_CamPreview->SetYCrossHairPosFromParentWindow(y_pos);
 }
 
 void cMain::OnCenterDetectorZ(wxCommandEvent& evt)
@@ -2019,54 +2119,12 @@ auto LiveCapturing::CaptureImage
 			current_value = data_ptr[y * m_ImageSize.GetWidth() + x];
 			short_data_ptr[y * m_ImageSize.GetWidth() + x] = (int)current_value;
 			/* Matlab implementation of JetColormap */
-			CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
+			m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
 			image_ptr->SetRGB(x, y, red, green, blue);
 		}
 	}
 	return true;
 }
-
-void LiveCapturing::CalculateMatlabJetColormapPixelRGB8bit
-(
-	const unsigned char& value, 
-	unsigned char& r, 
-	unsigned char& g, 
-	unsigned char& b
-)
-{
-	unsigned char x0_8bit{ 31 }, x1_8bit{ 95 }, x2_8bit{ 159 }, x3_8bit{ 223 }, x4_8bit{ 255 };
-	if (value < x0_8bit)
-	{
-		r = 0;
-		g = 0;
-		b = 255 * 0.51563f + (float)value * (255.0f - 255 * 0.51563f) / (float)x0_8bit;
-	}
-	else if (value >= x0_8bit && value <= x1_8bit)
-	{
-		r = 0;
-		g = (float)(value - x0_8bit) * 255.0f / (float)(x1_8bit - x0_8bit);
-		b = 255;
-	}
-	else if (value > x1_8bit && value < x2_8bit)
-	{
-		r = (float)(value - x1_8bit) * 255.0f / (float)(x2_8bit - x1_8bit);
-		g = 255;
-		b = (float)(x2_8bit - value) * 255.0f / (float)(x2_8bit - x1_8bit);
-	}
-	else if (value >= x2_8bit && value <= x3_8bit)
-	{
-		r = 255;
-		g = (float)(x3_8bit - value) * 255.0f / (float)(x3_8bit - x2_8bit);
-		b = 0;
-	}
-	else if (value > x3_8bit)
-	{
-		r = 255.0f * 0.5f + (float)(x4_8bit - value) * (255.0f - 255.0f * 0.5f) / (float)(x4_8bit - x3_8bit);
-		g = 0;
-		b = 0;
-	}
-}
-
 
 LiveCapturing::~LiveCapturing()
 {
@@ -2078,16 +2136,20 @@ LiveCapturing::~LiveCapturing()
 /* ___ Start Worker Thread ___ */
 WorkerThread::WorkerThread
 (
+	cMain* main_frame,
 	cSettings* settings, 
 	cCamPreview* camera_preview_panel,
+	unsigned short camera_type,
 	const wxString& path, 
 	const unsigned long& exp_time_us,
 	MainFrameVariables::AxisMeasurement* first_axis, 
 	MainFrameVariables::AxisMeasurement* second_axis
 ) 
 	: 
+	m_MainFrame(main_frame),
 	m_Settings(settings), 
-	m_CameraPreview{camera_preview_panel}, 
+	m_CameraPreview(camera_preview_panel), 
+	m_CameraType(camera_type),
 	m_ImagePath(path), 
 	m_ExposureTimeUS(exp_time_us),
 	m_FirstAxis(first_axis), 
@@ -2096,6 +2158,7 @@ WorkerThread::WorkerThread
 
 WorkerThread::~WorkerThread()
 {
+	m_MainFrame = nullptr;
 	m_Settings = nullptr;
 	m_CameraPreview = nullptr;
 	delete m_FirstAxis;
@@ -2106,6 +2169,7 @@ WorkerThread::~WorkerThread()
 
 wxThread::ExitCode WorkerThread::Entry()
 {
+	m_MainFrame->WorkerThreadFinished(false);
 	m_Settings->SetCurrentProgress(0, m_FirstAxis->step_number);
 
 	auto now = std::chrono::system_clock::now();
@@ -2114,6 +2178,18 @@ wxThread::ExitCode WorkerThread::Entry()
 	auto cur_hours = str_time.substr(0, 2);
 	auto cur_mins = str_time.substr(3, 2);
 	auto cur_secs = str_time.substr(6, 2);
+
+	auto cam_preview_data_ptr = m_CameraPreview->GetDataPtr();
+	auto cam_preview_image_ptr = m_CameraPreview->GetImagePtr();
+
+	std::unique_ptr<XimeaControl> ximea_control{};
+
+	if (m_CameraType == CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM)
+		return (wxThread::ExitCode)0;
+	if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
+	{
+		ximea_control = std::make_unique<XimeaControl>(m_ExposureTimeUS);
+	}
 
 	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
@@ -2142,18 +2218,24 @@ wxThread::ExitCode WorkerThread::Entry()
 		default:
 			break;
 		}
-		/* Take Photo And Save Data on Disk */
-		m_CameraPreview->CaptureAndSaveDataFromCamera
+
+		/* Take Capture */
+		if (CaptureAndSaveImage
 		(
-			m_ExposureTimeUS, 
-			m_ImagePath, 
+			ximea_control, 
+			cam_preview_data_ptr, 
+			cam_preview_image_ptr, 
+			i + 1,
+			first_axis_position,
+			second_axis_position,
 			cur_hours,
 			cur_mins,
-			cur_secs,
-			i + 1, 
-			first_axis_position 
-		);
+			cur_secs
+		))
+			/* Update image on CameraPreview Panel */
+			m_CameraPreview->SetCameraCapturedImage();
 
+		/* Update Current Progress */
 		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
 	}
 
@@ -2184,8 +2266,78 @@ wxThread::ExitCode WorkerThread::Entry()
 #endif // FALSE
 
 	m_Settings->SetCurrentProgress(m_FirstAxis->step_number, m_FirstAxis->step_number);
-
+	ximea_control.release();
+	m_MainFrame->WorkerThreadFinished(true);
 	return (wxThread::ExitCode)0;
+}
+
+auto WorkerThread::CaptureAndSaveImage
+(
+	const auto& camera_pointer,
+	unsigned short* short_data_ptr, 
+	wxImage* image_ptr,
+	const int& image_number,
+	const float& first_stage_position,
+	const float& second_stage_position,
+	const std::string& hours,
+	const std::string& minutes,
+	const std::string& seconds
+) -> bool
+{
+	auto image_size = wxSize{ (int)camera_pointer->GetImageWidth(), (int)camera_pointer->GetImageHeight() };
+	unsigned char* data_ptr{};
+	data_ptr = camera_pointer->GetImage();
+	if (!data_ptr) return false;
+
+	/* Save Image */
+	{
+		cv::Mat cv_img
+		(
+			cv::Size(image_size.GetWidth(), image_size.GetHeight()),
+			CV_8UC1, 
+			data_ptr, 
+			cv::Mat::AUTO_STEP
+		);
+
+		std::string first_axis_position_str = std::format("{:.3f}", first_stage_position);
+		std::replace(first_axis_position_str.begin(), first_axis_position_str.end(), '.', '_');
+
+		std::string second_axis_position_str = std::format("{:.3f}", second_stage_position);
+		std::replace(second_axis_position_str.begin(), second_axis_position_str.end(), '.', '_');
+		
+		std::string file_name = std::string(m_ImagePath.mb_str()) + std::string("\\") +
+			std::string("img_");
+		file_name += image_number < 10 ? std::string("0") : std::string("");
+		file_name += std::to_string(image_number) + std::string("_") + 
+			hours + std::string("H_") + 
+			minutes + std::string("M_") + 
+			seconds + std::string("S_") + 
+			std::to_string(m_ExposureTimeUS) + std::string("us") 
+			+ std::string("_1A_") + first_axis_position_str 
+			+ std::string("_2A_") + second_axis_position_str 
+			+ std::string(".tif");
+
+		if (!cv::imwrite(file_name, cv_img)) return false;
+	}
+
+	/* Update Values in CamPreview Panel */
+	{
+		unsigned char current_value{};
+		uint16_t max_uint16_t{ 65535 }, half_max_uint16_t{ 32768 }, max_char_uint16_t{ 256 };
+		unsigned char red{}, green{}, blue{}, range{ 128 };
+		for (auto y{ 0 }; y < image_size.GetHeight(); ++y)
+		{
+			for (auto x{ 0 }; x < image_size.GetWidth(); ++x)
+			{
+				current_value = data_ptr[y * image_size.GetWidth() + x];
+				short_data_ptr[y * image_size.GetWidth() + x] = (int)current_value;
+				/* Matlab implementation of JetColormap */
+				m_CameraPreview->CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
+				image_ptr->SetRGB(x, y, red, green, blue);
+			}
+		}
+	}
+	return true;
 }
 /* ___ End Worker Thread ___ */
 
@@ -2424,3 +2576,4 @@ void ProgressPanel::OnSize(wxSizeEvent& evt)
 	}
 }
 /* ___ End ProgressPanel ___ */
+

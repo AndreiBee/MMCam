@@ -34,9 +34,29 @@ cCamPreview::cCamPreview
 auto cCamPreview::SetCrossHairButtonActive(bool activate) -> void
 {
 	m_CrossHairTool->ActivateToolButton(activate, activate);
-	m_CrossHairTool->SetCursorPosOnCanvas(m_CursorPosOnCanvas);
+	//m_CrossHairTool->SetCursorPosOnCanvas(m_CursorPosOnCanvas);
 	ChangeCursorInDependenceOfCurrentParameters();
 	Refresh();
+}
+
+void cCamPreview::SetXCrossHairPosFromParentWindow(const int& x_pos)
+{
+	int corrected_x_pos = x_pos - 1;
+	if (corrected_x_pos >= 0 && corrected_x_pos < m_ImageSize.GetWidth())
+	{
+		m_CrossHairTool->SetXPosFromParent(corrected_x_pos);
+		Refresh();
+	}
+}
+
+void cCamPreview::SetYCrossHairPosFromParentWindow(const int& y_pos)
+{
+	int corrected_y_pos = y_pos - 1;
+	if (corrected_y_pos >= 0 && corrected_y_pos < m_ImageSize.GetHeight())
+	{
+		m_CrossHairTool->SetYPosFromParent(corrected_y_pos);
+		Refresh();
+	}
 }
 
 auto cCamPreview::SetImageSize(const wxSize& img_size) -> void
@@ -107,8 +127,8 @@ void cCamPreview::SetCameraCapturedImage()
 			m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage,
 			m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage
 		));
-		m_CrossHairTool->SetXPosFromParent(m_ImageSize.GetWidth() / 2);
-		m_CrossHairTool->SetYPosFromParent(m_ImageSize.GetHeight() / 2);
+		//m_CrossHairTool->SetXPosFromParent(m_ImageSize.GetWidth() / 2);
+		//m_CrossHairTool->SetYPosFromParent(m_ImageSize.GetHeight() / 2);
 	}
 
 	m_IsImageSet = true;
@@ -256,25 +276,12 @@ void cCamPreview::OnMouseMoved(wxMouseEvent& evt)
 		CalculatePositionOnImage();
 		CheckIfMouseAboveImage();
 
-		m_CrossHairTool->SetCursorPosOnCanvas(m_CursorPosOnCanvas);
-		m_CrossHairTool->MouseHoverOverImage(m_IsCursorInsideImage);
-		m_CrossHairTool->SetCursorPosOnImage(m_CheckedCursorPosOnImage);
-
-		if (m_ChangingCrossHairPosition)
-		{
-			m_CrossHairTool->LoopChangingCrossHairPos();
-		}
 
 		ChangeCursorInDependenceOfCurrentParameters();
 
 		if (m_Panning)
 		{
 			ProcessPan(m_CursorPosOnCanvas, true);
-			m_CrossHairTool->SetImageStartDrawPos(wxRealPoint
-			(
-				m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage,
-				m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage
-			));
 		}
 	}
 }
@@ -299,6 +306,14 @@ void cCamPreview::OnMouseWheelMoved(wxMouseEvent& evt)
 				AddZoom(0.5);
 			}
 		}
+		/* CrossHair Tool */
+		m_CrossHairTool->UpdateZoomValue(m_Zoom);
+		m_CrossHairTool->CalculateCrossHairPositionOnCanvas();
+		m_CrossHairTool->SetImageStartDrawPos(wxRealPoint
+		(
+			m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage,
+			m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage
+		));
 	}
 }
 
@@ -383,7 +398,7 @@ void cCamPreview::CalculatePositionOnImage()
 
 void cCamPreview::OnPreviewMouseLeftPressed(wxMouseEvent& evt)
 {
-	if (m_Zoom > 1.0 && m_IsCursorInsideImage && m_CrossHairTool->CanProcessPanning())
+	if (m_Zoom > 1.0 && m_IsCursorInsideImage)
 	{
 		m_Panning = true;
 		m_PanStartPoint = m_CursorPosOnCanvas;
@@ -405,7 +420,7 @@ void cCamPreview::ChangeCursorInDependenceOfCurrentParameters()
 	auto current_cursor = wxCURSOR_DEFAULT;
 
 	/* CrossHair Tool */
-	current_cursor = m_CrossHairTool->UpdateCursor(current_cursor);
+	//current_cursor = m_CrossHairTool->UpdateCursor(current_cursor);
 
 	SetCursor(current_cursor);
 }

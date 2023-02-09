@@ -214,6 +214,7 @@ public:
 	cMain(const wxString& title_);
 	auto StopLiveCapturing() -> bool;
 	auto LiveCapturingFinishedCapturingAndDrawing(bool is_finished) -> void;
+	auto WorkerThreadFinished(bool is_finished) -> void;
 private:
 	void CreateMainFrame();
 	void InitComponents();
@@ -294,6 +295,9 @@ private:
 
 	void UpdateAllAxisGlobalPositions();
 
+	void OnXPosCrossHairTextCtrl(wxCommandEvent& evt);
+	void OnYPosCrossHairTextCtrl(wxCommandEvent& evt);
+
 private:
 	/* Settings Menu */
 	std::unique_ptr<cSettings> m_Settings{};
@@ -311,6 +315,7 @@ private:
 	std::unique_ptr<wxTextCtrl> m_CamExposure{};
 	std::unique_ptr<wxChoice> m_ManufacturerChoice{};
 	wxArrayString m_ManufacturersArray{};
+	unsigned short m_CameraType{};
 	std::unique_ptr<wxButton> m_SingleShotBtn{};
 	std::unique_ptr<wxTextCtrl> m_CrossHairPosXTxtCtrl{}, m_CrossHairPosYTxtCtrl{};
 
@@ -363,14 +368,6 @@ private:
 		wxImage* image_ptr
 	) -> bool;
 
-	void CalculateMatlabJetColormapPixelRGB8bit
-	(
-		const unsigned char& value,
-		unsigned char& r,
-		unsigned char& g,
-		unsigned char& b
-	);
-
 private:
 	cMain* m_MainFrame{};
 	cCamPreview* m_CamPreviewWindow{};
@@ -387,8 +384,10 @@ class WorkerThread final: public wxThreadHelper
 public:
 	WorkerThread
 	(
+		cMain* main_frame,
 		cSettings* settings, 
 		cCamPreview* camera_preview_panel,
+		unsigned short camera_type,
 		const wxString& path, 
 		const unsigned long& exp_time_us,
 		MainFrameVariables::AxisMeasurement* first_axis, 
@@ -399,10 +398,27 @@ public:
 	virtual void* Entry();
 
 private:
+	auto CaptureAndSaveImage
+	(
+		const auto& camera_pointer, 
+		unsigned short* short_data_ptr, 
+		wxImage* image_ptr,
+		const int& image_number,
+		const float& first_stage_position,
+		const float& second_stage_position,
+		const std::string& hours,
+		const std::string& minutes,
+		const std::string& seconds
+	) -> bool;
+	auto SaveImageOnDisk(const int& image_number) -> bool;
+
+private:
+	cMain* m_MainFrame{};
 	cSettings* m_Settings{};
 	cCamPreview* m_CameraPreview{};
 	wxString m_ImagePath{};
 	unsigned long m_ExposureTimeUS{};
+	unsigned short m_CameraType{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
 };
 /* ___ End Worker Thread ___ */

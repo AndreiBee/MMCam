@@ -121,7 +121,7 @@ void CrossHairTool::SetXPosFromParent(const int& x_pos)
 {
 	m_CrossHairOnImage.x = x_pos;
 	CalculateCrossHairPositionOnCanvas();
-	UpdateParentCrossHairTextCtrls();
+	//UpdateParentCrossHairTextCtrls();
 	//UpdateParentCrossHairTextCtrlsWithRefresh();
 }
 
@@ -129,7 +129,7 @@ void CrossHairTool::SetYPosFromParent(const int& y_pos)
 {
 	m_CrossHairOnImage.y = y_pos;
 	CalculateCrossHairPositionOnCanvas();
-	UpdateParentCrossHairTextCtrls();
+	//UpdateParentCrossHairTextCtrls();
 	//UpdateParentCrossHairTextCtrlsWithRefresh();
 }
 
@@ -395,7 +395,7 @@ void CrossHairTool::LoopChangingCrossHairPos()
 			m_CursorOnCanvas.y - m_ImageStartDraw.y
 		};
 	}
-	UpdateParentCrossHairTextCtrlsWithRefresh();
+	//UpdateParentCrossHairTextCtrlsWithRefresh();
 }
 
 /* _____ Rectangle Tool _____ */

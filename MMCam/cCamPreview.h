@@ -48,6 +48,8 @@ public:
 		std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> input_preview_panel_args
 	);
 	auto SetCrossHairButtonActive(bool activate = false) -> void;
+	void SetXCrossHairPosFromParentWindow(const int& x_pos);
+	void SetYCrossHairPosFromParentWindow(const int& y_pos);
 	auto SetImageSize(const wxSize& img_size) -> void;
 	auto GetDataPtr() const -> unsigned short*;
 	auto GetImagePtr() const -> wxImage*;
@@ -66,6 +68,7 @@ public:
 		const float& first_axis_position, 
 		const float& second_axis_position = 0.f
 	);
+	void CalculateMatlabJetColormapPixelRGB8bit(const unsigned char& value, unsigned char& r, unsigned char& g, unsigned char& b);
 
 private:
 	void InitDefaultComponents();
@@ -77,7 +80,6 @@ private:
 	void OnSize(wxSizeEvent& evt);
 	void ChangeSizeOfImageInDependenceOnCanvasSize();
 	void CalculateMatlabJetColormapPixelRGB16bit(const uint16_t& value, unsigned char& r, unsigned char& g, unsigned char& b);
-	void CalculateMatlabJetColormapPixelRGB8bit(const unsigned char& value, unsigned char& r, unsigned char& g, unsigned char& b);
 	void OnMouseMoved(wxMouseEvent& evt);
 	/* Zooming */
 	void OnMouseWheelMoved(wxMouseEvent& evt);
