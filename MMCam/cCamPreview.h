@@ -21,8 +21,8 @@ namespace CameraPreviewVariables
 {
 	enum 
 	{
-		XIMEA_CAM,
 		MORAVIAN_INSTRUMENTS_CAM,
+		XIMEA_CAM,
 	};
 
 	struct InputPreviewPanelArgs

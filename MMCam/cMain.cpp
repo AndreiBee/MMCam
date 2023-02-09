@@ -895,8 +895,8 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 					MainFrameVariables::ID_RIGHT_CAM_MANUFACTURER_CHOICE,
 					wxDefaultPosition, wxDefaultSize, m_ManufacturersArray
 				);
-			m_ManufacturerChoice->SetSelection(CameraPreviewVariables::XIMEA_CAM);
 			m_CameraType = CameraPreviewVariables::XIMEA_CAM;
+			m_ManufacturerChoice->SetSelection(m_CameraType);
 			manufacturer_box_sizer->AddStretchSpacer();
 			manufacturer_box_sizer->Add(m_ManufacturerChoice.get(), 0, wxCENTER);
 			manufacturer_box_sizer->AddStretchSpacer();
@@ -1845,7 +1845,6 @@ void cMain::StartLiveCapturing()
 		: m_CamExposure->GetValue();
 	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
 
-	unsigned short camera_type{};
 
 	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("MI"))
 		m_CameraType = CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM;
@@ -1856,7 +1855,7 @@ void cMain::StartLiveCapturing()
 	(
 		this, 
 		m_CamPreview.get(), 
-		camera_type, 
+		m_CameraType, 
 		exposure_time
 	);
 
