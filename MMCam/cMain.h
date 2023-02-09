@@ -83,6 +83,8 @@ namespace MainFrameVariables
 		ID_RIGHT_CAM_EXPOSURE_TE_CTL,
 		ID_RIGHT_CAM_MANUFACTURER_CHOICE,
 		ID_RIGHT_CAM_SINGLE_SHOT_BTN,
+		ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL,
+		ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL,
 		/* Measurement */
 		ID_RIGHT_MT_OUT_FLD_TE_CTL,
 		ID_RIGHT_MT_OUT_FLD_BTN,
@@ -310,6 +312,7 @@ private:
 	std::unique_ptr<wxChoice> m_ManufacturerChoice{};
 	wxArrayString m_ManufacturersArray{};
 	std::unique_ptr<wxButton> m_SingleShotBtn{};
+	std::unique_ptr<wxTextCtrl> m_CrossHairPosXTxtCtrl{}, m_CrossHairPosYTxtCtrl{};
 
 	/* Measurement */
 	std::unique_ptr<wxTextCtrl> m_OutDirTextCtrl{};
@@ -354,7 +357,11 @@ public:
 	virtual void* Entry();
 
 private:
-	auto CaptureImage(wxImage* image_ptr) -> bool;
+	auto CaptureImage
+	(
+		unsigned short* short_data_ptr, 
+		wxImage* image_ptr
+	) -> bool;
 
 	void CalculateMatlabJetColormapPixelRGB8bit
 	(

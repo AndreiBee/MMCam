@@ -237,7 +237,18 @@ void cMain::CreateLeftAndRightSide()
 void cMain::CreateLeftSide(wxSizer* left_side_sizer)
 {
 	left_side_sizer->Add(m_VerticalToolBar->tool_bar, 0, wxEXPAND);
-	m_CamPreview = std::make_unique<cCamPreview>(this, left_side_sizer);
+	auto input_args = std::make_unique<CameraPreviewVariables::InputPreviewPanelArgs>
+		(
+			m_CrossHairPosXTxtCtrl.get(),
+			m_CrossHairPosYTxtCtrl.get()
+			);
+
+	m_CamPreview = std::make_unique<cCamPreview>
+		(
+		this, 
+		left_side_sizer, 
+		std::move(input_args)
+		);
 }
 
 void cMain::CreateRightSide(wxSizer* right_side_sizer)
@@ -868,8 +879,8 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 
 void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer)
 {
-	wxSizer* const cam_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Camera");
-
+	wxSizer* const cam_static_box_sizer = new wxStaticBoxSizer(wxVERTICAL, right_side_panel, "&Camera");
+	wxSizer* const first_row_sizer = new wxBoxSizer(wxHORIZONTAL);
 	{
 		wxSizer* const manufacturer_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Manufacturer");
 		{
@@ -886,7 +897,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 			manufacturer_box_sizer->Add(m_ManufacturerChoice.get(), 0, wxCENTER);
 			manufacturer_box_sizer->AddStretchSpacer();
 		}
-		cam_static_box_sizer->Add(manufacturer_box_sizer, 0, wxEXPAND);
+		first_row_sizer->Add(manufacturer_box_sizer, 0, wxEXPAND);
 
 		wxSizer* const settings_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Settings");
 		{
@@ -915,7 +926,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 
 			settings_static_box_sizer->Add(exposure_static_box_sizer, 0, wxEXPAND);
 		}
-		cam_static_box_sizer->Add(settings_static_box_sizer, 0, wxEXPAND | wxLEFT, 2);
+		first_row_sizer->Add(settings_static_box_sizer, 0, wxEXPAND | wxLEFT, 2);
 
 		/* Preview */
 		{
@@ -925,10 +936,59 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 				wxT("Single Shot (S)"), 
 				wxDefaultPosition, 
 				wxDefaultSize);
-			cam_static_box_sizer->AddStretchSpacer();
-			cam_static_box_sizer->Add(m_SingleShotBtn.get(), 0, wxALIGN_CENTER | wxRIGHT, 2);
+			first_row_sizer->AddStretchSpacer();
+			first_row_sizer->Add(m_SingleShotBtn.get(), 0, wxALIGN_CENTER | wxRIGHT, 2);
 		}
 	}
+	cam_static_box_sizer->Add(first_row_sizer, 0, wxEXPAND);
+
+	wxSizer* const second_row_sizer = new wxBoxSizer(wxHORIZONTAL);
+	{
+		wxSizer* const cross_hair_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&CrossHair");
+		/* X Position */
+		{
+			wxSizer* const x_pos_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&X");
+			wxIntegerValidator<int>	x_pos_validator(NULL, wxNUM_VAL_ZERO_AS_BLANK);
+			x_pos_validator.SetMin(1);
+			x_pos_validator.SetMax(10000);
+
+			m_CrossHairPosXTxtCtrl = std::make_unique<wxTextCtrl>
+				(
+					right_side_panel,
+					MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL,
+					wxT("1"), 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					wxTE_CENTRE
+					);
+			m_CrossHairPosXTxtCtrl->Disable();
+			x_pos_sizer->Add(m_CrossHairPosXTxtCtrl.get(), 1, wxEXPAND);
+			cross_hair_sizer->Add(x_pos_sizer, 1, wxEXPAND | wxRIGHT, 2);
+		}
+
+		/* Y Position */
+		{
+			wxSizer* const y_pos_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Y");
+			wxIntegerValidator<int>	y_pos_validator(NULL, wxNUM_VAL_ZERO_AS_BLANK);
+			y_pos_validator.SetMin(1);
+			y_pos_validator.SetMax(10000);
+
+			m_CrossHairPosYTxtCtrl = std::make_unique<wxTextCtrl>
+				(
+					right_side_panel,
+					MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL,
+					wxT("1"), 
+					wxDefaultPosition, 
+					wxDefaultSize, 
+					wxTE_CENTRE
+					);
+			m_CrossHairPosYTxtCtrl->Disable();
+			y_pos_sizer->Add(m_CrossHairPosYTxtCtrl.get(), 1, wxEXPAND);
+			cross_hair_sizer->Add(y_pos_sizer, 1, wxEXPAND);
+		}
+		second_row_sizer->Add(cross_hair_sizer, 1, wxEXPAND);
+	}
+	cam_static_box_sizer->Add(second_row_sizer, 0, wxEXPAND);
 
 	right_side_panel_sizer->Add(cam_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
 }
@@ -1477,10 +1537,9 @@ void cMain::UnCheckAllTools()
 	/* Unchecking CrossHair Button */
 	m_VerticalToolBar->tool_bar->ToggleTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
 	m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
-	//m_PreviewPanel->SetCrossHairButtonActive(false);
-	//m_SecondRightSideNotebook->x_pos_crosshair->Disable();
-	//m_SecondRightSideNotebook->y_pos_crosshair->Disable();
-	//m_SecondRightSideNotebook->export_crosshair_data->Disable();
+	m_CamPreview->SetCrossHairButtonActive(false);
+	m_CrossHairPosXTxtCtrl->Disable();
+	m_CrossHairPosYTxtCtrl->Disable();
 }
 
 void cMain::OnFirstStageChoice(wxCommandEvent& evt)
@@ -1750,7 +1809,9 @@ void cMain::OnCrossHairButton(wxCommandEvent& evt)
 		m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
 		m_VerticalToolBar->tool_bar->ToggleTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
 		m_IsCrossHairChecked = true;
-		//m_PreviewPanel->SetCrossHairButtonActive(true);
+		m_CamPreview->SetCrossHairButtonActive(true);
+		m_CrossHairPosXTxtCtrl->Enable();
+		m_CrossHairPosYTxtCtrl->Enable();
 	}
 	else
 	{
@@ -1913,6 +1974,7 @@ wxThread::ExitCode LiveCapturing::Entry()
 	if (m_CamPreviewWindow->GetImageSize() != m_ImageSize)
 		m_CamPreviewWindow->SetImageSize(m_ImageSize);
 	auto image_ptr = m_CamPreviewWindow->GetImagePtr();
+	auto short_data_ptr = m_CamPreviewWindow->GetDataPtr();
 
 	m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(false);
 
@@ -1920,7 +1982,7 @@ wxThread::ExitCode LiveCapturing::Entry()
 	{
 		if (m_XimeaCameraControl->IsCameraInitialized())
 		{
-			if (CaptureImage(image_ptr))
+			if (CaptureImage(short_data_ptr, image_ptr))
 				m_CamPreviewWindow->SetCameraCapturedImage();
 		}
 		else
@@ -1931,7 +1993,11 @@ wxThread::ExitCode LiveCapturing::Entry()
 	return (wxThread::ExitCode)0;
 }
 
-auto LiveCapturing::CaptureImage(wxImage* image_ptr) -> bool
+auto LiveCapturing::CaptureImage
+(
+	unsigned short* short_data_ptr, 
+	wxImage* image_ptr
+) -> bool
 {
 	unsigned char* data_ptr{};
 	if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
@@ -1951,6 +2017,7 @@ auto LiveCapturing::CaptureImage(wxImage* image_ptr) -> bool
 		for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
 		{
 			current_value = data_ptr[y * m_ImageSize.GetWidth() + x];
+			short_data_ptr[y * m_ImageSize.GetWidth() + x] = (int)current_value;
 			/* Matlab implementation of JetColormap */
 			CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
 			image_ptr->SetRGB(x, y, red, green, blue);

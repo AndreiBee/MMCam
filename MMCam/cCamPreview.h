@@ -14,6 +14,7 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "cPreviewTools.h"
 #include "XimeaControl.h"
 
 namespace CameraPreviewVariables
@@ -23,13 +24,32 @@ namespace CameraPreviewVariables
 		XIMEA_CAM,
 		MORAVIAN_INSTRUMENTS_CAM,
 	};
+
+	struct InputPreviewPanelArgs
+	{
+		wxTextCtrl* x_pos_crosshair{}, * y_pos_crosshair{};
+		InputPreviewPanelArgs() {};
+		InputPreviewPanelArgs
+		(
+			wxTextCtrl* par_x_pos_crosshair,
+			wxTextCtrl* par_y_pos_crosshair
+		) : x_pos_crosshair(par_x_pos_crosshair),
+			y_pos_crosshair(par_y_pos_crosshair) {};
+	};
 }
 
 class cCamPreview final : public wxPanel
 {
 public:
-	cCamPreview(wxFrame* parent_frame, wxSizer* parent_sizer);
+	cCamPreview
+	(
+		wxFrame* parent_frame, 
+		wxSizer* parent_sizer, 
+		std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> input_preview_panel_args
+	);
+	auto SetCrossHairButtonActive(bool activate = false) -> void;
 	auto SetImageSize(const wxSize& img_size) -> void;
+	auto GetDataPtr() const -> unsigned short*;
 	auto GetImagePtr() const -> wxImage*;
 	auto GetImageSize() const->wxSize;
 	auto SetXIMEAAsCurrentCamera() -> void;
@@ -67,18 +87,29 @@ private:
 	void ProcessPan(const wxRealPoint& point_, bool refresh_);
 	void FinishPan(bool refresh);
 
+	void CheckIfMouseAboveImage();
+	void CalculatePositionOnImage();
+
 	void OnPreviewMouseLeftPressed(wxMouseEvent& evt);
 	void OnPreviewMouseLeftReleased(wxMouseEvent& evt);
+
+	void ChangeCursorInDependenceOfCurrentParameters();
+
+	/* CrossHair */
+	void DrawCrossHair(wxGraphicsContext* graphics_context);
 
 private:
 	int m_Width{}, m_Height{};
 	bool m_IsGraphicsBitmapSet{}, m_IsImageSet{};
 	std::unique_ptr<wxGraphicsBitmap> m_GraphicsBitmapImage{};
+
 	std::shared_ptr<wxImage> m_Image{};
-	std::unique_ptr<unsigned char[]> m_ImageData{};
+	std::shared_ptr<unsigned short[]> m_ImageData{};
+	
 	wxSize m_ImageSize{}, m_ImageOnCanvasSize{}, m_CanvasSize{};
+	wxRealPoint m_NotCheckedCursorPosOnImage{}, m_CheckedCursorPosOnImage{}, m_CursorPosOnCanvas{};
 	wxRealPoint m_NotZoomedGraphicsBitmapOffset{}, m_StartDrawPos{};
-	wxRealPoint m_CursorPosOnCanvas{};
+	bool m_IsCursorInsideImage{};
 	/* Panning */
 	bool m_Panning{};
 	wxRealPoint m_PanOffset{}, m_PanStartPoint{}, m_PanDeltaPoints{};
@@ -90,6 +121,12 @@ private:
 	bool m_XimeaSelected{};
 
 	bool m_MoravianInstrumentsSelected{};
+
+	/* CrossHair Tool */
+	std::unique_ptr<CrossHairTool> m_CrossHairTool{};
+	bool m_ChangingCrossHairPosition{};
+
+	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};
 
 	DECLARE_EVENT_TABLE();
 };

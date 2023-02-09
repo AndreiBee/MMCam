@@ -146,6 +146,7 @@
     <ClInclude Include="cApp.h" />
     <ClInclude Include="cCamPreview.h" />
     <ClInclude Include="cMain.h" />
+    <ClInclude Include="cPreviewTools.h" />
     <ClInclude Include="cSettings.h" />
     <ClInclude Include="Motor.h" />
     <ClInclude Include="resource.h" />
@@ -155,6 +156,7 @@
     <ClCompile Include="cApp.cpp" />
     <ClCompile Include="cCamPreview.cpp" />
     <ClCompile Include="cMain.cpp" />
+    <ClCompile Include="cPreviewTools.cpp" />
     <ClCompile Include="cSettings.cpp" />
     <ClCompile Include="Motor.cpp" />
     <ClCompile Include="XimeaControl.cpp" />
