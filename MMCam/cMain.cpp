@@ -4,6 +4,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CLOSE(cMain::OnExit)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_FILE_QUIT, cMain::OnExit)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnSingleShotCameraImage)
+	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingMenu)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, cMain::OnCrossHairButton)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
@@ -50,6 +51,8 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, cMain::OnSecondStageChoice)
 	/* Start Capturing */
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT, cMain::OnStartCapturingButton)
+	/* Start\Stop Live Capturing */
+	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingTglBtn)
 	/* Progress */
 	EVT_THREAD(MainFrameVariables::ID_PROGRESS_CAPTURING, cMain::UpdateProgress)
 wxEND_EVENT_TABLE()
@@ -71,7 +74,9 @@ cMain::cMain(const wxString& title_)
 	wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS);
 	ProcessEvent(art_evt);
 
-	StartLiveCapturing();
+	m_StartStopLiveCapturingTglBtn->SetValue(true);
+	wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+	ProcessEvent(art_start_live_capturing);
 }
 
 auto cMain::StopLiveCapturing() -> bool
@@ -118,6 +123,7 @@ void cMain::CreateMenuBarOnFrame()
 	// Edit Menu
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, wxT("Single Shot\tS"));
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
+	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, wxT("Start Live\tL"));
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
@@ -932,8 +938,10 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 		}
 		first_row_sizer->Add(settings_static_box_sizer, 0, wxEXPAND | wxLEFT, 2);
 
-		/* Preview */
+		/* Preview And Start\Stop Live Capturing */
 		{
+			wxSizer* const ss_and_start_stop_box_sizer = new wxBoxSizer(wxVERTICAL);
+			
 			m_SingleShotBtn = std::make_unique<wxButton>(
 				right_side_panel,
 				MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN,
@@ -941,8 +949,18 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 				wxDefaultPosition, 
 				wxDefaultSize);
 			m_SingleShotBtn->Disable();
+			ss_and_start_stop_box_sizer->Add(m_SingleShotBtn.get(), 0, wxEXPAND);
+
+			m_StartStopLiveCapturingTglBtn = std::make_unique<wxToggleButton>
+				(
+					right_side_panel,
+					MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, 
+					wxT("Start Live (L)")
+				);
+			ss_and_start_stop_box_sizer->Add(m_StartStopLiveCapturingTglBtn.get(), 0, wxEXPAND | wxTOP, 5);
+
 			first_row_sizer->AddStretchSpacer();
-			first_row_sizer->Add(m_SingleShotBtn.get(), 0, wxALIGN_CENTER | wxRIGHT, 2);
+			first_row_sizer->Add(ss_and_start_stop_box_sizer, 0, wxALIGN_CENTER | wxRIGHT, 2);
 		}
 	}
 	cam_static_box_sizer->Add(first_row_sizer, 0, wxEXPAND);
@@ -1958,6 +1976,49 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 	}
 	m_StopLiveCapturing = false;
 	StartLiveCapturing();
+}
+
+void cMain::OnStartStopLiveCapturingMenu(wxCommandEvent& evt)
+{
+	if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))
+	{
+		m_StartStopLiveCapturingTglBtn->SetValue(true);
+	}
+	else
+	{
+		m_StartStopLiveCapturingTglBtn->SetValue(false);
+	}
+	wxCommandEvent art_start_live_pressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+	ProcessEvent(art_start_live_pressed);
+}
+
+void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
+{
+	if (m_StartStopLiveCapturingTglBtn->GetValue())
+	{
+		{
+			m_StopLiveCapturing = false;
+			StartLiveCapturing();
+		}
+
+		m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Stop Live (L)"));
+		if (!m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))
+			m_MenuBar->menu_edit->Check(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
+	}
+	else
+	{	
+		{
+			m_StopLiveCapturing = true;	
+			while (!m_LiveCapturingEndedDrawingOnCamPreview)
+			{
+				wxThread::This()->Sleep(10);
+			}
+		}	
+
+		m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Start Live (L)"));
+		if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))
+			m_MenuBar->menu_edit->Check(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
+	}
 }
 
 void cMain::OnXPosCrossHairTextCtrl(wxCommandEvent& evt)

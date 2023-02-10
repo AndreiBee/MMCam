@@ -83,6 +83,7 @@ namespace MainFrameVariables
 		ID_RIGHT_CAM_EXPOSURE_TE_CTL,
 		ID_RIGHT_CAM_MANUFACTURER_CHOICE,
 		ID_RIGHT_CAM_SINGLE_SHOT_BTN,
+		ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN,
 		ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL,
 		ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL,
 		/* Measurement */
@@ -289,6 +290,8 @@ private:
 	void ExposureValueChanged(wxCommandEvent& evt);
 	/* Start Capturing */
 	void OnStartCapturingButton(wxCommandEvent& evt);
+	void OnStartStopLiveCapturingMenu(wxCommandEvent& evt);
+	void OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt);
 	/* Progress */
 	void UpdateProgress(wxThreadEvent& evt);
 	bool Cancelled();
@@ -317,6 +320,7 @@ private:
 	wxArrayString m_ManufacturersArray{};
 	unsigned short m_CameraType{};
 	std::unique_ptr<wxButton> m_SingleShotBtn{};
+	std::unique_ptr<wxToggleButton> m_StartStopLiveCapturingTglBtn{};
 	std::unique_ptr<wxTextCtrl> m_CrossHairPosXTxtCtrl{}, m_CrossHairPosYTxtCtrl{};
 
 	/* Measurement */
@@ -340,7 +344,7 @@ private:
 
 	/* Live Capturing */
 	bool m_StopLiveCapturing{};
-	bool m_LiveCapturingEndedDrawingOnCamPreview{};
+	bool m_LiveCapturingEndedDrawingOnCamPreview{ true };
 
 	wxDECLARE_EVENT_TABLE();
 };
