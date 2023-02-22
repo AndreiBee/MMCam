@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\ext_lib">
+      <UniqueIdentifier>{8311a345-df65-4834-8a32-8a28e254ab9c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cApp.h">
@@ -38,6 +41,9 @@
     </ClInclude>
     <ClInclude Include="cPreviewTools.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>Header Files\ext_lib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

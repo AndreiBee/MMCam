@@ -12,6 +12,8 @@
 #include <memory>
 #include <chrono>
 
+#include "json.hpp"
+
 #include "cCamPreview.h"
 #include "cSettings.h"
 
@@ -300,6 +302,8 @@ private:
 
 	void OnXPosCrossHairTextCtrl(wxCommandEvent& evt);
 	void OnYPosCrossHairTextCtrl(wxCommandEvent& evt);
+
+	auto CreateMetadataFile() -> void;
 
 private:
 	/* Settings Menu */

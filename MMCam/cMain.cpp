@@ -1790,6 +1790,7 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 	}
 	{
 		m_StartCalculationTime = std::chrono::steady_clock::now();
+		CreateMetadataFile();
 		wxPoint start_point_progress_bar
 		{ 
 			this->GetPosition().x + this->GetSize().x - m_ProgressBar->GetSize().x, 
@@ -1946,6 +1947,127 @@ void cMain::UpdateProgress(wxThreadEvent& evt)
 		m_AppProgressIndicator->~wxAppProgressIndicator();
 		UpdateAllAxisGlobalPositions();
 		this->Enable();
+	}
+}
+
+auto cMain::CreateMetadataFile() -> void
+{
+	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
+		? wxString("0") 
+		: m_CamExposure->GetValue();
+	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
+
+	double det_x_pos{}, det_y_pos{}, det_z_pos{};
+	double opt_y_pos{};
+
+	{
+		/* Detector */
+		if (!m_X_Detector->absolute_text_ctrl->GetValue().ToDouble(&det_x_pos)) return;
+		if (!m_Y_Detector->absolute_text_ctrl->GetValue().ToDouble(&det_y_pos)) return;
+		if (!m_Z_Detector->absolute_text_ctrl->GetValue().ToDouble(&det_z_pos)) return;
+		/* Optics */
+		if (!m_Y_Optics->absolute_text_ctrl->GetValue().ToDouble(&opt_y_pos)) return;
+	}
+
+	std::string selected_axis{};
+	switch (m_FirstStage->stage->GetCurrentSelection() - 1)
+	{
+	/* Detector */
+	case 0:
+		selected_axis = std::string("detector_x");
+		break;
+	case 1:
+		selected_axis = std::string("detector_y");
+		break;
+	case 2:
+		selected_axis = std::string("detector_z");
+		break;
+	/* Optics */
+	case 3:
+		break;
+	case 4:
+		selected_axis = std::string("optics_y");
+		break;
+	case 5:
+		break;
+	default:
+		break;
+	}
+
+	double start_first_stage_value{}, step_first_stage_value{}, finish_first_stage_value{};
+	{
+		if (!m_FirstStage->start->GetValue().ToDouble(&start_first_stage_value)) return;
+		if (!m_FirstStage->step->GetValue().ToDouble(&step_first_stage_value)) return;
+		if (!m_FirstStage->finish->GetValue().ToDouble(&finish_first_stage_value)) return;
+	}
+	auto now = std::chrono::system_clock::now();
+	auto cur_time = std::chrono::system_clock::to_time_t(now);
+	std::string cur_date_and_time(30, '\0');
+	{
+		std::strftime(&cur_date_and_time[0], cur_date_and_time.size(), "%Y%m%d", std::localtime(&cur_time));
+		auto str_time = std::string(std::ctime(&cur_time)).substr(11, 8);
+		auto cur_hours = str_time.substr(0, 2);
+		auto cur_mins = str_time.substr(3, 2);
+		auto cur_secs = str_time.substr(6, 2);
+		
+		cur_date_and_time += std::string("_") + cur_hours + cur_mins + cur_secs;
+	}
+
+	nlohmann::json main_table{};
+	main_table = 
+	{
+		{"units", "mm"},
+		{"pos_source", 0.000},
+		{"pos_optics", 123.456},
+		{"pos_detector", 234.567},
+		{"first_stage", 
+			{
+				{"title", "optics"}, 
+				{"position", opt_y_pos}
+			}
+		},
+		{"second_stage", 
+			{
+				{"title", "detector_x"}, 
+				{"position", det_x_pos}
+			}
+		},
+		{"third_stage", 
+			{
+				{"title", "detector_y"}, 
+				{"position", det_y_pos}
+			}
+		},
+		{"fourth_stage", 
+			{
+				{"title", "detector_z"}, 
+				{"position", det_z_pos}
+			}
+		},
+		{"measurement", 
+			{
+				{"stage", selected_axis}, 
+				{"start", start_first_stage_value},
+				{"step", step_first_stage_value},
+				{"finish", finish_first_stage_value},
+				{"exposure", 
+					{
+						{"units", "us"}, 
+						{"time", exposure_time}, 
+						{"gain", 1}
+					}
+				},
+				{"date_time", cur_date_and_time}
+			}
+		}
+	};
+	
+	auto out_dir_with_filename = m_OutDirTextCtrl->GetValue() + wxString("\\metadata.json");
+	std::ofstream out_file(out_dir_with_filename.ToStdString());
+	if (out_file.is_open())
+	{
+		out_file << main_table;
+		out_file.close();
 	}
 }
 

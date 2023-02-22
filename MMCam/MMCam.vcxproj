@@ -148,6 +148,7 @@
     <ClInclude Include="cMain.h" />
     <ClInclude Include="cPreviewTools.h" />
     <ClInclude Include="cSettings.h" />
+    <ClInclude Include="json.hpp" />
     <ClInclude Include="Motor.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="XimeaControl.h" />
