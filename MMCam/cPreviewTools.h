@@ -80,6 +80,7 @@ public:
 	void SetCursorPosOnImage(const wxRealPoint& cursor_pos_on_image);
 	void SetXPosFromParent(const int& x_pos);
 	void SetYPosFromParent(const int& y_pos);
+	void ChangeStartPositionOfImage(const wxRealPoint& img_pos);
 	void CalculateCrossHairPositionOnCanvas();
 	void UpdateParentCrossHairTextCtrls();
 	wxStockCursor UpdateCursor(const wxStockCursor& current_cursor) override;

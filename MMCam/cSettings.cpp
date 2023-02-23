@@ -493,6 +493,7 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 		m_RefreshBtn = std::make_unique<wxButton>(motors_panel, wxID_ANY, wxT("Refresh"));
 
 		m_OkBtn = std::make_unique<wxButton>(motors_panel, wxID_ANY, wxT("OK"));
+		m_OkBtn->SetFocus();
 
 		m_CancelBtn = std::make_unique<wxButton>(motors_panel, wxID_ANY, wxT("Cancel"));
 

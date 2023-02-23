@@ -126,6 +126,7 @@ private:
 
 	/* CrossHair Tool */
 	std::unique_ptr<CrossHairTool> m_CrossHairTool{};
+	wxPoint m_CrossHairPos{};
 	bool m_ChangingCrossHairPosition{};
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};

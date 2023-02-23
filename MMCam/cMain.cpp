@@ -1789,8 +1789,8 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 		*/
 	}
 	{
-		m_StartCalculationTime = std::chrono::steady_clock::now();
 		CreateMetadataFile();
+		m_StartCalculationTime = std::chrono::steady_clock::now();
 		wxPoint start_point_progress_bar
 		{ 
 			this->GetPosition().x + this->GetSize().x - m_ProgressBar->GetSize().x, 
@@ -2002,10 +2002,12 @@ auto cMain::CreateMetadataFile() -> void
 	}
 	auto now = std::chrono::system_clock::now();
 	auto cur_time = std::chrono::system_clock::to_time_t(now);
-	std::string cur_date_and_time(30, '\0');
+	std::string cur_date_and_time{};
 	{
-		std::strftime(&cur_date_and_time[0], cur_date_and_time.size(), "%Y%m%d", std::localtime(&cur_time));
-		auto str_time = std::string(std::ctime(&cur_time)).substr(11, 8);
+		std::string cur_date(30, '\0');
+		std::strftime(&cur_date[0], cur_date.size(), "%Y%m%d", std::localtime(&cur_time));
+		cur_date_and_time = cur_date.substr(0, 8); 
+		auto str_time = std::string(std::ctime(&cur_time)).substr(11, 8); // Cut date in format: 20230223
 		auto cur_hours = str_time.substr(0, 2);
 		auto cur_mins = str_time.substr(3, 2);
 		auto cur_secs = str_time.substr(6, 2);
@@ -2059,7 +2061,8 @@ auto cMain::CreateMetadataFile() -> void
 				},
 				{"date_time", cur_date_and_time}
 			}
-		}
+		},
+		{"message", ""}
 	};
 	
 	auto out_dir_with_filename = m_OutDirTextCtrl->GetValue() + wxString("\\metadata.json");

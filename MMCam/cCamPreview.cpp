@@ -44,6 +44,7 @@ void cCamPreview::SetXCrossHairPosFromParentWindow(const int& x_pos)
 	int corrected_x_pos = x_pos - 1;
 	if (corrected_x_pos >= 0 && corrected_x_pos < m_ImageSize.GetWidth())
 	{
+		m_CrossHairPos.x = corrected_x_pos;
 		m_CrossHairTool->SetXPosFromParent(corrected_x_pos);
 		Refresh();
 	}
@@ -54,6 +55,7 @@ void cCamPreview::SetYCrossHairPosFromParentWindow(const int& y_pos)
 	int corrected_y_pos = y_pos - 1;
 	if (corrected_y_pos >= 0 && corrected_y_pos < m_ImageSize.GetHeight())
 	{
+		m_CrossHairPos.y = corrected_y_pos;
 		m_CrossHairTool->SetYPosFromParent(corrected_y_pos);
 		Refresh();
 	}
@@ -282,6 +284,11 @@ void cCamPreview::OnMouseMoved(wxMouseEvent& evt)
 		if (m_Panning)
 		{
 			ProcessPan(m_CursorPosOnCanvas, true);
+			m_CrossHairTool->SetImageStartDrawPos(wxRealPoint
+			(
+				m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage,
+				m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage
+			));
 		}
 	}
 }
@@ -398,7 +405,7 @@ void cCamPreview::CalculatePositionOnImage()
 
 void cCamPreview::OnPreviewMouseLeftPressed(wxMouseEvent& evt)
 {
-	if (m_Zoom > 1.0 && m_IsCursorInsideImage)
+	if (m_Zoom > 1.0 && m_IsCursorInsideImage && m_CrossHairTool->CanProcessPanning())
 	{
 		m_Panning = true;
 		m_PanStartPoint = m_CursorPosOnCanvas;

@@ -121,16 +121,17 @@ void CrossHairTool::SetXPosFromParent(const int& x_pos)
 {
 	m_CrossHairOnImage.x = x_pos;
 	CalculateCrossHairPositionOnCanvas();
-	//UpdateParentCrossHairTextCtrls();
-	//UpdateParentCrossHairTextCtrlsWithRefresh();
 }
 
 void CrossHairTool::SetYPosFromParent(const int& y_pos)
 {
 	m_CrossHairOnImage.y = y_pos;
 	CalculateCrossHairPositionOnCanvas();
-	//UpdateParentCrossHairTextCtrls();
-	//UpdateParentCrossHairTextCtrlsWithRefresh();
+}
+
+void CrossHairTool::ChangeStartPositionOfImage(const wxRealPoint& img_pos)
+{
+	SetImageStartDrawPos(img_pos);
 }
 
 void CrossHairTool::CheckIfMouseAboveCrossHair()
