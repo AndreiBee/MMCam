@@ -39,6 +39,11 @@ auto cCamPreview::SetCrossHairButtonActive(bool activate) -> void
 	Refresh();
 }
 
+auto cCamPreview::SetValueDisplayingActive(bool activate) -> void
+{
+	m_DisplayPixelValues = activate;
+}
+
 void cCamPreview::SetXCrossHairPosFromParentWindow(const int& x_pos)
 {
 	int corrected_x_pos = x_pos - 1;
@@ -120,7 +125,7 @@ void cCamPreview::SetCameraCapturedImage()
 
 	/* CrossHair*/
 	{
-		m_CrossHairTool->SetImageDataType(ToolsVariables::DATA_U8);
+		m_CrossHairTool->SetImageDataType(ToolsVariables::DATA_U12);
 		m_CrossHairTool->SetImageDimensions(m_ImageSize);
 		m_CrossHairTool->SetZoomOfOriginalSizeImage(m_ZoomOnOriginalSizeImage);
 		m_CrossHairTool->UpdateZoomValue(m_Zoom);
@@ -478,6 +483,8 @@ void cCamPreview::DrawCrossHair(wxGraphicsContext* graphics_context)
 {
 	graphics_context->SetPen(*wxRED_PEN);
 	m_CrossHairTool->DrawCrossHair(graphics_context, m_ImageData.get());
+	if (m_DisplayPixelValues)
+		m_CrossHairTool->DrawPixelValues(graphics_context, m_ImageData.get());
 }
 
 void cCamPreview::InitDefaultComponents()
@@ -576,6 +583,7 @@ void cCamPreview::ChangeSizeOfImageInDependenceOnCanvasSize()
 		m_ZoomOnOriginalSizeImage *= 2.0;
 	}
 	m_ImageOnCanvasSize.Set(current_image_size.GetWidth(), current_image_size.GetHeight());
+	m_CrossHairTool->SetImageOnCanvasSize(current_image_size);
 	m_NotZoomedGraphicsBitmapOffset.x = (canvas_size.GetWidth() - m_ImageOnCanvasSize.GetWidth()) / 2;
 	m_NotZoomedGraphicsBitmapOffset.y = (canvas_size.GetHeight() - m_ImageOnCanvasSize.GetHeight()) / 2;
 	m_NotZoomedGraphicsBitmapOffset.x *= m_ZoomOnOriginalSizeImage / m_Zoom;

@@ -31,6 +31,7 @@ namespace MainFrameVariables
 		ID_MENUBAR_FILE_QUIT,
 		ID_MENUBAR_EDIT_SETTINGS,
 		ID_MENUBAR_TOOLS_CROSSHAIR,
+		ID_MENUBAR_TOOLS_VALUE_DISPLAYING,
 		ID_MENUBAR_WINDOW_FULLSCREEN,
 		ID_MENUBAR_HELP_ABOUT,
 		/* Detector X */
@@ -247,6 +248,7 @@ private:
 	void EnableUsedAndDisableNonUsedMotors();
 
 	void OnCrossHairButton(wxCommandEvent& evt);
+	void OnValueDisplayingCheck(wxCommandEvent& evt);
 
 	void OnFullScreen(wxCommandEvent& evt);
 	void OnMaximizeButton(wxMaximizeEvent& evt);
@@ -345,6 +347,9 @@ private:
 
 	/* CrossHair */
 	bool m_IsCrossHairChecked{};
+
+	/* Value Displaying */
+	bool m_IsValueDisplayingChecked{};
 
 	/* Live Capturing */
 	bool m_StopLiveCapturing{};

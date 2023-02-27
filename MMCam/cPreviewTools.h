@@ -29,6 +29,7 @@ namespace ToolsVariables
 	enum DataTypes
 	{
 		DATA_U8 = 0,
+		DATA_U12 = 1,
 		DATA_U16 = 2,
 	};
 }
@@ -45,6 +46,7 @@ public:
 	void MouseHoverOverImage(bool moi = false);
 	virtual void UpdateZoomValue(const double& zoom);
 	void SetImageStartDrawPos(const wxRealPoint& start_draw_pos);
+	void SetImageOnCanvasSize(const wxSize& img_size);
 	void SetZoomOfOriginalSizeImage(const double& original_size_image_zoom);
 	virtual wxStockCursor UpdateCursor(const wxStockCursor& current_cursor) = 0;
 	virtual ~Tool() = default;
@@ -56,6 +58,7 @@ protected:
 	bool m_MouseHoverOverImage{};
 	wxRealPoint m_ImageStartDraw{};
 	wxRealPoint m_CursorOnCanvas{};
+	wxSize m_ImageOnCanvasSize{};
 
 	int m_DataType{};
 };
@@ -76,6 +79,7 @@ public:
 	CrossHairTool(wxTextCtrl* parent_x_pos, wxTextCtrl* parent_y_pos);
 	void UpdateZoomValue(const double& zoom) override;
 	void ActivateToolButton(bool vertical_line = false, bool horizontal_line = false);
+	void ActivateValueDisplaying(bool activate = false);
 	void SetCursorPosOnCanvas(const wxRealPoint& cursor_pos_on_canvas);
 	void SetCursorPosOnImage(const wxRealPoint& cursor_pos_on_image);
 	void SetXPosFromParent(const int& x_pos);
@@ -104,6 +108,8 @@ private:
 	void DrawDataOnVerticalLine(wxGraphicsContext* gc, uint16_t* data_, const int& curve_x_offset, const int& max_width, const uint16_t& max_value);
 	void UpdateParentCrossHairTextCtrlsWithRefresh();
 
+	auto CheckIfPixelValueIsInsideTheImage(const int& x, const int& y) -> bool;
+
 private:
 	wxTextCtrl* m_ParentXPosTextCtrl{}, *m_ParentYPosTextCtrl{};
 	wxRealPoint m_CursorOnImage{};
@@ -113,7 +119,7 @@ private:
 	bool m_ChangingHorizontalLine{}, m_ChangingVerticalLine{};
 	bool m_ShowHorizontalLine{}, m_ShowDataOnHorizontalLine{};
 	bool m_ShowVerticalLine{}, m_ShowDataOnVerticalLine{};
-	wxSize m_ImageOnCanvasSize{}, m_ActualZoomedSizeOfImageOnCanvas{};
+	wxSize m_ActualZoomedSizeOfImageOnCanvas{};
 
 	wxSize m_CrosshairRectangle{ 6, 6 };
 	int m_TextCtrlPixelOffset{ 1 };

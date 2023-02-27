@@ -7,6 +7,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingMenu)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, cMain::OnCrossHairButton)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, cMain::OnValueDisplayingCheck)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
 	EVT_MAXIMIZE(cMain::OnMaximizeButton)
 	/* Detector X */
@@ -132,9 +133,10 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->submenu_intensity_profile->AppendCheckItem(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, wxT("Crosshair\tC"));
 	// Append Submenu Selection Tools to the Tools Menu
 	m_MenuBar->menu_tools->Append(wxID_ANY, wxT("&Intensity Profile"), m_MenuBar->submenu_intensity_profile);
+	// Append Value Displaying Check
+	m_MenuBar->menu_tools->Append(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, wxT("Value Displaying\tV"), wxEmptyString, wxITEM_CHECK);
 	// Append Tools Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_tools, wxT("&Tools"));
-	
 	// Window Menu
 	m_MenuBar->menu_window->Append(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, wxT("Full screen mode\tF11"), wxEmptyString, wxITEM_CHECK);
 	// Append Window Menu to the Menu Bar
@@ -147,6 +149,10 @@ void cMain::CreateMenuBarOnFrame()
 
 void cMain::InitDefaultStateWidgets()
 {
+	m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, true);
+	m_CamPreview->SetValueDisplayingActive(true);
+	m_IsValueDisplayingChecked = true;
+
 	float default_absolute_value{ 0.0f }, default_relative_value{ 1.0f };
 	/* Disabling Detector Widgets */
 	{
@@ -2078,6 +2084,12 @@ bool cMain::Cancelled()
 {
 	wxCriticalSectionLocker lock(m_CSCancelled);
 	return m_Cancelled;
+}
+
+void cMain::OnValueDisplayingCheck(wxCommandEvent& evt)
+{
+	m_IsValueDisplayingChecked = m_MenuBar->menu_tools->IsChecked(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING);
+	m_CamPreview->SetValueDisplayingActive(m_IsValueDisplayingChecked);
 }
 
 void cMain::UpdateAllAxisGlobalPositions()

@@ -48,6 +48,7 @@ public:
 		std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> input_preview_panel_args
 	);
 	auto SetCrossHairButtonActive(bool activate = false) -> void;
+	auto SetValueDisplayingActive(bool activate = false) -> void;
 	void SetXCrossHairPosFromParentWindow(const int& x_pos);
 	void SetYCrossHairPosFromParentWindow(const int& y_pos);
 	auto SetImageSize(const wxSize& img_size) -> void;
@@ -141,6 +142,8 @@ private:
 	std::unique_ptr<CrossHairTool> m_CrossHairTool{};
 	wxPoint m_CrossHairPos{};
 	bool m_ChangingCrossHairPosition{};
+
+	bool m_DisplayPixelValues{};
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};
 

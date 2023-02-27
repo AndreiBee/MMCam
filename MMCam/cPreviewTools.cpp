@@ -45,6 +45,11 @@ void Tool::SetImageStartDrawPos(const wxRealPoint& start_draw_pos)
 	m_ImageStartDraw = start_draw_pos;
 }
 
+void Tool::SetImageOnCanvasSize(const wxSize& img_size)
+{
+	m_ImageOnCanvasSize = img_size;
+}
+
 void Tool::SetZoomOfOriginalSizeImage(const double& original_size_image_zoom)
 {
 	m_ZoomOriginalSizeImage = original_size_image_zoom;
@@ -104,6 +109,10 @@ void CrossHairTool::ActivateToolButton(bool vertical_line, bool horizontal_line)
 	m_ShowVerticalLine = m_ShowDataOnVerticalLine = vertical_line;
 	m_HorizontalLineProfileActive = m_ShowDataOnHorizontalLine = horizontal_line;
 	m_ShowHorizontalLine = horizontal_line;
+}
+
+void CrossHairTool::ActivateValueDisplaying(bool activate)
+{
 }
 
 void CrossHairTool::SetCursorPosOnCanvas(const wxRealPoint& cursor_pos_on_canvas)
@@ -233,16 +242,53 @@ void CrossHairTool::DrawCrossHair(wxGraphicsContext* graphics_context_, unsigned
 
 void CrossHairTool::DrawPixelValues(wxGraphicsContext* graphics_context_, unsigned short* data_)
 {
-	if (m_ActualHalfPixelSize.x < 64.0 || m_ActualHalfPixelSize.y < 64.0) return;
+	if (m_ActualHalfPixelSize.x < 32.0 || m_ActualHalfPixelSize.y < 32.0) return;
 
-	wxGraphicsPath path = graphics_context_->CreatePath();	
+	// Setting up the current font
+	wxColour fontColour(0, 77, 53, 200);
+	wxFont font = wxFont(10, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+	graphics_context_->SetFont(font, fontColour);
 
+	wxRealPoint drawPoint{};
+	wxSize window_disp_size
+	{ 
+		(int)(m_ImageSize.GetWidth() / m_Zoom * m_ZoomOriginalSizeImage),
+		(int)(m_ImageSize.GetHeight() / m_Zoom * m_ZoomOriginalSizeImage)
+	};
+
+	wxDouble widthText{}, heightText{};
+	wxString curr_value{};
+	wxPoint left_upper_pixel{};
 	/* Calculation of currently displayed window */
 	{
+		/* Checking X */
+		if (m_ImageStartDraw.x >= 0)
+			left_upper_pixel.x = 0;
+		else
+			left_upper_pixel.x = floor(fabs(m_ImageStartDraw.x / (m_ActualHalfPixelSize.x * 2.0)));
 
+		/* Checking Y */
+		if (m_ImageStartDraw.y >= 0)
+			left_upper_pixel.y = 0;
+		else
+			left_upper_pixel.y = floor(fabs(m_ImageStartDraw.y / (m_ActualHalfPixelSize.y * 2.0)));
+
+		/* Actual drawing */
+		for (auto y{ left_upper_pixel.y }; y < left_upper_pixel.y + window_disp_size.GetHeight() + 1; ++y)
+		{
+			for (auto x{ left_upper_pixel.x }; x < left_upper_pixel.x + window_disp_size.GetWidth() + 1; ++x)
+			{
+				if (!CheckIfPixelValueIsInsideTheImage(x, y)) continue;
+				curr_value = wxString::Format(wxT("%i"), data_[y * m_ImageSize.GetWidth() + x]);
+				graphics_context_->GetTextExtent(curr_value, &widthText, &heightText);
+				drawPoint.x = m_ImageStartDraw.x + x * m_ActualHalfPixelSize.x * 2.0;
+				drawPoint.x += m_ActualHalfPixelSize.x - widthText / 2.0;
+				drawPoint.y = m_ImageStartDraw.y + y * m_ActualHalfPixelSize.y * 2.0;
+				drawPoint.y += m_ActualHalfPixelSize.y - heightText / 2.0;
+				graphics_context_->DrawText(curr_value, drawPoint.x, drawPoint.y);
+			}
+		}
 	}
-
-	graphics_context_->StrokePath(path);
 }
 
 bool CrossHairTool::PositionCanBeChanged() const
@@ -304,7 +350,7 @@ void CrossHairTool::DrawData(wxGraphicsContext* graphics_context, uint16_t* data
 	int offset_from_line{ 5 }; // start draw data curve above horizontal line from this value
 	int data_preview_height{ (int)(m_ImageSize.GetHeight() / m_ZoomOriginalSizeImage * 0.2) }, data_preview_width{ data_preview_height }; // equal to max of uint16_t 65'535
 	//uint16_t max_uint16_t{ 65535 };
-	uint16_t max_value = m_DataType == ToolsVariables::DATA_U8 ? 255 : 65535;
+	uint16_t max_value = m_DataType == ToolsVariables::DATA_U12 ? 4095 : 65535;
 
 	if (m_ShowDataOnVerticalLine)
 	{
@@ -344,7 +390,6 @@ void CrossHairTool::DrawDataOnHorizontalLine(wxGraphicsContext* gc, uint16_t* da
 
 	gc->SetPen(*wxGREEN_PEN);
 	gc->DrawPath(path);
-
 }
 
 void CrossHairTool::DrawDataOnVerticalLine(wxGraphicsContext* gc, uint16_t* data_, const int& curve_x_offset, const int& max_width, const uint16_t& max_value)
@@ -382,6 +427,13 @@ void CrossHairTool::UpdateParentCrossHairTextCtrlsWithRefresh()
 	/* Here should be SetValue to initiate Refresh() from parent window */
 	m_ParentXPosTextCtrl->SetValue(wxString::Format(wxT("%i"), (int)(m_CrossHairOnImage.x + m_TextCtrlPixelOffset)));
 	m_ParentYPosTextCtrl->SetValue(wxString::Format(wxT("%i"), (int)(m_CrossHairOnImage.y + m_TextCtrlPixelOffset)));
+}
+
+auto CrossHairTool::CheckIfPixelValueIsInsideTheImage(const int& x, const int& y) -> bool
+{
+	if (x < 0 || x >= m_ImageSize.GetWidth()) return false;
+	if (y < 0 || y >= m_ImageSize.GetHeight()) return false;
+	return true;
 }
 
 void CrossHairTool::LoopChangingCrossHairPos()
