@@ -1775,17 +1775,19 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 		/* Checking Start, Step and Finish values */
 		{
 			if (!m_FirstStage->start->GetValue().ToDouble(&start_first_stage_value)) return;
-			first_axis->start = (float)start_first_stage_value;
+			first_axis->start = (int)(start_first_stage_value * 1000.0) / 1000.f;
 			if (!m_FirstStage->step->GetValue().ToDouble(&step_first_stage_value)) return;
-			first_axis->step = (float)step_first_stage_value;
+			first_axis->step = (int)(step_first_stage_value * 1000.0) / 1000.f;
 			if (!m_FirstStage->finish->GetValue().ToDouble(&finish_first_stage_value)) return;
-			first_axis->finish = (float)finish_first_stage_value;
+			first_axis->finish = (int)(finish_first_stage_value * 1000.0) / 1000.f;
 			if (
 				(finish_first_stage_value - start_first_stage_value < 0.0 && step_first_stage_value > 0.0)
 				|| (finish_first_stage_value - start_first_stage_value > 0.0 && step_first_stage_value < 0.0)
 				) 
 				raise_exception_msg("first");
-			first_axis->step_number = (finish_first_stage_value - start_first_stage_value) / step_first_stage_value + 1;
+			first_axis->step_number = ((int)(finish_first_stage_value * 1000.0) - 
+				(int)(start_first_stage_value * 1000.0)) / 
+				(int)(step_first_stage_value * 1000.0) + 1;
 		}
 		/* Checking second stage */
 		if (m_SecondStage->stage->GetCurrentSelection() - 1 == first_axis->axis_number) return;
@@ -2388,27 +2390,30 @@ wxThread::ExitCode WorkerThread::Entry()
 		ximea_control = std::make_unique<XimeaControl>(m_ExposureTimeUS);
 	}
 
+	float first_axis_rounded_go_to{};
 	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
 	{
 		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
+		/* Here we need to round values, for the correct positioning of motors */
+		first_axis_rounded_go_to = (int)((m_FirstAxis->start + i * m_FirstAxis->step) * 1000.f + .5f) / 1000.f;
 		switch (m_FirstAxis->axis_number)
 		{
 		/* Detector */
 		case 0:
-			first_axis_position = m_Settings->GoToAbsDetectorX(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsDetectorX(first_axis_rounded_go_to);
 			break;
 		case 1:
-			first_axis_position = m_Settings->GoToAbsDetectorY(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsDetectorY(first_axis_rounded_go_to);
 			break;
 		case 2:
-			first_axis_position = m_Settings->GoToAbsDetectorZ(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsDetectorZ(first_axis_rounded_go_to);
 			break;
 		/* Optics */
 		case 3:
 			break;
 		case 4:
-			first_axis_position = m_Settings->GoToAbsOpticsY(m_FirstAxis->start + i * m_FirstAxis->step);
+			first_axis_position = m_Settings->GoToAbsOpticsY(first_axis_rounded_go_to);
 			break;
 		case 5:
 			break;
@@ -2495,7 +2500,6 @@ auto WorkerThread::CaptureAndSaveImage
 			data_ptr, 
 			cv::Mat::AUTO_STEP
 		);
-
 		std::string first_axis_position_str = std::format("{:.3f}", first_stage_position);
 		std::replace(first_axis_position_str.begin(), first_axis_position_str.end(), '.', '_');
 

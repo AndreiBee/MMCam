@@ -21,6 +21,7 @@
 *.xml
 *.png
 *.mat
+*.json
 
 # Mono auto generated files
 mono_crash.*
