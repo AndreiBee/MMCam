@@ -231,6 +231,20 @@ void CrossHairTool::DrawCrossHair(wxGraphicsContext* graphics_context_, unsigned
 	DrawData(graphics_context_, data_);
 }
 
+void CrossHairTool::DrawPixelValues(wxGraphicsContext* graphics_context_, unsigned short* data_)
+{
+	if (m_ActualHalfPixelSize.x < 64.0 || m_ActualHalfPixelSize.y < 64.0) return;
+
+	wxGraphicsPath path = graphics_context_->CreatePath();	
+
+	/* Calculation of currently displayed window */
+	{
+
+	}
+
+	graphics_context_->StrokePath(path);
+}
+
 bool CrossHairTool::PositionCanBeChanged() const
 {
 	return (m_ShowHorizontalLine && m_CursorAboveHorizontalLine) || (m_ShowVerticalLine && m_CursorAboveVerticalLine);

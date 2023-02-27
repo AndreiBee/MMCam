@@ -68,7 +68,20 @@ public:
 		const float& first_axis_position, 
 		const float& second_axis_position = 0.f
 	);
-	void CalculateMatlabJetColormapPixelRGB8bit(const unsigned char& value, unsigned char& r, unsigned char& g, unsigned char& b);
+	void CalculateMatlabJetColormapPixelRGB8bit
+	(
+		const unsigned char& value, 
+		unsigned char& r, 
+		unsigned char& g, 
+		unsigned char& b
+	);
+	void CalculateMatlabJetColormapPixelRGB12bit
+	(
+		const unsigned short& value, 
+		unsigned char& r, 
+		unsigned char& g, 
+		unsigned char& b
+	);
 
 private:
 	void InitDefaultComponents();

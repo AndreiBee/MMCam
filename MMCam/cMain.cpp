@@ -1302,14 +1302,14 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 		{
 			auto ximea_control = std::make_unique<XimeaControl>(exposure_time);
 			auto image_size = wxSize{ (int)ximea_control->GetImageWidth(), (int)ximea_control->GetImageHeight() };
-			unsigned char* data_ptr{};
+			unsigned short* data_ptr{};
 			data_ptr = ximea_control->GetImage();
 			if (!data_ptr) return;
 
 			cv::Mat cv_img
 			(
 				cv::Size(image_size.GetWidth(), image_size.GetHeight()),
-				CV_8UC1, 
+				CV_16U, 
 				data_ptr, 
 				cv::Mat::AUTO_STEP
 			);
@@ -2284,7 +2284,7 @@ auto LiveCapturing::CaptureImage
 	wxImage* image_ptr
 ) -> bool
 {
-	unsigned char* data_ptr{};
+	unsigned short* data_ptr{};
 	if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
 	{
 		data_ptr = m_XimeaCameraControl->GetImage();
@@ -2294,17 +2294,17 @@ auto LiveCapturing::CaptureImage
 
 	if (!data_ptr) return false;
 
-	unsigned char current_value{};
-	uint16_t max_uint16_t{ 65535 }, half_max_uint16_t{ 32768 }, max_char_uint16_t{ 256 };
-	unsigned char red{}, green{}, blue{}, range{ 128 };
+	unsigned short current_value{};
+	unsigned char red{}, green{}, blue{};
 	for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
 	{
 		for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
 		{
 			current_value = data_ptr[y * m_ImageSize.GetWidth() + x];
-			short_data_ptr[y * m_ImageSize.GetWidth() + x] = (int)current_value;
+			short_data_ptr[y * m_ImageSize.GetWidth() + x] = current_value;
 			/* Matlab implementation of JetColormap */
-			m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
+			/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
+			m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
 			image_ptr->SetRGB(x, y, red, green, blue);
 		}
 	}
@@ -2470,7 +2470,7 @@ auto WorkerThread::CaptureAndSaveImage
 ) -> bool
 {
 	auto image_size = wxSize{ (int)camera_pointer->GetImageWidth(), (int)camera_pointer->GetImageHeight() };
-	unsigned char* data_ptr{};
+	unsigned short* data_ptr{};
 	data_ptr = camera_pointer->GetImage();
 	if (!data_ptr) return false;
 
@@ -2479,7 +2479,7 @@ auto WorkerThread::CaptureAndSaveImage
 		cv::Mat cv_img
 		(
 			cv::Size(image_size.GetWidth(), image_size.GetHeight()),
-			CV_8UC1, 
+			CV_16U, 
 			data_ptr, 
 			cv::Mat::AUTO_STEP
 		);
@@ -2507,17 +2507,17 @@ auto WorkerThread::CaptureAndSaveImage
 
 	/* Update Values in CamPreview Panel */
 	{
-		unsigned char current_value{};
-		uint16_t max_uint16_t{ 65535 }, half_max_uint16_t{ 32768 }, max_char_uint16_t{ 256 };
-		unsigned char red{}, green{}, blue{}, range{ 128 };
+		unsigned short current_value{};
+		unsigned char red{}, green{}, blue{};
 		for (auto y{ 0 }; y < image_size.GetHeight(); ++y)
 		{
 			for (auto x{ 0 }; x < image_size.GetWidth(); ++x)
 			{
 				current_value = data_ptr[y * image_size.GetWidth() + x];
-				short_data_ptr[y * image_size.GetWidth() + x] = (int)current_value;
+				short_data_ptr[y * image_size.GetWidth() + x] = current_value;
 				/* Matlab implementation of JetColormap */
-				m_CameraPreview->CalculateMatlabJetColormapPixelRGB8bit(current_value, red, green, blue);
+				/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
+				m_CameraPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
 				image_ptr->SetRGB(x, y, red, green, blue);
 			}
 		}

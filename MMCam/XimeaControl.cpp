@@ -23,10 +23,14 @@ auto XimeaControl::InitializeCamera() -> bool
 	m_State = xiOpenDevice(0, &m_CamHandler);
 	m_IsCameraOpen = m_State == XI_OK ? true : false;
 
+	/* Set the data format to 12-bit */
+	int format = XI_RAW16;
+	m_State = xiSetParamInt(m_CamHandler, XI_PRM_IMAGE_DATA_FORMAT, format);
+
 	return m_State == XI_OK ? true : false;
 }
 
-auto XimeaControl::GetImage(const int exposure_us) -> unsigned char*
+auto XimeaControl::GetImage(const int exposure_us) -> unsigned short*
 {
 	if (!m_CamHandler || !m_IsCameraOpen) return nullptr;
 
@@ -38,7 +42,7 @@ auto XimeaControl::GetImage(const int exposure_us) -> unsigned char*
 	if (m_State != XI_OK) return nullptr;
 	if (xiStopAcquisition(m_CamHandler) != XI_OK) return nullptr;
 
-	return (unsigned char*)m_Image.bp;
+	return (unsigned short*)m_Image.bp;
 }
 
 auto XimeaControl::GetImageWidth() const -> unsigned long

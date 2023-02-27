@@ -226,6 +226,48 @@ void cCamPreview::CalculateMatlabJetColormapPixelRGB8bit
 	}
 }
 
+void cCamPreview::CalculateMatlabJetColormapPixelRGB12bit(const unsigned short& value, unsigned char& r, unsigned char& g, unsigned char& b)
+{
+	unsigned short x0_12bit{ 498 }, x1_12bit{ 1526 }, x2_12bit{ 2553 }, x3_12bit{ 3581 }, x4_12bit{ 4095 };
+	if (value < x0_12bit)
+	{
+		r = 0;
+		g = 0;
+		b = 255 * 0.51563f + (float)value * (255.0f - 255 * 0.51563f) / (float)x0_12bit;
+	}
+	else if (value >= x0_12bit && value <= x1_12bit)
+	{
+		r = 0;
+		g = (float)(value - x0_12bit) * 255.0f / (float)(x1_12bit - x0_12bit);
+		b = 255;
+	}
+	else if (value > x1_12bit && value < x2_12bit)
+	{
+		r = (float)(value - x1_12bit) * 255.0f / (float)(x2_12bit - x1_12bit);
+		g = 255;
+		b = (float)(x2_12bit - value) * 255.0f / (float)(x2_12bit - x1_12bit);
+	}
+	else if (value >= x2_12bit && value <= x3_12bit)
+	{
+		r = 255;
+		g = (float)(x3_12bit - value) * 255.0f / (float)(x3_12bit - x2_12bit);
+		b = 0;
+	}
+	else if (value > x3_12bit && value < x4_12bit)
+	{
+		r = 255.0f * 0.5f + (float)(x4_12bit - value) * (255.0f - 255.0f * 0.5f) / (float)(x4_12bit - x3_12bit);
+		g = 0;
+		b = 0;
+	}
+	else if (value == x4_12bit)
+	{
+		// Saturation (white)
+		r = 255.f;
+		g = 255.f;
+		b = 255.f;
+	}
+}
+
 void cCamPreview::CalculateMatlabJetColormapPixelRGB16bit
 (
 	const uint16_t& value, 
