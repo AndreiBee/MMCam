@@ -1265,6 +1265,19 @@ void cMain::CreateProgressBar()
 
 void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 {
+	constexpr auto raise_exception_msg = []() 
+	{
+		wxString title = "Single shot error";
+		wxMessageBox(
+			wxT
+			(
+				"Current camera can't make a single shot."
+				"\nPlease, check if the camera is connected properly and restart the program."
+			),
+			title,
+			wxICON_ERROR);
+	};
+
 	wxBusyCursor busy_cursor{};
 	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
 		? wxString("0") 
@@ -1301,6 +1314,7 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 		/* Moravian Instruments */
 		if (m_CameraType == CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM)
 		{
+			raise_exception_msg();
 			return;
 		}
 		/* XIMEA */
@@ -1310,7 +1324,11 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 			auto image_size = wxSize{ (int)ximea_control->GetImageWidth(), (int)ximea_control->GetImageHeight() };
 			unsigned short* data_ptr{};
 			data_ptr = ximea_control->GetImage();
-			if (!data_ptr) return;
+			if (!data_ptr)
+			{
+				raise_exception_msg();
+				return;
+			}
 
 			cv::Mat cv_img
 			(
@@ -2010,6 +2028,7 @@ auto cMain::CreateMetadataFile() -> void
 	}
 	auto now = std::chrono::system_clock::now();
 	auto cur_time = std::chrono::system_clock::to_time_t(now);
+	std::string time_metadata_filename{};
 	std::string cur_date_and_time{};
 	{
 		std::string cur_date(30, '\0');
@@ -2019,7 +2038,7 @@ auto cMain::CreateMetadataFile() -> void
 		auto cur_hours = str_time.substr(0, 2);
 		auto cur_mins = str_time.substr(3, 2);
 		auto cur_secs = str_time.substr(6, 2);
-		
+		time_metadata_filename = cur_hours + std::string("H_") + cur_mins + std::string("M_") + cur_secs + std::string("S");
 		cur_date_and_time += std::string("_") + cur_hours + cur_mins + cur_secs;
 	}
 
@@ -2073,7 +2092,11 @@ auto cMain::CreateMetadataFile() -> void
 		{"message", ""}
 	};
 	
-	auto out_dir_with_filename = m_OutDirTextCtrl->GetValue() + wxString("\\metadata.json");
+	auto out_dir_with_filename = 
+		m_OutDirTextCtrl->GetValue() + 
+		wxString("\\metadata_") + 
+		wxString(time_metadata_filename) + 
+		wxString(".json");
 	std::ofstream out_file(out_dir_with_filename.ToStdString());
 	if (out_file.is_open())
 	{
@@ -2262,6 +2285,25 @@ LiveCapturing::LiveCapturing
 
 wxThread::ExitCode LiveCapturing::Entry()
 {
+	constexpr auto raise_exception_msg = []() 
+	{
+		wxString title = "Camera capturing error";
+		wxMessageBox(
+			wxT
+			(
+				"Current camera can't capture an image."
+				"\nPlease, check if the camera is connected properly and restart the program."
+			),
+			title,
+			wxICON_ERROR);
+	};
+	auto exit_thread = [&]()
+	{
+		m_XimeaCameraControl.release();
+		m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(true);
+		return (wxThread::ExitCode)0;
+	};
+
 	if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
 	{
 		m_XimeaCameraControl = std::make_unique<XimeaControl>(m_ExposureUS);
@@ -2283,13 +2325,16 @@ wxThread::ExitCode LiveCapturing::Entry()
 		{
 			if (CaptureImage(short_data_ptr, image_ptr))
 				m_CamPreviewWindow->SetCameraCapturedImage();
+			else
+			{
+				raise_exception_msg();
+				exit_thread();
+			}
 		}
 		else
 			wxThread::This()->Sleep(500);
 	}
-	m_XimeaCameraControl.release();
-	m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(true);
-	return (wxThread::ExitCode)0;
+	exit_thread();
 }
 
 auto LiveCapturing::CaptureImage
@@ -2368,6 +2413,26 @@ WorkerThread::~WorkerThread()
 
 wxThread::ExitCode WorkerThread::Entry()
 {
+	constexpr auto raise_exception_msg = [](wxString camera_name) 
+	{
+		wxString title = "Camera capturing error";
+		wxMessageBox(
+			wxT
+			(
+				"The " + camera_name + " camera can't capture an image."
+				"\nPlease, check if the " + camera_name + " camera is connected properly and restart the program."
+			),
+			title,
+			wxICON_ERROR);
+	};
+	auto exit_thread = [&](std::unique_ptr<XimeaControl>* cam_control)
+	{
+		m_Settings->SetCurrentProgress(m_FirstAxis->step_number, m_FirstAxis->step_number);
+		cam_control->release();
+		m_MainFrame->WorkerThreadFinished(true);
+		return (wxThread::ExitCode)0;
+	};
+
 	m_MainFrame->WorkerThreadFinished(false);
 	m_Settings->SetCurrentProgress(0, m_FirstAxis->step_number);
 
@@ -2436,6 +2501,11 @@ wxThread::ExitCode WorkerThread::Entry()
 		))
 			/* Update image on CameraPreview Panel */
 			m_CameraPreview->SetCameraCapturedImage();
+		else
+		{
+			raise_exception_msg("XIMEA");
+			exit_thread(&ximea_control);
+		}
 
 		/* Update Current Progress */
 		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
@@ -2467,10 +2537,7 @@ wxThread::ExitCode WorkerThread::Entry()
 	}
 #endif // FALSE
 
-	m_Settings->SetCurrentProgress(m_FirstAxis->step_number, m_FirstAxis->step_number);
-	ximea_control.release();
-	m_MainFrame->WorkerThreadFinished(true);
-	return (wxThread::ExitCode)0;
+	exit_thread(&ximea_control);
 }
 
 auto WorkerThread::CaptureAndSaveImage
