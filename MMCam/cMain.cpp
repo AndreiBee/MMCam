@@ -1267,11 +1267,11 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 {
 	constexpr auto raise_exception_msg = []() 
 	{
-		wxString title = "Single shot error";
+		wxString title = "Connection error";
 		wxMessageBox(
 			wxT
 			(
-				"Current camera can't make a single shot."
+				"Current camera can't provide a single shot."
 				"\nPlease, check if the camera is connected properly and restart the program."
 			),
 			title,
@@ -1340,8 +1340,12 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 			cv::imwrite(file_name, cv_img);
 		}
 	}
-	m_StopLiveCapturing = false;
-	StartLiveCapturing();
+	/* Only if user has already started Live Capturing, continue Live Capturing */
+	if (m_StopLiveCapturing)
+	{
+		m_StopLiveCapturing = false;
+		StartLiveCapturing();
+	}
 }
 
 void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
@@ -2287,7 +2291,7 @@ wxThread::ExitCode LiveCapturing::Entry()
 {
 	constexpr auto raise_exception_msg = []() 
 	{
-		wxString title = "Camera capturing error";
+		wxString title = "Connection error";
 		wxMessageBox(
 			wxT
 			(
@@ -2415,7 +2419,7 @@ wxThread::ExitCode WorkerThread::Entry()
 {
 	constexpr auto raise_exception_msg = [](wxString camera_name) 
 	{
-		wxString title = "Camera capturing error";
+		wxString title = "Connection error";
 		wxMessageBox(
 			wxT
 			(
