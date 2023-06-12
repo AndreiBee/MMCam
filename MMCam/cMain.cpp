@@ -5,6 +5,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_FILE_QUIT, cMain::OnExit)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnSingleShotCameraImage)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingMenu)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, cMain::OnEnableDarkMode)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, cMain::OnCrossHairButton)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, cMain::OnValueDisplayingCheck)
@@ -72,12 +73,19 @@ cMain::cMain(const wxString& title_)
 	CenterOnScreen();
 	Show();
 
-	wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS);
-	ProcessEvent(art_evt);
-
-	m_StartStopLiveCapturingTglBtn->SetValue(true);
-	wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
-	ProcessEvent(art_start_live_capturing);
+	{
+		wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE);
+		ProcessEvent(art_evt);
+	}
+	{
+		wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS);
+		ProcessEvent(art_evt);
+	}
+	{
+		m_StartStopLiveCapturingTglBtn->SetValue(true);
+		wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+		ProcessEvent(art_start_live_capturing);
+	}
 }
 
 auto cMain::StopLiveCapturing() -> bool
@@ -125,6 +133,7 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, wxT("Single Shot\tS"));
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, wxT("Start Live\tL"));
+	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, wxT("Dark Mode"));
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
@@ -268,21 +277,22 @@ void cMain::CreateLeftSide(wxSizer* left_side_sizer)
 
 void cMain::CreateRightSide(wxSizer* right_side_sizer)
 {
-	wxPanel* right_side_panel = new wxPanel(this);
+	m_RightSidePanel = std::make_unique<wxPanel>(this);
+	//wxPanel* right_side_panel = new wxPanel(this);
 #ifdef _DEBUG
-	right_side_panel->SetBackgroundColour(wxColor(150, 100, 180));
+	m_RightSidePanel->SetBackgroundColour(wxColor(150, 100, 180));
 #else
-	right_side_panel->SetBackgroundColour(wxColor(255, 255, 255));
+	m_RightSidePanel->SetBackgroundColour(wxColor(255, 255, 255));
 #endif // _DEBUG
 
 	wxBoxSizer* right_side_panel_sizer = new wxBoxSizer(wxVERTICAL);
 
-	CreateSteppersControl(right_side_panel, right_side_panel_sizer);
-	CreateCameraControls(right_side_panel, right_side_panel_sizer);
-	CreateMeasurement(right_side_panel, right_side_panel_sizer);
+	CreateSteppersControl(m_RightSidePanel.get(), right_side_panel_sizer);
+	CreateCameraControls(m_RightSidePanel.get(), right_side_panel_sizer);
+	CreateMeasurement(m_RightSidePanel.get(), right_side_panel_sizer);
 
-	right_side_panel->SetSizer(right_side_panel_sizer);
-	right_side_sizer->Add(right_side_panel, 1, wxEXPAND);
+	m_RightSidePanel->SetSizer(right_side_panel_sizer);
+	right_side_sizer->Add(m_RightSidePanel.get(), 1, wxEXPAND);
 }
 
 void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer)
@@ -1250,6 +1260,27 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 	right_side_panel_sizer->Add(mmt_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
 }
 
+auto cMain::OnEnableDarkMode(wxCommandEvent& evt) -> void
+{
+	if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE))
+	{
+		m_CamPreview->SetBackgroundColor(m_BlackAppearenceColor);
+
+		wxColour normalized_black = wxColour(100, 100, 100);
+		m_VerticalToolBar->tool_bar->SetBackgroundColour(normalized_black);
+		wxColour nb_color = wxColour(normalized_black.Red() + 40, normalized_black.Green() + 40, normalized_black.Blue() + 40);
+		m_RightSidePanel->SetBackgroundColour(nb_color);
+	}
+	else
+	{
+		m_CamPreview->SetBackgroundColor(m_DefaultAppearenceColor);
+
+		m_VerticalToolBar->tool_bar->SetBackgroundColour(m_DefaultAppearenceColor);
+		m_RightSidePanel->SetBackgroundColour(m_DefaultAppearenceColor);
+	}
+	Refresh();
+}
+
 void cMain::CreateProgressBar()
 {
 	wxSize size_of_progress_bar{ 400, 190 };
@@ -1283,6 +1314,8 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 		? wxString("0") 
 		: m_CamExposure->GetValue();
 	int exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate exposure time to [us]
+
+	auto start_live_capturing_after_ss = !m_StopLiveCapturing;
 
 	m_StopLiveCapturing = true;
 	{
@@ -1341,7 +1374,7 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 		}
 	}
 	/* Only if user has already started Live Capturing, continue Live Capturing */
-	if (m_StopLiveCapturing)
+	if (start_live_capturing_after_ss)
 	{
 		m_StopLiveCapturing = false;
 		StartLiveCapturing();
@@ -2357,6 +2390,9 @@ auto LiveCapturing::CaptureImage
 
 	if (!data_ptr) return false;
 
+#ifdef USE_MULTITHREAD
+	UpdatePixelsMultithread(short_data_ptr, image_ptr);
+#else
 	unsigned short current_value{};
 	unsigned char red{}, green{}, blue{};
 	for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
@@ -2371,7 +2407,79 @@ auto LiveCapturing::CaptureImage
 			image_ptr->SetRGB(x, y, red, green, blue);
 		}
 	}
+#endif
 	return true;
+}
+
+auto LiveCapturing::UpdatePixelsMultithread
+(
+	unsigned short* short_data_ptr, 
+	wxImage* image_ptr
+) -> void
+{
+	auto numThreads = std::thread::hardware_concurrency();
+	auto tileSize = m_ImageSize.GetHeight() % numThreads > 0 ? m_ImageSize.GetHeight() / numThreads + 1 : m_ImageSize.GetHeight() / numThreads;
+
+	std::vector<std::thread> threads;
+	threads.reserve(numThreads);
+
+	for (auto i{ 0 }; i < numThreads; ++i)
+	{
+		auto start_x = 0;
+		auto start_y = i * tileSize;
+		auto finish_x = m_ImageSize.GetWidth();
+		auto finish_y = (i + 1) * tileSize > m_ImageSize.GetHeight() ? m_ImageSize.GetHeight() : (i + 1) * tileSize;
+
+		threads.emplace_back
+		(
+			std::thread
+			(
+			&LiveCapturing::AdjustImageParts, 
+			this, 
+			&short_data_ptr[start_y * m_ImageSize.GetWidth() + start_x], 
+			image_ptr, 
+			start_x, 
+			start_y, 
+			finish_x, 
+			finish_y
+			)
+		);
+	}
+
+	for (auto& thread : threads)
+	{
+		thread.join();
+	}
+}
+
+auto LiveCapturing::AdjustImageParts
+(
+	const unsigned short* data_ptr, 
+	wxImage* image_ptr,
+	const unsigned int start_x, 
+	const unsigned int start_y, 
+	const unsigned int finish_x, 
+	const unsigned int finish_y
+) -> void
+{
+	if (!data_ptr) return;
+	if (!image_ptr->IsOk()) return;
+	unsigned short current_value{};
+	unsigned char red{}, green{}, blue{};
+	unsigned long long position_in_data_pointer{};
+
+	for (auto y{ start_y }; y < finish_y; ++y)
+	{
+		for (auto x{ start_x }; x < finish_x; ++x)
+		{
+			current_value = data_ptr[position_in_data_pointer];
+			/* Matlab implementation of JetColormap */
+			/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
+			m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
+			image_ptr->SetRGB(x, y, red, green, blue);
+			++position_in_data_pointer;
+		}
+	}
 }
 
 LiveCapturing::~LiveCapturing()

@@ -31,6 +31,11 @@ cCamPreview::cCamPreview
 	InitDefaultComponents();
 }
 
+auto cCamPreview::SetBackgroundColor(wxColour bckg_colour) -> void
+{
+	SetBackgroundColor(bckg_colour);
+}
+
 auto cCamPreview::SetCrossHairButtonActive(bool activate) -> void
 {
 	m_CrossHairTool->ActivateToolButton(activate, activate);

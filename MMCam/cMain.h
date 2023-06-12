@@ -23,12 +23,15 @@
 
 #include "src/img/logo.xpm"
 
+#define USE_MULTITHREAD
+
 namespace MainFrameVariables
 {
 	enum
 	{
 		/* Menu Bar */
 		ID_MENUBAR_FILE_QUIT,
+		ID_MENUBAR_EDIT_ENABLE_DARK_MODE,
 		ID_MENUBAR_EDIT_SETTINGS,
 		ID_MENUBAR_TOOLS_CROSSHAIR,
 		ID_MENUBAR_TOOLS_VALUE_DISPLAYING,
@@ -232,6 +235,8 @@ private:
 	void CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 
+	auto OnEnableDarkMode(wxCommandEvent& evt) -> void;
+
 	void UnCheckAllTools();
 	/* ProgressBar */
 	void CreateProgressBar();
@@ -355,6 +360,13 @@ private:
 	bool m_StopLiveCapturing{};
 	bool m_LiveCapturingEndedDrawingOnCamPreview{ true };
 
+	/* Appearance Colors */
+	wxColour m_DefaultAppearenceColor = wxColour(255, 255, 255);
+	wxColour m_BlackAppearenceColor = wxColour(30, 30, 30);
+
+	/* wxPanels */
+	std::unique_ptr<wxPanel> m_RightSidePanel{};
+
 	wxDECLARE_EVENT_TABLE();
 };
 /* ___ End cMain ___ */
@@ -380,6 +392,20 @@ private:
 		unsigned short* short_data_ptr, 
 		wxImage* image_ptr
 	) -> bool;
+	auto UpdatePixelsMultithread
+	(
+		unsigned short* short_data_ptr, 
+		wxImage* image_ptr
+	) -> void;
+	auto AdjustImageParts
+	(
+		const unsigned short* data_ptr,
+		wxImage* image_ptr,
+		const unsigned int start_x,
+		const unsigned int start_y,
+		const unsigned int finish_x,
+		const unsigned int finish_y
+	) -> void;
 
 private:
 	cMain* m_MainFrame{};

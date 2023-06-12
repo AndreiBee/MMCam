@@ -47,6 +47,7 @@ public:
 		wxSizer* parent_sizer, 
 		std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> input_preview_panel_args
 	);
+	auto SetBackgroundColor(wxColour bckg_colour) -> void;
 	auto SetCrossHairButtonActive(bool activate = false) -> void;
 	auto SetValueDisplayingActive(bool activate = false) -> void;
 	void SetXCrossHairPosFromParentWindow(const int& x_pos);
