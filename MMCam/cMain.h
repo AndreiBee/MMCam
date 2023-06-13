@@ -23,7 +23,6 @@
 
 #include "src/img/logo.xpm"
 
-#define USE_MULTITHREAD
 
 namespace MainFrameVariables
 {
@@ -214,6 +213,8 @@ class ProgressPanel;
 class WorkerThread;
 class ProgressThread;
 
+//#define USE_MULTITHREAD
+
 /* ___ Start cMain ___ */
 class cMain final : public wxFrame
 {
@@ -249,6 +250,7 @@ private:
 	void OnSetOutDirectoryBtn(wxCommandEvent& evt);
 
 	void OnOpenSettings(wxCommandEvent& evt);
+	auto InitializeSelectedCamera() -> void;
 	void UpdateStagePositions();
 	void EnableUsedAndDisableNonUsedMotors();
 
@@ -327,9 +329,7 @@ private:
 
 	/* Camera */
 	std::unique_ptr<wxTextCtrl> m_CamExposure{};
-	std::unique_ptr<wxChoice> m_ManufacturerChoice{};
-	wxArrayString m_ManufacturersArray{};
-	unsigned short m_CameraType{};
+	std::unique_ptr<wxStaticText> m_SelectedCameraStaticTXT{};
 	std::unique_ptr<wxButton> m_SingleShotBtn{};
 	std::unique_ptr<wxToggleButton> m_StartStopLiveCapturingTglBtn{};
 	std::unique_ptr<wxTextCtrl> m_CrossHairPosXTxtCtrl{}, m_CrossHairPosYTxtCtrl{};
@@ -365,7 +365,7 @@ private:
 	wxColour m_BlackAppearenceColor = wxColour(30, 30, 30);
 
 	/* wxPanels */
-	std::unique_ptr<wxPanel> m_RightSidePanel{};
+	wxPanel* m_RightSidePanel{};
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -379,7 +379,7 @@ public:
 	(
 		cMain* main_frame,
 		cCamPreview* cam_preview_window,
-		const unsigned short& camera_type,
+		const std::string& selected_camera,
 		const int exposure_us
 	);
 	~LiveCapturing();
@@ -410,7 +410,7 @@ private:
 private:
 	cMain* m_MainFrame{};
 	cCamPreview* m_CamPreviewWindow{};
-	unsigned short m_CameraType{};
+	std::string m_SelectedCameraSN{};
 	int m_ExposureUS{};
 	std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
 	wxSize m_ImageSize{};
@@ -426,7 +426,6 @@ public:
 		cMain* main_frame,
 		cSettings* settings, 
 		cCamPreview* camera_preview_panel,
-		unsigned short camera_type,
 		const wxString& path, 
 		const unsigned long& exp_time_us,
 		MainFrameVariables::AxisMeasurement* first_axis, 
@@ -457,7 +456,6 @@ private:
 	cCamPreview* m_CameraPreview{};
 	wxString m_ImagePath{};
 	unsigned long m_ExposureTimeUS{};
-	unsigned short m_CameraType{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
 };
 /* ___ End Worker Thread ___ */

@@ -9,18 +9,23 @@
 #include <set>
 #include <sstream>
 #include <fstream>
+#include <iostream>
+#include <filesystem>
 
 #include "rapidxml.hpp"
 #include "rapidxml_utils.hpp"
 #include "rapidxml_print.hpp"
 
 #include "Motor.h"
+#include "XimeaControl.h"
 
 
 namespace SettingsVariables
 {
 	enum
 	{
+		/* Work Station */
+		ID_WORK_STATION_CHOICE,
 		/* Detector X */
 		ID_MOT_DET_X_MOTOR_CHOICE,
 		ID_MOT_DET_X_RANGE_ST_TEXT,
@@ -39,6 +44,8 @@ namespace SettingsVariables
 		/* Optics Z */
 		ID_MOT_OPT_Z_MOTOR_CHOICE,
 		ID_MOT_OPT_Z_RANGE_ST_TEXT,
+		/* Cameras */
+		ID_CAM_CHOICE,
 	};
 
 	struct MotorSettings
@@ -67,6 +74,29 @@ namespace SettingsVariables
 		{
 			m_Detector = std::make_unique<MotorSettings[]>(3);
 			m_Optics = std::make_unique<MotorSettings[]>(3);
+		}
+	};
+
+	struct Cameras
+	{
+		wxChoice* camera{};
+		wxArrayString all_cameras_arr;
+		std::string selected_camera{};
+
+		Cameras() 
+		{ 
+			all_cameras_arr.Add("None"); 
+		}
+	};
+
+	struct WorkStations
+	{
+		wxChoice* work_station{};
+		wxArrayString work_stations_arr;
+
+		WorkStations() 
+		{ 
+			work_stations_arr.Add("None"); 
 		}
 	};
 
@@ -128,6 +158,8 @@ public:
 	/* Progress */
 	void SetCurrentProgress(const int& curr_capturing_num, const int& whole_capturing_num);
 
+	/* Camera */
+	auto GetSelectedCamera() const -> std::string;
 private:
 	void CreateMainFrame();
 	void CreateSettings();
@@ -150,6 +182,8 @@ private:
 
 	/* Working with XML data and operating with m_Motors variables */
 	auto CompareXMLWithConnectedDevices();
+	auto ReadWorkStationFiles() -> void;
+	auto IterateOverConnectedCameras() -> void;
 	void ReadXMLFile();
 	void UpdateUniqueArray();
 	void SelectMotorsAndRangesFromXMLFile();
@@ -160,10 +194,13 @@ private:
 	void ResetAllMotorsAndRangesInXMLFile();
 
 private:
-	const wxString xml_file_path = "src\\mtrs.xml";
+	const wxString work_stations_path = "src\\";
+	const wxString xml_file_path = "src\\old_xml\\mtrs.xml";
+	std::unique_ptr<SettingsVariables::WorkStations> m_WorkStations{};
 	std::unique_ptr<wxButton> m_OkBtn{}, m_CancelBtn{}, m_RefreshBtn{};
 	std::unique_ptr<SettingsVariables::MotorSettingsArray> m_Motors{};
 	std::unique_ptr<MotorArray> m_PhysicalMotors{};
+	std::unique_ptr<SettingsVariables::Cameras> m_Cameras{};
 	const int m_MotorsCount{ 6 };
 	std::unique_ptr<SettingsVariables::ProgressValues> m_Progress = std::make_unique<SettingsVariables::ProgressValues>();
 };

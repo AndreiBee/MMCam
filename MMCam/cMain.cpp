@@ -74,6 +74,7 @@ cMain::cMain(const wxString& title_)
 	Show();
 
 	{
+		m_MenuBar->menu_edit->Check(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, true);
 		wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE);
 		ProcessEvent(art_evt);
 	}
@@ -205,11 +206,6 @@ void cMain::InitDefaultStateWidgets()
 			m_Z_Optics->DisableAllControls();
 		}
 	}
-	/* Camera initialization */
-	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("MI"))
-		m_CameraType = CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM;
-	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("XIMEA"))
-		m_CameraType = CameraPreviewVariables::XIMEA_CAM;
 
 	/* Disabling Measurement Controls */
 	{
@@ -277,8 +273,7 @@ void cMain::CreateLeftSide(wxSizer* left_side_sizer)
 
 void cMain::CreateRightSide(wxSizer* right_side_sizer)
 {
-	m_RightSidePanel = std::make_unique<wxPanel>(this);
-	//wxPanel* right_side_panel = new wxPanel(this);
+	m_RightSidePanel = new wxPanel(this);
 #ifdef _DEBUG
 	m_RightSidePanel->SetBackgroundColour(wxColor(150, 100, 180));
 #else
@@ -287,12 +282,12 @@ void cMain::CreateRightSide(wxSizer* right_side_sizer)
 
 	wxBoxSizer* right_side_panel_sizer = new wxBoxSizer(wxVERTICAL);
 
-	CreateSteppersControl(m_RightSidePanel.get(), right_side_panel_sizer);
-	CreateCameraControls(m_RightSidePanel.get(), right_side_panel_sizer);
-	CreateMeasurement(m_RightSidePanel.get(), right_side_panel_sizer);
+	CreateSteppersControl(m_RightSidePanel, right_side_panel_sizer);
+	CreateCameraControls(m_RightSidePanel, right_side_panel_sizer);
+	CreateMeasurement(m_RightSidePanel, right_side_panel_sizer);
 
 	m_RightSidePanel->SetSizer(right_side_panel_sizer);
-	right_side_sizer->Add(m_RightSidePanel.get(), 1, wxEXPAND);
+	right_side_sizer->Add(m_RightSidePanel, 1, wxEXPAND);
 }
 
 void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer)
@@ -907,23 +902,14 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 	wxSizer* const cam_static_box_sizer = new wxStaticBoxSizer(wxVERTICAL, right_side_panel, "&Camera");
 	wxSizer* const first_row_sizer = new wxBoxSizer(wxHORIZONTAL);
 	{
-		wxSizer* const manufacturer_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Manufacturer");
+		wxSizer* const selected_camera_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Selected Camera");
 		{
-			m_ManufacturersArray.Add("MI");
-			m_ManufacturersArray.Add("XIMEA");
-			m_ManufacturerChoice = std::make_unique<wxChoice>
-				(
-					right_side_panel,
-					MainFrameVariables::ID_RIGHT_CAM_MANUFACTURER_CHOICE,
-					wxDefaultPosition, wxDefaultSize, m_ManufacturersArray
-				);
-			m_CameraType = CameraPreviewVariables::XIMEA_CAM;
-			m_ManufacturerChoice->SetSelection(m_CameraType);
-			manufacturer_box_sizer->AddStretchSpacer();
-			manufacturer_box_sizer->Add(m_ManufacturerChoice.get(), 0, wxCENTER);
-			manufacturer_box_sizer->AddStretchSpacer();
+			m_SelectedCameraStaticTXT = std::make_unique<wxStaticText>(right_side_panel, wxID_ANY, wxT("None"));
+			selected_camera_box_sizer->AddStretchSpacer();
+			selected_camera_box_sizer->Add(m_SelectedCameraStaticTXT.get(), 0, wxCENTER);
+			selected_camera_box_sizer->AddStretchSpacer();
 		}
-		first_row_sizer->Add(manufacturer_box_sizer, 0, wxEXPAND);
+		first_row_sizer->Add(selected_camera_box_sizer, 0, wxEXPAND);
 
 		wxSizer* const settings_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Settings");
 		{
@@ -976,7 +962,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 			ss_and_start_stop_box_sizer->Add(m_StartStopLiveCapturingTglBtn.get(), 0, wxEXPAND | wxTOP, 5);
 
 			first_row_sizer->AddStretchSpacer();
-			first_row_sizer->Add(ss_and_start_stop_box_sizer, 0, wxALIGN_CENTER | wxRIGHT, 2);
+			first_row_sizer->Add(ss_and_start_stop_box_sizer, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 2);
 		}
 	}
 	cam_static_box_sizer->Add(first_row_sizer, 0, wxEXPAND);
@@ -1265,7 +1251,6 @@ auto cMain::OnEnableDarkMode(wxCommandEvent& evt) -> void
 	if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE))
 	{
 		m_CamPreview->SetBackgroundColor(m_BlackAppearenceColor);
-
 		wxColour normalized_black = wxColour(100, 100, 100);
 		m_VerticalToolBar->tool_bar->SetBackgroundColour(normalized_black);
 		wxColour nb_color = wxColour(normalized_black.Red() + 40, normalized_black.Green() + 40, normalized_black.Blue() + 40);
@@ -1344,16 +1329,12 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 			std::to_string(exposure_time) + std::string("us") 
 			+ std::string(".tif");
 
-		/* Moravian Instruments */
-		if (m_CameraType == CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM)
+		/* Camera */
 		{
-			raise_exception_msg();
-			return;
-		}
-		/* XIMEA */
-		if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
-		{
-			auto ximea_control = std::make_unique<XimeaControl>(exposure_time);
+			auto ximea_control = std::make_unique<XimeaControl>();
+			auto curr_cam = m_Settings->GetSelectedCamera();
+			ximea_control->InitializeCameraBySN(curr_cam);
+			ximea_control->SetExposureTime(exposure_time);
 			auto image_size = wxSize{ (int)ximea_control->GetImageWidth(), (int)ximea_control->GetImageHeight() };
 			unsigned short* data_ptr{};
 			data_ptr = ximea_control->GetImage();
@@ -1366,8 +1347,8 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 			cv::Mat cv_img
 			(
 				cv::Size(image_size.GetWidth(), image_size.GetHeight()),
-				CV_16U, 
-				data_ptr, 
+				CV_16U,
+				data_ptr,
 				cv::Mat::AUTO_STEP
 			);
 			cv::imwrite(file_name, cv_img);
@@ -1403,8 +1384,35 @@ void cMain::OnOpenSettings(wxCommandEvent& evt)
 	m_Settings->ShowModal();
 	if (!m_Settings->IsActive())
 	{
+		InitializeSelectedCamera();
 		UpdateStagePositions();
-		EnableUsedAndDisableNonUsedMotors();
+		EnableUsedAndDisableNonUsedMotors();	
+
+
+	}
+}
+
+auto cMain::InitializeSelectedCamera() -> void
+{
+	auto curr_camera = m_Settings->GetSelectedCamera();
+	if (curr_camera != "None")
+	{
+		m_CamPreview->InitializeSelectedCamera(curr_camera);	
+		{
+			auto start_live_capturing_after_initialization = !m_StopLiveCapturing;
+			m_StopLiveCapturing = true;
+			while (!m_LiveCapturingEndedDrawingOnCamPreview)
+			{
+				wxThread::This()->Sleep(10);
+			}	
+			if (start_live_capturing_after_initialization)
+			{
+				m_StopLiveCapturing = false;
+				StartLiveCapturing();
+			}
+		}
+		m_SelectedCameraStaticTXT->SetLabel(wxString(curr_camera));
+		Refresh();
 	}
 }
 
@@ -1883,7 +1891,6 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 			this,
 			m_Settings.get(),
 			m_CamPreview.get(),
-			m_CameraType,
 			out_dir,
 			exposure_time,
 			first_axis.release(), 
@@ -1927,17 +1934,14 @@ void cMain::StartLiveCapturing()
 		: m_CamExposure->GetValue();
 	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
 
-
-	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("MI"))
-		m_CameraType = CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM;
-	if (m_ManufacturerChoice->GetString(m_ManufacturerChoice->GetSelection()) == wxString("XIMEA"))
-		m_CameraType = CameraPreviewVariables::XIMEA_CAM;
+	auto curr_camera = m_Settings->GetSelectedCamera();
+	LOG(curr_camera.c_str());
 
 	LiveCapturing* live_capturing = new LiveCapturing
 	(
 		this, 
 		m_CamPreview.get(), 
-		m_CameraType, 
+		curr_camera,
 		exposure_time
 	);
 
@@ -2312,12 +2316,12 @@ LiveCapturing::LiveCapturing
 (
 	cMain* main_frame,
 	cCamPreview* cam_preview_window,
-	const unsigned short& camera_type,
+	const std::string& selected_camera,
 	const int exposure_us
 ) 
 	: m_MainFrame(main_frame), 
 	m_CamPreviewWindow(cam_preview_window), 
-	m_CameraType(camera_type), 
+	m_SelectedCameraSN(selected_camera),
 	m_ExposureUS(exposure_us) {}
 
 wxThread::ExitCode LiveCapturing::Entry()
@@ -2338,16 +2342,13 @@ wxThread::ExitCode LiveCapturing::Entry()
 	{
 		m_XimeaCameraControl.release();
 		m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(true);
-		return (wxThread::ExitCode)0;
 	};
 
-	if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
-	{
-		m_XimeaCameraControl = std::make_unique<XimeaControl>(m_ExposureUS);
-		m_ImageSize.Set(m_XimeaCameraControl->GetImageWidth(), m_XimeaCameraControl->GetImageHeight());
-	}
-	else if (m_CameraType == CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM)
-		return (wxThread::ExitCode)0;
+	m_XimeaCameraControl = std::make_unique<XimeaControl>();
+	if (m_XimeaCameraControl->InitializeCameraBySN(m_SelectedCameraSN))
+		m_XimeaCameraControl->SetExposureTime(m_ExposureUS);
+	else return (wxThread::ExitCode)0;
+	m_ImageSize.Set(m_XimeaCameraControl->GetImageWidth(), m_XimeaCameraControl->GetImageHeight());
 
 	if (m_CamPreviewWindow->GetImageSize() != m_ImageSize)
 		m_CamPreviewWindow->SetImageSize(m_ImageSize);
@@ -2372,6 +2373,7 @@ wxThread::ExitCode LiveCapturing::Entry()
 			wxThread::This()->Sleep(500);
 	}
 	exit_thread();
+	return (wxThread::ExitCode)0;
 }
 
 auto LiveCapturing::CaptureImage
@@ -2381,14 +2383,16 @@ auto LiveCapturing::CaptureImage
 ) -> bool
 {
 	unsigned short* data_ptr{};
-	if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
-	{
-		data_ptr = m_XimeaCameraControl->GetImage();
-	}
-	else
-		return false;
-
+	data_ptr = m_XimeaCameraControl->GetImage();
 	if (!data_ptr) return false;
+	memcpy
+	(
+		short_data_ptr, 
+		data_ptr, 
+		sizeof(unsigned short) * m_ImageSize.GetWidth() * m_ImageSize.GetHeight()
+	);
+
+	if (!short_data_ptr) return false;
 
 #ifdef USE_MULTITHREAD
 	UpdatePixelsMultithread(short_data_ptr, image_ptr);
@@ -2400,7 +2404,7 @@ auto LiveCapturing::CaptureImage
 		for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
 		{
 			current_value = data_ptr[y * m_ImageSize.GetWidth() + x];
-			short_data_ptr[y * m_ImageSize.GetWidth() + x] = current_value;
+			//short_data_ptr[y * m_ImageSize.GetWidth() + x] = current_value;
 			/* Matlab implementation of JetColormap */
 			/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
 			m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
@@ -2495,7 +2499,6 @@ WorkerThread::WorkerThread
 	cMain* main_frame,
 	cSettings* settings, 
 	cCamPreview* camera_preview_panel,
-	unsigned short camera_type,
 	const wxString& path, 
 	const unsigned long& exp_time_us,
 	MainFrameVariables::AxisMeasurement* first_axis, 
@@ -2505,7 +2508,6 @@ WorkerThread::WorkerThread
 	m_MainFrame(main_frame),
 	m_Settings(settings), 
 	m_CameraPreview(camera_preview_panel), 
-	m_CameraType(camera_type),
 	m_ImagePath(path), 
 	m_ExposureTimeUS(exp_time_us),
 	m_FirstAxis(first_axis), 
@@ -2542,7 +2544,6 @@ wxThread::ExitCode WorkerThread::Entry()
 		m_Settings->SetCurrentProgress(m_FirstAxis->step_number, m_FirstAxis->step_number);
 		cam_control->release();
 		m_MainFrame->WorkerThreadFinished(true);
-		return (wxThread::ExitCode)0;
 	};
 
 	m_MainFrame->WorkerThreadFinished(false);
@@ -2558,15 +2559,12 @@ wxThread::ExitCode WorkerThread::Entry()
 	auto cam_preview_data_ptr = m_CameraPreview->GetDataPtr();
 	auto cam_preview_image_ptr = m_CameraPreview->GetImagePtr();
 
-	std::unique_ptr<XimeaControl> ximea_control{};
-
-	if (m_CameraType == CameraPreviewVariables::MORAVIAN_INSTRUMENTS_CAM)
-		return (wxThread::ExitCode)0;
-	if (m_CameraType == CameraPreviewVariables::XIMEA_CAM)
+	auto ximea_control = std::make_unique<XimeaControl>();
 	{
-		ximea_control = std::make_unique<XimeaControl>(m_ExposureTimeUS);
+		auto current_camera = m_Settings->GetSelectedCamera();
+		ximea_control->InitializeCameraBySN(current_camera);
+		ximea_control->SetExposureTime(m_ExposureTimeUS);
 	}
-
 	float first_axis_rounded_go_to{};
 	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
@@ -2650,6 +2648,7 @@ wxThread::ExitCode WorkerThread::Entry()
 #endif // FALSE
 
 	exit_thread(&ximea_control);
+	return (wxThread::ExitCode)0;
 }
 
 auto WorkerThread::CaptureAndSaveImage

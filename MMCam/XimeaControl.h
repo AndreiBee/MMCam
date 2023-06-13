@@ -13,8 +13,11 @@ class XimeaControl final
 {
 public:
 	XimeaControl();
-	XimeaControl(const int exposure_us);
-	auto InitializeCamera() -> bool;
+	auto InitializeAllCameras() -> void;
+	auto GetCamerasCount() -> unsigned short;
+	auto GetCamerasSN() -> std::string*;
+	auto SetExposureTime(const int exposure_us) -> void;
+	auto InitializeCameraBySN(const std::string& cam_sn) -> bool;
 	auto GetImage(const int exposure_us = 0) -> unsigned short*;
 	auto GetImageWidth() const -> unsigned long;
 	auto GetImageHeight() const -> unsigned long;
@@ -26,6 +29,9 @@ private:
 	XI_IMG m_Image;
 	HANDLE m_CamHandler{};
 	XI_RETURN m_State{};
+	unsigned short m_CamerasCount{};
+	std::unique_ptr<std::string[]> m_CamerasSN{};
+	std::string m_CurrentCameraSN{};
 };
 
 #endif // !XIMEA_CONTROL_H

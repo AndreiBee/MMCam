@@ -56,8 +56,7 @@ public:
 	auto GetDataPtr() const -> unsigned short*;
 	auto GetImagePtr() const -> wxImage*;
 	auto GetImageSize() const->wxSize;
-	auto SetXIMEAAsCurrentCamera() -> void;
-	auto SetMoravianInstrumentsAsCurrentCamera() -> void;
+	auto InitializeSelectedCamera(const std::string& camera_sn) -> void;
 	auto SetCameraCapturedImage() -> void;
 	void CaptureAndSaveDataFromCamera
 	(
@@ -94,6 +93,7 @@ private:
 	void DrawCameraCapturedImage(wxGraphicsContext* gc_);
 	void OnSize(wxSizeEvent& evt);
 	void ChangeSizeOfImageInDependenceOnCanvasSize();
+	auto UpdateCrossHairOnSize() -> void;
 	void CalculateMatlabJetColormapPixelRGB16bit(const uint16_t& value, unsigned char& r, unsigned char& g, unsigned char& b);
 	void OnMouseMoved(wxMouseEvent& evt);
 	/* Zooming */
@@ -135,9 +135,7 @@ private:
 	double m_Zoom{}, m_ZoomOnOriginalSizeImage{};
 
 	std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
-	bool m_XimeaSelected{};
-
-	bool m_MoravianInstrumentsSelected{};
+	std::string m_SelectedCameraSN{};
 
 	/* CrossHair Tool */
 	std::unique_ptr<CrossHairTool> m_CrossHairTool{};

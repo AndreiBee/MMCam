@@ -33,7 +33,7 @@ cCamPreview::cCamPreview
 
 auto cCamPreview::SetBackgroundColor(wxColour bckg_colour) -> void
 {
-	SetBackgroundColor(bckg_colour);
+	SetBackgroundColour(bckg_colour);
 }
 
 auto cCamPreview::SetCrossHairButtonActive(bool activate) -> void
@@ -94,17 +94,13 @@ auto cCamPreview::GetImageSize() const -> wxSize
 	return m_ImageSize;
 }
 
-auto cCamPreview::SetXIMEAAsCurrentCamera() -> void
+auto cCamPreview::InitializeSelectedCamera(const std::string& camera_sn) -> void
 {
-	m_MoravianInstrumentsSelected = false;
-	m_XimeaSelected = true;
-	m_XimeaCameraControl = std::make_unique<XimeaControl>();
-}
-
-auto cCamPreview::SetMoravianInstrumentsAsCurrentCamera() -> void
-{
-	m_MoravianInstrumentsSelected = true;
-	m_XimeaSelected = false;
+	if (m_XimeaCameraControl->CloseCamera())
+	{
+		m_SelectedCameraSN = camera_sn;
+		m_XimeaCameraControl->InitializeCameraBySN(m_SelectedCameraSN);
+	}
 }
 
 void cCamPreview::SetCameraCapturedImage()
@@ -501,6 +497,7 @@ void cCamPreview::InitDefaultComponents()
 			m_ParentArguments->x_pos_crosshair, 
 			m_ParentArguments->y_pos_crosshair
 		);
+	m_XimeaCameraControl = std::make_unique<XimeaControl>();
 }
 
 void cCamPreview::PaintEvent(wxPaintEvent& evt)
@@ -571,6 +568,7 @@ void cCamPreview::OnSize(wxSizeEvent& evt)
 		m_Zoom = 1.0;
 		m_PanOffset = {};
 		ChangeSizeOfImageInDependenceOnCanvasSize();
+		UpdateCrossHairOnSize();
 		m_IsGraphicsBitmapSet = false;
 		Refresh();
 	}
@@ -594,5 +592,20 @@ void cCamPreview::ChangeSizeOfImageInDependenceOnCanvasSize()
 	m_NotZoomedGraphicsBitmapOffset.x *= m_ZoomOnOriginalSizeImage / m_Zoom;
 	m_NotZoomedGraphicsBitmapOffset.y *= m_ZoomOnOriginalSizeImage / m_Zoom;
 	m_StartDrawPos = m_NotZoomedGraphicsBitmapOffset;
+
+}
+
+auto cCamPreview::UpdateCrossHairOnSize() -> void
+{
+	m_CrossHairTool->SetImageDimensions(m_ImageSize);
+	m_CrossHairTool->SetZoomOfOriginalSizeImage(m_ZoomOnOriginalSizeImage);
+	m_CrossHairTool->UpdateZoomValue(m_Zoom);
+	m_CrossHairTool->SetImageStartDrawPos(wxRealPoint
+	(
+		m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage,
+		m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage
+	));
+	m_CrossHairTool->SetXPosFromParent(m_CrossHairPos.x);
+	m_CrossHairTool->SetYPosFromParent(m_CrossHairPos.y);
 }
 
