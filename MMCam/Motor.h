@@ -7,6 +7,7 @@
 #include <vector>
 #include <thread>
 #include <chrono>
+#include <string>
 #include <ximc.h>
 
 
@@ -98,18 +99,19 @@ public:
 
 	/* Getter */
 	std::map<unsigned int, float> GetNamesWithRanges() const;
-	float GetActualStagePos(const int& motor_number) const;
-	bool MotorHasSerialNumber(const int& motor_number) const;
+	float GetActualStagePos(const std::string& motor_sn) const;
+	auto MotorHasSerialNumber(const std::string& motor_sn) const -> bool;
 
 	/* Setter */
-	float GoMotorHome(const int& motor_number);
-	float GoMotorCenter(const int& motor_number);
-	float GoMotorToAbsPos(const int& motor_number, float abs_pos);
-	float GoMotorOffset(const int& motor_number, float offset);
+	float GoMotorHome(const std::string& motor_sn);
+	float GoMotorCenter(const std::string& motor_sn);
+	float GoMotorToAbsPos(const std::string& motor_sn, float abs_pos);
+	float GoMotorOffset(const std::string& motor_sn, float offset);
 
 private:
 	std::vector<Motor> m_MotorsArray{};
 	std::map<unsigned int, float> m_NamesOfMotorsWithRanges{};
+	const float error_position = 0.0f;
 };
 
 #endif

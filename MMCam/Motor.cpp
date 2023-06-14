@@ -291,46 +291,104 @@ std::map<unsigned int, float> MotorArray::GetNamesWithRanges() const
 	return m_NamesOfMotorsWithRanges;
 }
 
-float MotorArray::GetActualStagePos(const int& motor_number) const
+float MotorArray::GetActualStagePos(const std::string& motor_sn) const
 {
-	return motor_number >= m_MotorsArray.size() || motor_number < 0 ? 0.f : m_MotorsArray[motor_number].GetDeviceActualStagePos();
+	auto serial_num{ 0 };
+	try { serial_num = std::stoi(motor_sn);}
+	catch (std::invalid_argument const& ex) { return error_position; }
+
+	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
+	{
+		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
+			return m_MotorsArray[motor].GetDeviceActualStagePos();
+	}
+	return error_position;
 }
 
-bool MotorArray::MotorHasSerialNumber(const int& motor_number) const
+auto MotorArray::MotorHasSerialNumber(const std::string& motor_sn) const -> bool
 {
-	return motor_number >= m_MotorsArray.size() || motor_number < 0 ? false : m_MotorsArray[motor_number].GetDeviceSerNum();
+	auto serial_num{ 0 };
+	try { serial_num = std::stoi(motor_sn);}
+	catch (std::invalid_argument const& ex) { return false; }
+
+	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
+	{
+		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
+			return true;
+	}
+	return false;
 }
 
-float MotorArray::GoMotorHome(const int& motor_number)
-{
-	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
-	m_MotorsArray[motor_number].GoHomeAndZero();
-	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
-}
-
-float MotorArray::GoMotorCenter(const int& motor_number)
-{
-	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
-	m_MotorsArray[motor_number].GoCenter();
-	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
-}
-
-float MotorArray::GoMotorToAbsPos(const int& motor_number, float abs_pos)
-{
-	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
-	if (abs_pos < 0.f || abs_pos > m_MotorsArray[motor_number].GetDeviceRange()) return abs_pos;
-	m_MotorsArray[motor_number].GoToPos(abs_pos);
-	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
-}
-
-float MotorArray::GoMotorOffset(const int& motor_number, float offset)
+float MotorArray::GoMotorHome(const std::string& motor_sn)
 {	
-	if (motor_number >= m_MotorsArray.size() || motor_number < 0) return 0.f;
-	if (offset + m_MotorsArray[motor_number].GetDeviceActualStagePos() < 0.f || 
-		offset + m_MotorsArray[motor_number].GetDeviceActualStagePos() > m_MotorsArray[motor_number].GetDeviceRange()) 
-		return m_MotorsArray[motor_number].GetDeviceActualStagePos();
-	m_MotorsArray[motor_number].GoToPos(m_MotorsArray[motor_number].GetDeviceActualStagePos() + offset);
-	return m_MotorsArray[motor_number].GetDeviceActualStagePos();
+	auto serial_num{ 0 };
+	try { serial_num = std::stoi(motor_sn);}
+	catch (std::invalid_argument const& ex) { return error_position; }
+
+	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
+	{
+		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
+		{
+			m_MotorsArray[motor].GoHomeAndZero();
+			return m_MotorsArray[motor].GetDeviceActualStagePos();
+		}
+	}
+	return error_position;
+}
+
+float MotorArray::GoMotorCenter(const std::string& motor_sn)
+{
+	auto serial_num{ 0 };
+	try { serial_num = std::stoi(motor_sn);}
+	catch (std::invalid_argument const& ex) { return error_position; }
+
+	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
+	{
+		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
+		{
+			m_MotorsArray[motor].GoCenter();
+			return m_MotorsArray[motor].GetDeviceActualStagePos();
+		}
+	}
+	return error_position;
+}
+
+float MotorArray::GoMotorToAbsPos(const std::string& motor_sn, float abs_pos)
+{
+	auto serial_num{ 0 };
+	try { serial_num = std::stoi(motor_sn);}
+	catch (std::invalid_argument const& ex) { return error_position; }
+
+	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
+	{
+		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
+		{
+			m_MotorsArray[motor].GoToPos(abs_pos);
+			return m_MotorsArray[motor].GetDeviceActualStagePos();
+		}
+	}
+	return error_position;
+}
+
+float MotorArray::GoMotorOffset(const std::string& motor_sn, float offset)
+{	
+	auto serial_num{ 0 };
+	try { serial_num = std::stoi(motor_sn);}
+	catch (std::invalid_argument const& ex) { return error_position; }
+
+	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
+	{
+		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
+		{
+			if (offset + m_MotorsArray[motor].GetDeviceActualStagePos() < 0.f || 
+				offset + m_MotorsArray[motor].GetDeviceActualStagePos() > m_MotorsArray[motor].GetDeviceRange()) 
+				return m_MotorsArray[motor].GetDeviceActualStagePos();
+
+			m_MotorsArray[motor].GoToPos(m_MotorsArray[motor].GetDeviceActualStagePos() + offset);
+			return m_MotorsArray[motor].GetDeviceActualStagePos();
+		}
+	}
+	return error_position;
 }
 
 bool MotorArray::InitAllMotors()

@@ -1394,7 +1394,14 @@ auto cMain::InitializeSelectedCamera() -> void
 {
 	auto curr_camera = m_Settings->GetSelectedCamera();
 	m_SelectedCameraStaticTXT->SetLabel(curr_camera);	
-	
+
+	m_StopLiveCapturing = true;
+	while (!m_LiveCapturingEndedDrawingOnCamPreview)
+	{
+		wxThread::This()->Sleep(10);
+	}
+	m_StopLiveCapturing = false;
+
 	if (curr_camera != "None")
 	{
 		m_StartStopLiveCapturingTglBtn->SetValue(true);

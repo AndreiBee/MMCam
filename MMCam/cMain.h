@@ -213,7 +213,7 @@ class ProgressPanel;
 class WorkerThread;
 class ProgressThread;
 
-//#define USE_MULTITHREAD
+#define USE_MULTITHREAD
 
 /* ___ Start cMain ___ */
 class cMain final : public wxFrame

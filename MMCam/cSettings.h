@@ -25,24 +25,24 @@ namespace SettingsVariables
 	enum
 	{
 		/* Work Station */
-		ID_WORK_STATION_TXT_CTRL,
+		ID_WORK_STATION_CHOICE,
 		/* Detector X */
-		ID_MOT_DET_X_MOTOR_CHOICE,
+		ID_MOT_DET_X_MOTOR_TXT_CTRL,
 		ID_MOT_DET_X_RANGE_ST_TEXT,
 		/* Detector Y */
-		ID_MOT_DET_Y_MOTOR_CHOICE,
+		ID_MOT_DET_Y_MOTOR_TXT_CTRL,
 		ID_MOT_DET_Y_RANGE_ST_TEXT,
 		/* Detector Z */
-		ID_MOT_DET_Z_MOTOR_CHOICE,
+		ID_MOT_DET_Z_MOTOR_TXT_CTRL,
 		ID_MOT_DET_Z_RANGE_ST_TEXT,
 		/* Optics X */
-		ID_MOT_OPT_X_MOTOR_CHOICE,
+		ID_MOT_OPT_X_MOTOR_TXT_CTRL,
 		ID_MOT_OPT_X_RANGE_ST_TEXT,
 		/* Optics Y */
-		ID_MOT_OPT_Y_MOTOR_CHOICE,
+		ID_MOT_OPT_Y_MOTOR_TXT_CTRL,
 		ID_MOT_OPT_Y_RANGE_ST_TEXT,
 		/* Optics Z */
-		ID_MOT_OPT_Z_MOTOR_CHOICE,
+		ID_MOT_OPT_Z_MOTOR_TXT_CTRL,
 		ID_MOT_OPT_Z_RANGE_ST_TEXT,
 		/* Cameras */
 		ID_CAM_TXT_CTRL,
@@ -50,12 +50,13 @@ namespace SettingsVariables
 
 	struct MotorSettings
 	{
-		wxChoice* motors{}; 
+		wxTextCtrl* motor{}; 
 		wxStaticText* ranges{};
-		uint8_t current_selection[2], prev_selection[2];
+		wxString motor_sn{};
+		//uint8_t current_selection[2], prev_selection[2];
 		~MotorSettings()
 		{
-			motors->~wxChoice();
+			motor->~wxTextCtrl();
 		}
 	};
 
@@ -81,6 +82,11 @@ namespace SettingsVariables
 	{
 		wxTextCtrl* camera{};
 		wxString selected_camera_str{};
+
+		~Cameras()
+		{
+			camera->~wxTextCtrl();
+		}
 	};
 
 	struct WorkStationData
@@ -92,10 +98,17 @@ namespace SettingsVariables
 
 	struct WorkStations
 	{
-		wxTextCtrl* work_station_txt_ctrl{};
+		wxChoice* work_station_choice{};
 		unsigned short work_stations_count{};
 		std::unique_ptr<WorkStationData[]> work_station_data{};
+		wxArrayString all_work_station_array_str{};
 		wxString initialized_work_station{};
+		unsigned short initialized_work_station_num{};
+
+		~WorkStations()
+		{
+			work_station_choice->~wxChoice();
+		}
 	};
 
 	struct ProgressValues
@@ -165,10 +178,11 @@ private:
 	void InitDefaultStateWidgets();
 	void InitComponents();
 
-	void BindMotorsAndRangesChoices();
-	void OnMotorsChoice(wxCommandEvent& evt);
+	void BindControls();
 	void UpdateRangesTextCtrls();
 
+	auto OnWorkStationChoice(wxCommandEvent& evt) -> void;
+	auto UpdateMotorsAndCameraTXTCtrls(const short selected_work_station = -1) -> void;
 	void OnRefreshBtn(wxCommandEvent& evt);
 	void OnOkBtn(wxCommandEvent& evt);
 	bool CheckIfThereIsCollisionWithMotors();
@@ -197,7 +211,7 @@ private:
 private:
 	const wxString initialization_file_path = "src\\init.ini";
 	const wxString work_stations_path = "src\\";
-	const wxString xml_file_path = "src\\old_xml\\mtrs.xml";
+	//const wxString xml_file_path = "src\\old_xml\\mtrs.xml";
 	std::unique_ptr<SettingsVariables::WorkStations> m_WorkStations{};
 	std::unique_ptr<wxButton> m_OkBtn{}, m_CancelBtn{}, m_RefreshBtn{};
 	std::unique_ptr<SettingsVariables::MotorSettingsArray> m_Motors{};
