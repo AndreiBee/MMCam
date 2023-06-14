@@ -156,7 +156,7 @@ void cCamPreview::CaptureAndSaveDataFromCamera
 	const float& second_axis_position
 )
 {
-	auto image_ptr = m_XimeaCameraControl->GetImage(exposure_time_us);
+	auto image_ptr = m_XimeaCameraControl->GetImage();
 	if (!image_ptr) return;
 
 	/* Save Captured Image */

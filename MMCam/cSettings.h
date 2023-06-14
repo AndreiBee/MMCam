@@ -25,7 +25,7 @@ namespace SettingsVariables
 	enum
 	{
 		/* Work Station */
-		ID_WORK_STATION_CHOICE,
+		ID_WORK_STATION_TXT_CTRL,
 		/* Detector X */
 		ID_MOT_DET_X_MOTOR_CHOICE,
 		ID_MOT_DET_X_RANGE_ST_TEXT,
@@ -45,7 +45,7 @@ namespace SettingsVariables
 		ID_MOT_OPT_Z_MOTOR_CHOICE,
 		ID_MOT_OPT_Z_RANGE_ST_TEXT,
 		/* Cameras */
-		ID_CAM_CHOICE,
+		ID_CAM_TXT_CTRL,
 	};
 
 	struct MotorSettings
@@ -79,25 +79,23 @@ namespace SettingsVariables
 
 	struct Cameras
 	{
-		wxChoice* camera{};
-		wxArrayString all_cameras_arr;
-		std::string selected_camera{};
+		wxTextCtrl* camera{};
+		wxString selected_camera_str{};
+	};
 
-		Cameras() 
-		{ 
-			all_cameras_arr.Add("None"); 
-		}
+	struct WorkStationData
+	{
+		wxArrayString selected_motors_in_data_file{};
+		wxString selected_camera_in_data_file{};
+		wxString work_station_name{};
 	};
 
 	struct WorkStations
 	{
-		wxChoice* work_station{};
-		wxArrayString work_stations_arr;
-
-		WorkStations() 
-		{ 
-			work_stations_arr.Add("None"); 
-		}
+		wxTextCtrl* work_station_txt_ctrl{};
+		unsigned short work_stations_count{};
+		std::unique_ptr<WorkStationData[]> work_station_data{};
+		wxString initialized_work_station{};
 	};
 
 	struct ProgressValues
@@ -159,7 +157,7 @@ public:
 	void SetCurrentProgress(const int& curr_capturing_num, const int& whole_capturing_num);
 
 	/* Camera */
-	auto GetSelectedCamera() const -> std::string;
+	auto GetSelectedCamera() const -> wxString;
 private:
 	void CreateMainFrame();
 	void CreateSettings();
@@ -182,6 +180,7 @@ private:
 
 	/* Working with XML data and operating with m_Motors variables */
 	auto CompareXMLWithConnectedDevices();
+	auto ReadInitializationFile() -> void;
 	auto ReadWorkStationFiles() -> void;
 	auto IterateOverConnectedCameras() -> void;
 	void ReadXMLFile();
@@ -193,7 +192,10 @@ private:
 	void WriteActualSelectedMotorsAndRangesIntoXMLFile();
 	void ResetAllMotorsAndRangesInXMLFile();
 
+	auto RewriteInitializationFile() -> void;
+
 private:
+	const wxString initialization_file_path = "src\\init.ini";
 	const wxString work_stations_path = "src\\";
 	const wxString xml_file_path = "src\\old_xml\\mtrs.xml";
 	std::unique_ptr<SettingsVariables::WorkStations> m_WorkStations{};

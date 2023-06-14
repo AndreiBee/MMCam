@@ -83,9 +83,9 @@ cMain::cMain(const wxString& title_)
 		ProcessEvent(art_evt);
 	}
 	{
-		m_StartStopLiveCapturingTglBtn->SetValue(true);
-		wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
-		ProcessEvent(art_start_live_capturing);
+		//m_StartStopLiveCapturingTglBtn->SetValue(true);
+		//wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+		//ProcessEvent(art_start_live_capturing);
 	}
 }
 
@@ -1333,7 +1333,7 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 		{
 			auto ximea_control = std::make_unique<XimeaControl>();
 			auto curr_cam = m_Settings->GetSelectedCamera();
-			ximea_control->InitializeCameraBySN(curr_cam);
+			ximea_control->InitializeCameraBySN(curr_cam.ToStdString());
 			ximea_control->SetExposureTime(exposure_time);
 			auto image_size = wxSize{ (int)ximea_control->GetImageWidth(), (int)ximea_control->GetImageHeight() };
 			unsigned short* data_ptr{};
@@ -1387,32 +1387,19 @@ void cMain::OnOpenSettings(wxCommandEvent& evt)
 		InitializeSelectedCamera();
 		UpdateStagePositions();
 		EnableUsedAndDisableNonUsedMotors();	
-
-
 	}
 }
 
 auto cMain::InitializeSelectedCamera() -> void
 {
 	auto curr_camera = m_Settings->GetSelectedCamera();
+	m_SelectedCameraStaticTXT->SetLabel(curr_camera);	
+	
 	if (curr_camera != "None")
 	{
-		m_CamPreview->InitializeSelectedCamera(curr_camera);	
-		{
-			auto start_live_capturing_after_initialization = !m_StopLiveCapturing;
-			m_StopLiveCapturing = true;
-			while (!m_LiveCapturingEndedDrawingOnCamPreview)
-			{
-				wxThread::This()->Sleep(10);
-			}	
-			if (start_live_capturing_after_initialization)
-			{
-				m_StopLiveCapturing = false;
-				StartLiveCapturing();
-			}
-		}
-		m_SelectedCameraStaticTXT->SetLabel(wxString(curr_camera));
-		Refresh();
+		m_StartStopLiveCapturingTglBtn->SetValue(true);
+		wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+		ProcessEvent(art_start_live_capturing);
 	}
 }
 
@@ -1935,13 +1922,12 @@ void cMain::StartLiveCapturing()
 	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
 
 	auto curr_camera = m_Settings->GetSelectedCamera();
-	LOG(curr_camera.c_str());
 
 	LiveCapturing* live_capturing = new LiveCapturing
 	(
 		this, 
 		m_CamPreview.get(), 
-		curr_camera,
+		curr_camera.ToStdString(),
 		exposure_time
 	);
 
@@ -2562,7 +2548,7 @@ wxThread::ExitCode WorkerThread::Entry()
 	auto ximea_control = std::make_unique<XimeaControl>();
 	{
 		auto current_camera = m_Settings->GetSelectedCamera();
-		ximea_control->InitializeCameraBySN(current_camera);
+		ximea_control->InitializeCameraBySN(current_camera.ToStdString());
 		ximea_control->SetExposureTime(m_ExposureTimeUS);
 	}
 	float first_axis_rounded_go_to{};

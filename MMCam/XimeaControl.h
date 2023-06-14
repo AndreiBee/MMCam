@@ -18,7 +18,7 @@ public:
 	auto GetCamerasSN() -> std::string*;
 	auto SetExposureTime(const int exposure_us) -> void;
 	auto InitializeCameraBySN(const std::string& cam_sn) -> bool;
-	auto GetImage(const int exposure_us = 0) -> unsigned short*;
+	auto GetImage() -> unsigned short*;
 	auto GetImageWidth() const -> unsigned long;
 	auto GetImageHeight() const -> unsigned long;
 	auto IsCameraInitialized() const -> bool;
@@ -32,6 +32,7 @@ private:
 	unsigned short m_CamerasCount{};
 	std::unique_ptr<std::string[]> m_CamerasSN{};
 	std::string m_CurrentCameraSN{};
+	unsigned int m_Exposure{};
 };
 
 #endif // !XIMEA_CONTROL_H

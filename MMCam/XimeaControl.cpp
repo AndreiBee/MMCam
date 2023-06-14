@@ -39,7 +39,11 @@ auto XimeaControl::GetCamerasSN() -> std::string*
 
 auto XimeaControl::SetExposureTime(const int exposure_us) -> void
 {
-	if (exposure_us) m_State = xiSetParamInt(m_CamHandler, XI_PRM_EXPOSURE, exposure_us);
+	if (exposure_us)
+	{
+		m_State = xiSetParamInt(m_CamHandler, XI_PRM_EXPOSURE, exposure_us);
+		m_Exposure = exposure_us;
+	}
 }
 
 auto XimeaControl::InitializeCameraBySN(const std::string& cam_sn) -> bool
@@ -62,14 +66,14 @@ auto XimeaControl::InitializeCameraBySN(const std::string& cam_sn) -> bool
 	return m_State == XI_OK ? true : false;
 }
 
-auto XimeaControl::GetImage(const int exposure_us) -> unsigned short*
+auto XimeaControl::GetImage() -> unsigned short*
 {
 	if (!m_CamHandler || !m_IsCameraOpen) return nullptr;
 
 	m_State = xiStartAcquisition(m_CamHandler);
 	if (m_State != XI_OK) return nullptr;
 
-	DWORD timeout = (double)exposure_us / 1000.0 + 5000; // Default value = 5000
+	DWORD timeout = (double)m_Exposure / 1000.0 + 5000; // Default value = 5000
 	m_State = xiGetImage(m_CamHandler, timeout, &m_Image);
 	if (m_State != XI_OK) return nullptr;
 	if (xiStopAcquisition(m_CamHandler) != XI_OK) return nullptr;

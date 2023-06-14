@@ -209,16 +209,17 @@ void cSettings::SetCurrentProgress(const int& curr_capturing_num, const int& who
 	m_Progress->is_finished = curr_capturing_num >= whole_capturing_num ? true : false;
 }
 
-auto cSettings::GetSelectedCamera() const -> std::string
+auto cSettings::GetSelectedCamera() const -> wxString
 {
-	return m_Cameras->selected_camera;
+	return m_Cameras->selected_camera_str;
 }
 
 void cSettings::CreateMainFrame()
 {
 	InitComponents();
+	ReadInitializationFile();
 	ReadWorkStationFiles();
-	IterateOverConnectedCameras();
+	//IterateOverConnectedCameras();
 	ReadXMLFile();
 	CreateSettings();
 	BindMotorsAndRangesChoices();
@@ -250,19 +251,20 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 	wxSizer* const work_station_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Work Station");
 	{
 		auto work_station_choice_size = wxSize(120, 24);
-		m_WorkStations->work_station = new wxChoice
+		m_WorkStations->work_station_txt_ctrl = new wxTextCtrl
 		(
 			main_panel, 
-			SettingsVariables::ID_WORK_STATION_CHOICE, 
+			SettingsVariables::ID_WORK_STATION_TXT_CTRL, 
+			wxT("None"),
 			wxDefaultPosition, 
-			work_station_choice_size, 
-			m_WorkStations->work_stations_arr
+			work_station_choice_size,
+			wxTE_CENTRE | wxTE_READONLY
 		);
-
-		m_WorkStations->work_station->SetSelection(0);
+		
+		m_WorkStations->work_station_txt_ctrl->SetValue(m_WorkStations->initialized_work_station);
 
 		work_station_static_box_sizer->AddStretchSpacer();
-		work_station_static_box_sizer->Add(m_WorkStations->work_station, 0, wxEXPAND);
+		work_station_static_box_sizer->Add(m_WorkStations->work_station_txt_ctrl, 0, wxEXPAND);
 		work_station_static_box_sizer->AddStretchSpacer();
 	}
 	main_panel_sizer->Add(work_station_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
@@ -516,18 +518,26 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 	/* Camera */
 	wxSizer* const cameras_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Camera");
 	{
-		//m_Cameras = std::make_unique<SettingsVariables::Cameras>();
 		auto cam_choice_size = wxSize(80, 24);
-		m_Cameras->camera = new wxChoice
+		m_Cameras->camera = new wxTextCtrl
 		(
 			main_panel, 
-			SettingsVariables::ID_CAM_CHOICE, 
+			SettingsVariables::ID_CAM_TXT_CTRL, 
+			wxT("None"),
 			wxDefaultPosition, 
-			cam_choice_size, 
-			m_Cameras->all_cameras_arr
+			cam_choice_size,
+			wxTE_CENTRE | wxTE_READONLY
 		);
 
-		m_Cameras->camera->SetSelection(0);
+		{
+			for (auto i{ 0 }; i < m_WorkStations->work_stations_count; ++i)
+			{
+				if (m_WorkStations->work_station_data[i].work_station_name == m_WorkStations->initialized_work_station)
+					m_Cameras->selected_camera_str = m_WorkStations->work_station_data[i].selected_camera_in_data_file;
+			}
+
+			m_Cameras->camera->SetValue(m_Cameras->selected_camera_str);
+		}
 
 		cameras_static_box_sizer->AddStretchSpacer();
 		cameras_static_box_sizer->Add(m_Cameras->camera, 0, wxEXPAND);
@@ -951,40 +961,82 @@ auto cSettings::CompareXMLWithConnectedDevices()
 
 auto cSettings::ReadWorkStationFiles() -> void
 {
-	m_WorkStations->work_stations_arr.Clear();
-	m_WorkStations->work_stations_arr.Add("None");
-
 	std::string file_name_with_path{};
 	wxString work_station_name{};
+	m_WorkStations->work_stations_count = 0;
+	for (const auto& entry : std::filesystem::directory_iterator(work_stations_path.ToStdString()))
+	{
+		if (entry.is_regular_file() && entry.path().extension() == ".xml")
+		{
+			++m_WorkStations->work_stations_count;
+		}
+	}
+	m_WorkStations->work_station_data = std::make_unique<SettingsVariables::WorkStationData[]>(m_WorkStations->work_stations_count);
+
+	auto i{ 0 };
 	for (const auto& entry : std::filesystem::directory_iterator(work_stations_path.ToStdString())) 
 	{
 		if (entry.is_regular_file() && entry.path().extension() == ".xml")
 		{
 			file_name_with_path = work_stations_path.ToStdString() + entry.path().filename().string();
-			//work_station_name = wxString(file_name_with_path);
 			auto xmlFile = std::make_unique<rapidxml::file<>>(file_name_with_path.c_str());
 			auto document = std::make_unique<rapidxml::xml_document<>>();
 			document->parse<0>(xmlFile->data());
+
+			rapidxml::xml_node<>* selected_motors_node = document->first_node("selected_motors");
+			if (!selected_motors_node) return;
+
+			for (rapidxml::xml_node<>* item = selected_motors_node->first_node()->first_node(); item; item = item->next_sibling())
+			{
+				auto node = item->first_node();
+				auto value = node->value();
+				m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
+			}
+			for (rapidxml::xml_node<>* item = selected_motors_node->first_node()->next_sibling()->first_node(); item; item = item->next_sibling())
+			{
+				auto node = item->first_node();
+				auto value = node->value();
+				m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
+			}
+
+			rapidxml::xml_node<>* camera_node = document->first_node("camera");
+			if (!camera_node) return;
+			m_WorkStations->work_station_data[i].selected_camera_in_data_file = wxString(camera_node->first_node()->value());
+
 			rapidxml::xml_node<>* work_station_node = document->first_node("station");
 
 			if (!work_station_node)
 				return;
-			m_WorkStations->work_stations_arr.Add(wxString(work_station_node->first_node()->value()));
+			m_WorkStations->work_station_data[i].work_station_name = wxString(work_station_node->first_node()->value());
+
+			++i;
 		}
 	}
+}
+
+auto cSettings::ReadInitializationFile() -> void
+{
+	auto xmlFile = std::make_unique<rapidxml::file<>>(initialization_file_path.c_str());
+	auto document = std::make_unique<rapidxml::xml_document<>>();
+	document->parse<0>(xmlFile->data());
+	rapidxml::xml_node<>* work_station_node = document->first_node("work_station");
+
+	if (!work_station_node)
+		return;
+	
+	m_WorkStations->initialized_work_station = wxString(work_station_node->first_node()->value());
 }
 
 auto cSettings::IterateOverConnectedCameras() -> void
 {
 	auto ximea_cameras = std::make_unique<XimeaControl>();
 	ximea_cameras->InitializeAllCameras();
-	m_Cameras->all_cameras_arr.Clear();
-	m_Cameras->all_cameras_arr.Add("None");
 
 	auto cameras_count = ximea_cameras->GetCamerasCount();
+	wxString camera_name{};
 	for (auto i{ 0 }; i < cameras_count; ++i)
 	{
-		m_Cameras->all_cameras_arr.Add(wxString(ximea_cameras->GetCamerasSN()[i]));
+		camera_name = wxString(ximea_cameras->GetCamerasSN()[i]);
 	}
 }
 
@@ -1187,12 +1239,6 @@ void cSettings::UpdatePreviousStatesData()
 			m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1] = current_index;
 		}
 	}
-	/* Check selected Camera */
-	{
-		auto selected_camera_num = m_Cameras->camera->GetSelection();
-		if (selected_camera_num != wxNOT_FOUND)
-			m_Cameras->selected_camera = m_Cameras->camera->GetString(selected_camera_num);
-	}
 }
 
 void cSettings::SetPreviousStatesDataAsCurrentSelection()
@@ -1371,5 +1417,35 @@ void cSettings::ResetAllMotorsAndRangesInXMLFile()
 		out_file.close();
 	}
 	document->clear();
+}
 
+auto cSettings::RewriteInitializationFile() -> void
+{
+	auto document = std::make_unique<rapidxml::xml_document<>>();
+	// Open *.xml file
+	std::ifstream ini_file(initialization_file_path.mb_str());
+	// Preparing buffer
+	std::stringstream file_buffer;
+	file_buffer << ini_file.rdbuf();
+	ini_file.close();
+
+	std::string content(file_buffer.str());
+	document->parse<0 | rapidxml::parse_no_data_nodes>(&content[0]);
+	rapidxml::xml_node<>* work_station_node = document->first_node("work_station");
+
+	if (!work_station_node)
+		return;
+
+	//work_station_node->first_node()->value(m_WorkStations->selected_work_station_str);
+	//m_WorkStations->selected_work_station_str = wxString(work_station_node->first_node()->value());
+
+	// Save to file
+	std::ofstream out_file(initialization_file_path.mb_str());
+	if (out_file.is_open())
+	{
+		out_file << "<?xml version=\"1.0\"?>\n";
+		out_file << *document;
+		out_file.close();
+	}
+	document->clear();
 }
