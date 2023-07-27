@@ -32,6 +32,7 @@ public:
 	auto AppendThread() -> int; // Returns the ID
 	auto GetThreadState(int id) -> bool;
 	auto TurnOffLastThread() -> bool;
+	auto ClearAllThreads() -> void;
 	~XimeaControl();
 private:
 	bool m_IsCameraOpen{};

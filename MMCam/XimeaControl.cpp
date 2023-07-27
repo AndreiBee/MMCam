@@ -145,8 +145,9 @@ auto XimeaControl::IsCameraConnected() -> bool
 	{
 		char serial[256];
 		status = xiGetDeviceInfoString(i, XI_PRM_DEVICE_SN, serial, sizeof(serial));
-		if (std::strcmp(m_CurrentCameraSN.c_str(), serial) && status == XI_OK) return true;
+		if (!std::strcmp(m_CurrentCameraSN.c_str(), serial) && status == XI_OK) return true;
 	}
+	return false;
 }
 
 auto XimeaControl::TryToReconnectLastSelectedCamera() -> bool
@@ -178,6 +179,11 @@ auto XimeaControl::TurnOffLastThread() -> bool
 
 	m_Threads[n] = false;
 	return true;
+}
+
+auto XimeaControl::ClearAllThreads() -> void
+{
+	m_Threads.clear();
 }
 
 XimeaControl::~XimeaControl()

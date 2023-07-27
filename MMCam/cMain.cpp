@@ -1489,6 +1489,7 @@ void cMain::OnExit(wxCloseEvent& evt)
 		unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
 		wxThread::This()->Sleep(exposure_time);
 	}
+	m_XimeaControl->ClearAllThreads();
 
 	Destroy();  // you may also do:  event.Skip();
 	evt.Skip();
@@ -2292,6 +2293,7 @@ void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
 			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
 			wxThread::This()->Sleep(exposure_time);
 		}
+		m_XimeaControl->ClearAllThreads();
 
 		m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Start Live (L)"));
 		if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))
