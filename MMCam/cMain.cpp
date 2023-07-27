@@ -2696,11 +2696,6 @@ wxThread::ExitCode WorkerThread::Entry()
 	auto cam_preview_data_ptr = m_CameraPreview->GetDataPtr();
 	auto cam_preview_image_ptr = m_CameraPreview->GetImagePtr();
 
-	//auto ximea_control = std::make_unique<XimeaControl>();
-	{
-		//auto current_camera = m_Settings->GetSelectedCamera();
-		//ximea_control->InitializeCameraBySN(current_camera.ToStdString());
-	}
 	if (!m_XimeaControl->IsCameraConnected())
 	{
 		exit_thread(m_XimeaControl);
