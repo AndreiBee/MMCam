@@ -109,6 +109,7 @@ void CrossHairTool::ActivateToolButton(bool vertical_line, bool horizontal_line)
 	m_ShowVerticalLine = m_ShowDataOnVerticalLine = vertical_line;
 	m_HorizontalLineProfileActive = m_ShowDataOnHorizontalLine = horizontal_line;
 	m_ShowHorizontalLine = horizontal_line;
+	m_ToolButtonActive = vertical_line || horizontal_line;
 }
 
 void CrossHairTool::ActivateValueDisplaying(bool activate)
@@ -192,13 +193,17 @@ wxStockCursor CrossHairTool::UpdateCursor(const wxStockCursor& current_cursor)
 {
 	CheckIfMouseAboveCrossHair();
 	auto edited_cursor = current_cursor;
-	if (m_MouseHoverOverImage)
+	if (m_ToolButtonActive)
 	{
-		edited_cursor = m_CursorAboveVerticalLine && m_ShowVerticalLine ? wxCURSOR_SIZEWE : edited_cursor;
-		edited_cursor = m_CursorAboveHorizontalLine && m_ShowHorizontalLine ? wxCURSOR_SIZENS : edited_cursor;
-		edited_cursor = m_CursorAboveHorizontalLine && m_CursorAboveVerticalLine && m_ShowVerticalLine && m_ShowHorizontalLine ? wxCURSOR_SIZING : edited_cursor;
-		edited_cursor = m_ChangingHorizontalLine || m_ChangingVerticalLine ? wxCURSOR_CLOSED_HAND : edited_cursor;
+		edited_cursor = m_SelectingPositionFromParentWindow ? wxCURSOR_QUESTION_ARROW : edited_cursor;
 	}
+	//if (m_MouseHoverOverImage)
+	//{
+		//edited_cursor = m_CursorAboveVerticalLine && m_ShowVerticalLine ? wxCURSOR_SIZEWE : edited_cursor;
+		//edited_cursor = m_CursorAboveHorizontalLine && m_ShowHorizontalLine ? wxCURSOR_SIZENS : edited_cursor;
+		//edited_cursor = m_CursorAboveHorizontalLine && m_CursorAboveVerticalLine && m_ShowVerticalLine && m_ShowHorizontalLine ? wxCURSOR_SIZING : edited_cursor;
+		//edited_cursor = m_ChangingHorizontalLine || m_ChangingVerticalLine ? wxCURSOR_CLOSED_HAND : edited_cursor;
+	//}
 	return edited_cursor;
 }
 
@@ -324,6 +329,11 @@ bool CrossHairTool::GetShowHorizontalLine() const
 int CrossHairTool::GetYPos() const
 {
 	return m_CrossHairOnImage.y;
+}
+
+auto CrossHairTool::ActivateSetPositionFromParentWindow(bool activate) -> void
+{
+	m_SelectingPositionFromParentWindow = activate;
 }
 
 void CrossHairTool::ProcessChangingCrossHairPos()

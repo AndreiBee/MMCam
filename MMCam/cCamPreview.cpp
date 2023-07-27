@@ -71,6 +71,12 @@ void cCamPreview::SetYCrossHairPosFromParentWindow(const int& y_pos)
 	}
 }
 
+auto cCamPreview::SettingCrossHairPosFromParentWindow(bool set) -> void
+{
+	m_CrossHairTool->ActivateSetPositionFromParentWindow(set);
+	//m_SettingCrossHairPos = set;
+}
+
 auto cCamPreview::SetImageSize(const wxSize& img_size) -> void
 {
 	m_Image = std::make_shared<wxImage>();
@@ -453,7 +459,16 @@ void cCamPreview::CalculatePositionOnImage()
 
 void cCamPreview::OnPreviewMouseLeftPressed(wxMouseEvent& evt)
 {
-	if (m_Zoom > 1.0 && m_IsCursorInsideImage && m_CrossHairTool->CanProcessPanning())
+	if (m_ParentArguments->set_pos_tgl_btn->GetValue())
+	{
+		//m_CrossHairTool->SetXPosFromParent(m_CheckedCursorPosOnImage.x);
+		//m_CrossHairTool->SetYPosFromParent(m_CheckedCursorPosOnImage.y);
+		m_ParentArguments->x_pos_crosshair->SetValue(wxString::Format(wxT("%i"), (int)(m_CheckedCursorPosOnImage.x + 1)));
+		m_ParentArguments->y_pos_crosshair->SetValue(wxString::Format(wxT("%i"), (int)(m_CheckedCursorPosOnImage.y + 1)));
+		m_ParentArguments->set_pos_tgl_btn->SetValue(false);
+		m_CrossHairTool->ActivateSetPositionFromParentWindow(false);
+	}
+	else if (m_Zoom > 1.0 && m_IsCursorInsideImage && m_CrossHairTool->CanProcessPanning())
 	{
 		m_Panning = true;
 		m_PanStartPoint = m_CursorPosOnCanvas;
@@ -475,7 +490,8 @@ void cCamPreview::ChangeCursorInDependenceOfCurrentParameters()
 	auto current_cursor = wxCURSOR_DEFAULT;
 
 	/* CrossHair Tool */
-	//current_cursor = m_CrossHairTool->UpdateCursor(current_cursor);
+	//current_cursor = m_SettingCrossHairPos ? wxCURSOR_QUESTION_ARROW : current_cursor;
+	current_cursor = m_CrossHairTool->UpdateCursor(current_cursor);
 
 	SetCursor(current_cursor);
 }

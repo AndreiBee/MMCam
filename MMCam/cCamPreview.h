@@ -5,6 +5,7 @@
 #include "wx/wx.h"
 #include "wx/dcbuffer.h"
 #include "wx/graphics.h"
+#include "wx/tglbtn.h"
 
 #include <iostream>
 #include <fstream>
@@ -28,13 +29,16 @@ namespace CameraPreviewVariables
 	struct InputPreviewPanelArgs
 	{
 		wxTextCtrl* x_pos_crosshair{}, * y_pos_crosshair{};
+		wxToggleButton* set_pos_tgl_btn{};
 		InputPreviewPanelArgs() {};
 		InputPreviewPanelArgs
 		(
 			wxTextCtrl* par_x_pos_crosshair,
-			wxTextCtrl* par_y_pos_crosshair
+			wxTextCtrl* par_y_pos_crosshair,
+			wxToggleButton* par_pos_crosshair_tgl_btn
 		) : x_pos_crosshair(par_x_pos_crosshair),
-			y_pos_crosshair(par_y_pos_crosshair) {};
+			y_pos_crosshair(par_y_pos_crosshair), 
+			set_pos_tgl_btn(par_pos_crosshair_tgl_btn) {};
 	};
 }
 
@@ -52,6 +56,7 @@ public:
 	auto SetValueDisplayingActive(bool activate = false) -> void;
 	void SetXCrossHairPosFromParentWindow(const int& x_pos);
 	void SetYCrossHairPosFromParentWindow(const int& y_pos);
+	auto SettingCrossHairPosFromParentWindow(bool set = false) -> void;
 	auto SetImageSize(const wxSize& img_size) -> void;
 	auto GetDataPtr() const -> unsigned short*;
 	auto GetImagePtr() const -> wxImage*;
@@ -141,6 +146,7 @@ private:
 	std::unique_ptr<CrossHairTool> m_CrossHairTool{};
 	wxPoint m_CrossHairPos{};
 	bool m_ChangingCrossHairPosition{};
+	//bool m_SettingCrossHairPos{};
 
 	bool m_DisplayPixelValues{};
 

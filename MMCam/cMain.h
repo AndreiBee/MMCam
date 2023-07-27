@@ -91,6 +91,7 @@ namespace MainFrameVariables
 		ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN,
 		ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL,
 		ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL,
+		ID_RIGHT_CAM_CROSS_HAIR_SET_POS_TGL_BTN,
 		/* Measurement */
 		ID_RIGHT_MT_OUT_FLD_TE_CTL,
 		ID_RIGHT_MT_OUT_FLD_BTN,
@@ -103,8 +104,10 @@ namespace MainFrameVariables
 		ID_RIGHT_MT_SECOND_STAGE_STEP,
 		ID_RIGHT_MT_SECOND_STAGE_FINISH,
 		ID_RIGHT_MT_START_MEASUREMENT,
+		/* Live Capturing */
+		ID_THREAD_LIVE_CAPTURING,
 		/* Progress */
-		ID_PROGRESS_CAPTURING,
+		ID_THREAD_PROGRESS_CAPTURING,
 	};
 	struct MenuBar
 	{
@@ -220,7 +223,7 @@ class cMain final : public wxFrame
 {
 public:
 	cMain(const wxString& title_);
-	auto StopLiveCapturing() -> bool;
+	//auto StopLiveCapturing() -> bool;
 	auto LiveCapturingFinishedCapturingAndDrawing(bool is_finished) -> void;
 	auto WorkerThreadFinished(bool is_finished) -> void;
 private:
@@ -303,14 +306,19 @@ private:
 	void OnStartCapturingButton(wxCommandEvent& evt);
 	void OnStartStopLiveCapturingMenu(wxCommandEvent& evt);
 	void OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt);
+
+	/* Thread Live Capturing */
+	auto LiveCapturingThread(wxThreadEvent& evt) -> void;
 	/* Progress */
 	void UpdateProgress(wxThreadEvent& evt);
 	bool Cancelled();
 
 	void UpdateAllAxisGlobalPositions();
 
+	/* CrossHair */
 	void OnXPosCrossHairTextCtrl(wxCommandEvent& evt);
 	void OnYPosCrossHairTextCtrl(wxCommandEvent& evt);
+	auto OnSetPosCrossHairTglBtn(wxCommandEvent& evt) -> void;
 
 	auto CreateMetadataFile() -> void;
 
@@ -328,11 +336,13 @@ private:
 	std::unique_ptr<MainFrameVariables::StepperControl> m_X_Optics{}, m_Y_Optics{}, m_Z_Optics{};
 
 	/* Camera */
+	std::unique_ptr<XimeaControl> m_XimeaControl{};
 	std::unique_ptr<wxTextCtrl> m_CamExposure{};
 	std::unique_ptr<wxStaticText> m_SelectedCameraStaticTXT{};
 	std::unique_ptr<wxButton> m_SingleShotBtn{};
 	std::unique_ptr<wxToggleButton> m_StartStopLiveCapturingTglBtn{};
 	std::unique_ptr<wxTextCtrl> m_CrossHairPosXTxtCtrl{}, m_CrossHairPosYTxtCtrl{};
+	std::unique_ptr<wxToggleButton> m_SetCrossHairPosTglBtn{};
 
 	/* Measurement */
 	std::unique_ptr<wxTextCtrl> m_OutDirTextCtrl{};
@@ -357,8 +367,8 @@ private:
 	bool m_IsValueDisplayingChecked{};
 
 	/* Live Capturing */
-	bool m_StopLiveCapturing{};
-	bool m_LiveCapturingEndedDrawingOnCamPreview{ true };
+	//bool m_StopLiveCapturing{};
+	//bool m_LiveCapturingEndedDrawingOnCamPreview{ true };
 
 	/* Appearance Colors */
 	wxColour m_DefaultAppearenceColor = wxColour(255, 255, 255);
@@ -379,7 +389,8 @@ public:
 	(
 		cMain* main_frame,
 		cCamPreview* cam_preview_window,
-		const std::string& selected_camera,
+		XimeaControl* ximea_control,
+		//const std::string& selected_camera,
 		const int exposure_us
 	);
 	~LiveCapturing();
@@ -410,10 +421,12 @@ private:
 private:
 	cMain* m_MainFrame{};
 	cCamPreview* m_CamPreviewWindow{};
-	std::string m_SelectedCameraSN{};
+	XimeaControl* m_XimeaControl{};
+	//std::string m_SelectedCameraSN{};
 	int m_ExposureUS{};
-	std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
+	//std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
 	wxSize m_ImageSize{};
+	int m_ThreadID{ -1 };
 };
 /* ___ End Worker Thread ___ */
 
@@ -426,6 +439,7 @@ public:
 		cMain* main_frame,
 		cSettings* settings, 
 		cCamPreview* camera_preview_panel,
+		XimeaControl* ximea_control,
 		const wxString& path, 
 		const unsigned long& exp_time_us,
 		MainFrameVariables::AxisMeasurement* first_axis, 
@@ -454,6 +468,7 @@ private:
 	cMain* m_MainFrame{};
 	cSettings* m_Settings{};
 	cCamPreview* m_CameraPreview{};
+	XimeaControl* m_XimeaControl{};
 	wxString m_ImagePath{};
 	unsigned long m_ExposureTimeUS{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};

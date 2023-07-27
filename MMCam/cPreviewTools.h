@@ -99,6 +99,7 @@ public:
 	int GetXPos() const;
 	bool GetShowHorizontalLine() const;
 	int GetYPos() const;
+	auto ActivateSetPositionFromParentWindow(bool activate) -> void;
 
 private:
 	void CheckIfMouseAboveCrossHair();
@@ -119,6 +120,7 @@ private:
 	bool m_ChangingHorizontalLine{}, m_ChangingVerticalLine{};
 	bool m_ShowHorizontalLine{}, m_ShowDataOnHorizontalLine{};
 	bool m_ShowVerticalLine{}, m_ShowDataOnVerticalLine{};
+	bool m_SelectingPositionFromParentWindow{};
 	wxSize m_ActualZoomedSizeOfImageOnCanvas{};
 
 	wxSize m_CrosshairRectangle{ 6, 6 };

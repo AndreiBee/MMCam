@@ -2,6 +2,7 @@
 
 XimeaControl::XimeaControl()
 {
+	m_Threads.reserve(4096);
 }
 
 auto XimeaControl::InitializeAllCameras() -> void
@@ -46,14 +47,14 @@ auto XimeaControl::SetExposureTime(const int exposure_us) -> void
 	}
 }
 
-auto XimeaControl::InitializeCameraBySN(const std::string& cam_sn) -> bool
+auto XimeaControl::InitializeCameraBySN(std::string cam_sn) -> bool
 {
 	m_CurrentCameraSN = cam_sn;
 	m_CamHandler = NULL;
 	m_State = XI_OK;
 
 	/* Opening Camera */
-	m_State = xiOpenDeviceBy(XI_OPEN_BY_SN, cam_sn.c_str(), &m_CamHandler);
+	m_State = xiOpenDeviceBy(XI_OPEN_BY_SN, m_CurrentCameraSN.c_str(), &m_CamHandler);
 	m_IsCameraOpen = m_State == XI_OK ? true : false;
 
 	memset(&m_Image, 0, sizeof(m_Image));
@@ -114,6 +115,69 @@ auto XimeaControl::CloseCamera() -> bool
 		m_CamHandler = NULL;
 		return true;
 	}
+}
+
+auto XimeaControl::StopAcquisition() -> bool
+{
+	m_WasAcquisitionStopped = true;
+	return xiStopAcquisition(m_CamHandler);
+}
+
+auto XimeaControl::WasAcquisitionStopped() -> bool
+{
+	if (m_WasAcquisitionStopped) // True
+	{
+		m_WasAcquisitionStopped = !m_WasAcquisitionStopped;
+		return !m_WasAcquisitionStopped;
+	}
+	else
+		return m_WasAcquisitionStopped; // False
+}
+
+auto XimeaControl::IsCameraConnected() -> bool
+{
+	DWORD numDevices = 0;
+	auto status = xiGetNumberDevices(&numDevices);
+
+	if (status != XI_OK || numDevices == 0) return false;
+
+	for (auto i{ 0 }; i < numDevices; ++i)
+	{
+		char serial[256];
+		status = xiGetDeviceInfoString(i, XI_PRM_DEVICE_SN, serial, sizeof(serial));
+		if (std::strcmp(m_CurrentCameraSN.c_str(), serial) && status == XI_OK) return true;
+	}
+}
+
+auto XimeaControl::TryToReconnectLastSelectedCamera() -> bool
+{
+	CloseCamera();
+	return InitializeCameraBySN(m_CurrentCameraSN);
+}
+
+auto XimeaControl::AppendThread() -> int
+{
+	m_Threads.emplace_back(true);
+	return m_Threads.size() - 1;
+}
+
+auto XimeaControl::GetThreadState(int id) -> bool
+{
+	if (id >= m_Threads.size() || id < 0) return false;
+	else
+		return m_Threads[id];
+}
+
+auto XimeaControl::TurnOffLastThread() -> bool
+{
+	auto n = m_Threads.size() - 1;
+	while (!m_Threads[n] && n > -1)
+		--n;
+
+	if (n == -1) return false;
+
+	m_Threads[n] = false;
+	return true;
 }
 
 XimeaControl::~XimeaControl()
