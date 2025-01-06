@@ -7,6 +7,7 @@
 #include "wx/valnum.h"
 #include "wx/thread.h"
 #include "wx/appprogress.h"
+#include "wxMaterialDesignArtProvider.hpp"
 
 #include <string>
 #include <memory>
@@ -17,12 +18,14 @@
 #include "cCamPreview.h"
 #include "cSettings.h"
 
-#include "src/img/cross_hair.xpm"
-#include "src/img/center.xpm"
-#include "src/img/home.xpm"
-
 #include "src/img/logo.xpm"
 
+//#include "src/img/cross_hair.xpm"
+//#include "src/img/center.xpm"
+//#include "src/img/home.xpm"
+
+#define MAJOR_VERSION 1
+#define MINOR_VERSION 11
 
 namespace MainFrameVariables
 {

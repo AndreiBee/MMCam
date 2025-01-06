@@ -66,6 +66,11 @@ wxEND_EVENT_TABLE()
 cMain::cMain(const wxString& title_) 
 	: wxFrame(NULL, wxID_ANY, title_)
 {
+#ifndef _DEBUG
+	wxBusyCursor busy;
+#endif // !_DEBUG
+
+	wxArtProvider::Push(new wxMaterialDesignArtProvider);
 	CreateMainFrame();
 	InitDefaultStateWidgets();
 	SetIcon(logo_xpm);
@@ -304,11 +309,37 @@ void cMain::CreateSteppersControl(wxPanel* right_side_panel, wxBoxSizer* right_s
 	wxSize inc_dec_size = { 20, 20 };
 
 	/* Center bitmap */
-	wxImage centerImage = wxImage(center_xpm);
-	wxBitmap centerBitmap = wxBitmap(centerImage);
+	wxBitmap centerBitmap{};
+	{
+		auto bitmap = wxART_CENTER_HORIZONTAL;
+		auto client = wxART_CLIENT_FLUENTUI_FILLED;
+		auto color = wxColour(255, 128, 0);
+		auto size = wxSize(16, 16);
+		centerBitmap = wxMaterialDesignArtProvider::GetBitmap
+		(
+			bitmap,
+			client,
+			size,
+			color
+		);
+	}
+
 	/* Home bitmap */
-	wxImage homeImage = wxImage(home_xpm);
-	wxBitmap homeBitmap = wxBitmap(homeImage);
+	wxBitmap homeBitmap{};
+	{
+		auto bitmap = wxART_HOME;
+		auto client = wxART_CLIENT_MATERIAL_FILLED;
+		auto color = wxColour(0, 255, 128);
+		auto size = wxSize(16, 16);
+		homeBitmap = wxMaterialDesignArtProvider::GetBitmap
+		(
+			bitmap,
+			client,
+			size,
+			color
+		);
+	}
+
 	{
 		wxSizer* const detector_static_box_sizer = new wxStaticBoxSizer(wxVERTICAL, right_side_panel, "&Detector");
 		{
@@ -1637,9 +1668,22 @@ void cMain::CreateVerticalToolBar()
 		wxTB_VERTICAL
 	);
 
-	// CrossHair
-	wxImage crosshairToolImage = wxImage(cross_hair_xpm);
-	wxBitmap crosshairToolBitmap = wxBitmap(crosshairToolImage);
+	/* CrossHair bitmap */
+	wxBitmap crosshairToolBitmap{};
+	{
+		auto bitmap = wxART_ARROW_TRENDING_LINES;
+		auto client = wxART_CLIENT_FLUENTUI_FILLED;
+		auto color = wxColour(128, 128, 255);
+		auto size = wxSize(32, 32);
+		crosshairToolBitmap = wxMaterialDesignArtProvider::GetBitmap
+		(
+			bitmap,
+			client,
+			size,
+			color
+		);
+	}
+
 	m_VerticalToolBar->tool_bar->AddCheckTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, _("Crosshair"), crosshairToolBitmap);
 	m_VerticalToolBar->tool_bar->SetToolShortHelp(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, wxT("Crosshair (C)"));
 

@@ -113,13 +113,14 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;$(XIMEA);$(XIMC);$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MaterialDesign;$(WXWIN_LATEST)\include;$(WXWIN_LATEST)\include\msvc;$(OPENCV_LATEST)\..\..\include;$(XIMEA_LATEST);$(LIBXIMC_LATEST);$(ProjectDir)src\third_libs\rapidxml</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OPENCV_DIR)\lib;$(XIMEA);$(WXWIN320)\lib\vc_x64_lib;$(XIMC)\win64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world454d.lib;xiapi64.lib;libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WXWIN_LATEST)\lib\vc_x64_lib;$(OPENCV_LATEST)\lib;$(XIMEA_LATEST);$(LIBXIMC_LATEST)\win64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world4100d.lib;xiapi64.lib;libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -131,18 +132,31 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(OPENCV_DIR)\..\..\include;$(XIMEA);$(XIMC);$(ProjectDir)src\third_libs\rapidxml;$(WXWIN320)\include;$(WXWIN320)\include\msvc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)MaterialDesign;$(WXWIN_LATEST)\include;$(WXWIN_LATEST)\include\msvc;$(OPENCV_LATEST)\..\..\include;$(XIMEA_LATEST);$(LIBXIMC_LATEST);$(ProjectDir)src\third_libs\rapidxml</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OPENCV_DIR)\lib;$(XIMEA);$(WXWIN320)\lib\vc_x64_lib;$(XIMC)\win64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world454.lib;xiapi64.lib;libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(WXWIN_LATEST)\lib\vc_x64_lib;$(OPENCV_LATEST)\lib;$(XIMEA_LATEST);$(LIBXIMC_LATEST)\win64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world4100.lib;xiapi64.lib;libximc.lib;bindy.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\MaterialDesign\wxAwesomeBrandsArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxAwesomeRegularArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxAwesomeSolidArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxFluentuiFilledArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxFluentuiRegularArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxMaterialDesignArtProvider.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxMaterialFilledArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxMaterialOutlinedArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxMaterialRoundArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxMaterialSharpArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxMaterialTwoToneArt.hpp" />
+    <ClInclude Include="..\MaterialDesign\wxSimpleIconsArt.hpp" />
     <ClInclude Include="cApp.h" />
     <ClInclude Include="cCamPreview.h" />
     <ClInclude Include="cMain.h" />
@@ -154,6 +168,18 @@
     <ClInclude Include="XimeaControl.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\MaterialDesign\wxAwesomeBrandsArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxAwesomeRegularArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxAwesomeSolidArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxFluentuiFilledArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxFluentuiRegularArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxMaterialDesignArtProvider.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxMaterialFilledArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxMaterialOutlinedArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxMaterialRoundArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxMaterialSharpArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxMaterialTwoToneArt.cpp" />
+    <ClCompile Include="..\MaterialDesign\wxSimpleIconsArt.cpp" />
     <ClCompile Include="cApp.cpp" />
     <ClCompile Include="cCamPreview.cpp" />
     <ClCompile Include="cMain.cpp" />

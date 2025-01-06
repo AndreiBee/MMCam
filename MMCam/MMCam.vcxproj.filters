@@ -16,6 +16,12 @@
     <Filter Include="Header Files\ext_lib">
       <UniqueIdentifier>{8311a345-df65-4834-8a32-8a28e254ab9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\MaterialDesign">
+      <UniqueIdentifier>{c4933ef9-3752-4e69-aeda-ce9a7c9292b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MaterialDesign">
+      <UniqueIdentifier>{16ff1013-2f7f-4a6a-ac0d-e058b639441c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cApp.h">
@@ -45,6 +51,42 @@
     <ClInclude Include="json.hpp">
       <Filter>Header Files\ext_lib</Filter>
     </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxAwesomeBrandsArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxAwesomeRegularArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxAwesomeSolidArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxFluentuiFilledArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxFluentuiRegularArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxMaterialDesignArtProvider.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxMaterialFilledArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxMaterialOutlinedArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxMaterialRoundArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxMaterialSharpArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxMaterialTwoToneArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MaterialDesign\wxSimpleIconsArt.hpp">
+      <Filter>Header Files\MaterialDesign</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cApp.cpp">
@@ -67,6 +109,42 @@
     </ClCompile>
     <ClCompile Include="cPreviewTools.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxAwesomeBrandsArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxAwesomeRegularArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxAwesomeSolidArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxFluentuiFilledArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxFluentuiRegularArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxMaterialDesignArtProvider.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxMaterialFilledArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxMaterialOutlinedArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxMaterialRoundArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxMaterialSharpArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxMaterialTwoToneArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MaterialDesign\wxSimpleIconsArt.cpp">
+      <Filter>Source Files\MaterialDesign</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
