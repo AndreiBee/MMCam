@@ -87,6 +87,9 @@
     <ClInclude Include="..\MaterialDesign\wxSimpleIconsArt.hpp">
       <Filter>Header Files\MaterialDesign</Filter>
     </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cApp.cpp">
@@ -153,7 +156,7 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="src\logo.ico">
+    <Image Include="src\img\logo.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

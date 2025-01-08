@@ -20,10 +20,6 @@
 
 #include "src/img/logo.xpm"
 
-//#include "src/img/cross_hair.xpm"
-//#include "src/img/center.xpm"
-//#include "src/img/home.xpm"
-
 #define MAJOR_VERSION 1
 #define MINOR_VERSION 11
 
