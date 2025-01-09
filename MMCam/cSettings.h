@@ -158,26 +158,40 @@ public:
 	void ResetCapturing();
 
 	/* Setters */
-	/* Detector X */
-	float GoToAbsDetectorX(float absolute_position);
-	float GoOffsetDetectorX(float delta);
-	float CenterDetectorX();
-	float HomeDetectorX();
-	/* Detector Y */
-	float GoToAbsDetectorY(float absolute_position);
-	float GoOffsetDetectorY(float delta);
-	float CenterDetectorY();
-	float HomeDetectorY();
-	/* Detector Z */
-	float GoToAbsDetectorZ(float absolute_position);
-	float GoOffsetDetectorZ(float delta);
-	float CenterDetectorZ();
-	float HomeDetectorZ();
-	/* Optics Y */
-	float GoToAbsOpticsY(float absolute_position);
-	float GoOffsetOpticsY(float delta);
-	float CenterOpticsY();
-	float HomeOpticsY();
+	float GoToAbsPos(const int motorName, const float absolute_position)
+	{
+		return m_PhysicalMotors->GoMotorToAbsPos
+		(
+			m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[motorName].ToStdString(),
+			absolute_position
+		);
+	};
+
+	float GoOffsetMotor(const int motorName, const float delta)
+	{
+		return m_PhysicalMotors->GoMotorOffset
+		(
+			m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[motorName].ToStdString(),
+			delta
+		);
+	};
+
+	float CenterMotor(const int motorName)
+	{
+		return m_PhysicalMotors->GoMotorCenter
+		(
+			m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[motorName].ToStdString()
+		);
+
+	};
+	float HomeMotor(const int motorName)
+	{
+		return m_PhysicalMotors->GoMotorHome
+		(
+			m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[motorName].ToStdString()
+		);
+	};
+
 	/* Progress */
 	void SetCurrentProgress(const int& curr_capturing_num, const int& whole_capturing_num);
 
