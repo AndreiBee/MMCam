@@ -12,7 +12,9 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+.venv
 *.txt
+!FWHM/requirements.txt
 *.raw
 *.tif
 *.xlsx
