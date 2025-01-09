@@ -48,6 +48,16 @@ namespace SettingsVariables
 		ID_CAM_TXT_CTRL,
 	};
 
+	enum MotorsNames 
+	{
+		DETECTOR_X,
+		DETECTOR_Y,
+		DETECTOR_Z,
+		OPTICS_X,
+		OPTICS_Y,
+		OPTICS_Z
+	};
+
 	struct MotorSettings
 	{
 		wxTextCtrl* motor{}; 
@@ -124,20 +134,21 @@ class cSettings final : public wxDialog
 public:
 	cSettings(wxWindow* parent_frame);
 
-	/* Getters */
-	bool DetectorXHasSerialNumber() const;
-	float GetActualDetectorXStagePos() const;
-	bool DetectorYHasSerialNumber() const;
-	float GetActualDetectorYStagePos() const;
-	bool DetectorZHasSerialNumber() const;
-	float GetActualDetectorZStagePos() const;
+	bool MotorHasSerialNumber(const int motorName)
+	{
+		return m_PhysicalMotors->MotorHasSerialNumber
+		(
+			m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[motorName].ToStdString()
+		);
+	}
 
-	bool OpticsXHasSerialNumber() const;
-	float GetActualOpticsXStagePos() const;
-	bool OpticsYHasSerialNumber() const;
-	float GetActualOpticsYStagePos() const;
-	bool OpticsZHasSerialNumber() const;
-	float GetActualOpticsZStagePos() const;
+	float GetActualMotorPosition(const int motorName)
+	{
+		return m_PhysicalMotors->GetActualStagePos
+		(
+			m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[motorName].ToStdString()
+		);
+	}
 
 	/* Progress Getter */
 	bool IsCapturingFinished() const;

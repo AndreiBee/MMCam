@@ -1533,11 +1533,41 @@ void cMain::OnExit(wxCloseEvent& evt)
 
 void cMain::UpdateStagePositions()
 {
-	m_X_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorXStagePos()));
-	m_Y_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorYStagePos()));
-	m_Z_Detector->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorZStagePos()));
+	// Detector
+	{
+		m_X_Detector->absolute_text_ctrl->SetValue(
+			wxString::Format(wxT("%.3f"),
+				m_Settings->GetActualMotorPosition(SettingsVariables::DETECTOR_X))
+		);
 
-	m_Y_Optics->absolute_text_ctrl->SetValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualOpticsYStagePos()));
+		m_Y_Detector->absolute_text_ctrl->SetValue(
+			wxString::Format(wxT("%.3f"),
+				m_Settings->GetActualMotorPosition(SettingsVariables::DETECTOR_Y))
+		);
+
+		m_Z_Detector->absolute_text_ctrl->SetValue(
+			wxString::Format(wxT("%.3f"),
+				m_Settings->GetActualMotorPosition(SettingsVariables::DETECTOR_Z))
+		);
+	}
+
+	// Optics
+	{
+		m_X_Optics->absolute_text_ctrl->SetValue(
+			wxString::Format(wxT("%.3f"),
+				m_Settings->GetActualMotorPosition(SettingsVariables::OPTICS_X))
+		);
+
+		m_Y_Optics->absolute_text_ctrl->SetValue(
+			wxString::Format(wxT("%.3f"),
+				m_Settings->GetActualMotorPosition(SettingsVariables::OPTICS_Y))
+		);
+
+		m_Z_Optics->absolute_text_ctrl->SetValue(
+			wxString::Format(wxT("%.3f"),
+				m_Settings->GetActualMotorPosition(SettingsVariables::OPTICS_Z))
+		);
+	}
 }
 
 void cMain::OnExit(wxCommandEvent& evt)
@@ -1549,22 +1579,22 @@ void cMain::OnExit(wxCommandEvent& evt)
 void cMain::EnableUsedAndDisableNonUsedMotors()
 {
 	/* Detector X */
-	if (m_Settings->DetectorXHasSerialNumber()) m_X_Detector->EnableAllControls();
+	if (m_Settings->MotorHasSerialNumber(SettingsVariables::DETECTOR_X)) m_X_Detector->EnableAllControls();
 	else m_X_Detector->DisableAllControls();
 	/* Detector Y */
-	if (m_Settings->DetectorYHasSerialNumber()) m_Y_Detector->EnableAllControls();
+	if (m_Settings->MotorHasSerialNumber(SettingsVariables::DETECTOR_Y)) m_Y_Detector->EnableAllControls();
 	else m_Y_Detector->DisableAllControls();
 	/* Detector Z */
-	if (m_Settings->DetectorZHasSerialNumber()) m_Z_Detector->EnableAllControls();
+	if (m_Settings->MotorHasSerialNumber(SettingsVariables::DETECTOR_Z)) m_Z_Detector->EnableAllControls();
 	else m_Z_Detector->DisableAllControls();
 	/* Optics X */
-	if (m_Settings->OpticsXHasSerialNumber()) m_X_Optics->EnableAllControls();
+	if (m_Settings->MotorHasSerialNumber(SettingsVariables::OPTICS_X)) m_X_Optics->EnableAllControls();
 	else m_X_Optics->DisableAllControls();
 	/* Optics Y */
-	if (m_Settings->OpticsYHasSerialNumber()) m_Y_Optics->EnableAllControls();
+	if (m_Settings->MotorHasSerialNumber(SettingsVariables::OPTICS_Y)) m_Y_Optics->EnableAllControls();
 	else m_Y_Optics->DisableAllControls();
 	/* Optics Z */
-	if (m_Settings->OpticsZHasSerialNumber()) m_Z_Optics->EnableAllControls();
+	if (m_Settings->MotorHasSerialNumber(SettingsVariables::OPTICS_Z)) m_Z_Optics->EnableAllControls();
 	else m_Z_Optics->DisableAllControls();
 }
 
@@ -2277,13 +2307,13 @@ void cMain::OnValueDisplayingCheck(wxCommandEvent& evt)
 void cMain::UpdateAllAxisGlobalPositions()
 {
 	/* Detectors */
-	m_X_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorXStagePos()));
-	m_Y_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorYStagePos()));
-	m_Z_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualDetectorZStagePos()));
+	m_X_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualMotorPosition(SettingsVariables::DETECTOR_X)));
+	m_Y_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualMotorPosition(SettingsVariables::DETECTOR_Y)));
+	m_Z_Detector->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualMotorPosition(SettingsVariables::DETECTOR_Z)));
 	/* Optics */
-	m_X_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualOpticsXStagePos()));
-	m_Y_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualOpticsYStagePos()));
-	m_Z_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualOpticsZStagePos()));
+	m_X_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualMotorPosition(SettingsVariables::OPTICS_X)));
+	m_Y_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualMotorPosition(SettingsVariables::OPTICS_Y)));
+	m_Z_Optics->absolute_text_ctrl->ChangeValue(wxString::Format(wxT("%.3f"), m_Settings->GetActualMotorPosition(SettingsVariables::OPTICS_Z)));
 }
 
 void cMain::ExposureValueChanged(wxCommandEvent& evt)
