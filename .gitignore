@@ -17,7 +17,6 @@
 *.tif
 *.xlsx
 *.pdf
-*.xml
 *.png
 *.mat
 *.json

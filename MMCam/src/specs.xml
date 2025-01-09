@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<selected_motors>
+	<camera>37680258</camera>
+	<detector>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+	</detector>
+	<optics>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+	</optics>
+	<station>SPECS</station>
+</selected_motors>

@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<selected_motors>
+	<camera>12312</camera>
+	<detector>
+		<motor>
+			<sn>15748</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>15715</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>18808</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+	</detector>
+	<optics>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+		<motor>
+			<sn>None</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
+	</optics>
+	<station>BRUKER</station>
+</selected_motors>

@@ -913,26 +913,6 @@ auto cSettings::CompareXMLWithConnectedDevices()
 			m_Motors->xml_all_motors[0].Add(motor_sn);
 			m_Motors->xml_all_motors[1].Add(motor_range);
 		}
-
-		//for (auto motor{ 0 }; motor < m_MotorsCount; ++motor)
-		//{
-		//	if (motor < m_MotorsCount / 2)
-		//	{
-		//		m_Motors->m_Detector[motor].prev_selection[0] = 0;
-		//		m_Motors->m_Detector[motor].prev_selection[1] = 0;
-		//		m_Motors->m_Detector[motor].current_selection[0] = 0;
-		//		m_Motors->m_Detector[motor].current_selection[1] = 0;
-		//	}
-		//	else
-		//	{
-		//		m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[0] = 0;
-		//		m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1] = 0;
-		//		m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[0] = 0;
-		//		m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = 0;
-		//	}
-		//	m_Motors->xml_selected_motors[0].Add("None");
-		//	m_Motors->xml_selected_motors[1].Add("None");
-		//}
 	};
 
 	if (serial_numbers_in_xml != m_Motors->unique_motors_map.size() || serial_numbers_in_xml == 0)
@@ -945,6 +925,15 @@ auto cSettings::CompareXMLWithConnectedDevices()
 
 auto cSettings::ReadWorkStationFiles() -> void
 {
+	auto findNode = [&](rapidxml::xml_node<>* xmlNode, std::string nodeName)
+		{
+			for (auto node = xmlNode->first_node(); node; node = node->next_sibling())
+			{
+				if (node->name() == nodeName)
+					return node;
+			}
+		};
+
 	std::string file_name_with_path{};
 	wxString work_station_name{};
 	m_WorkStations->work_stations_count = 0;
@@ -971,43 +960,55 @@ auto cSettings::ReadWorkStationFiles() -> void
 			if (!selected_motors_node) return;
 
 			// Detector
-			for (rapidxml::xml_node<>* item = selected_motors_node->first_node()->first_node(); item; item = item->next_sibling())
+			auto element = findNode(selected_motors_node, "detector");
+			if (element)
 			{
-				// SN
-				auto node = item->first_node();
-				auto value = node->value();
-				m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
-				// Steps/mm
-				auto steps_node = node->next_sibling();
-				auto steps_per_mm = std::stoi(std::string(steps_node->value()));
-				m_WorkStations->work_station_data[i].motors_steps_per_mm.insert(std::make_pair(wxString(value), steps_per_mm));
-				m_PhysicalMotors->SetStepsPerMMForTheMotor(value, steps_per_mm);
+				for (auto detector = element->first_node(); detector; detector = detector->next_sibling())
+				{
+					// SN
+					auto node = detector->first_node();
+					auto value = node->value();
+					m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
+					// Steps/mm
+					auto steps_node = node->next_sibling();
+					auto steps_per_mm = std::stoi(std::string(steps_node->value()));
+					m_WorkStations->work_station_data[i].motors_steps_per_mm.insert(std::make_pair(wxString(value), steps_per_mm));
+					m_PhysicalMotors->SetStepsPerMMForTheMotor(value, steps_per_mm);
+				}
 			}
 
 			// Optics
-			for (rapidxml::xml_node<>* item = selected_motors_node->first_node()->next_sibling()->first_node(); item; item = item->next_sibling())
+			element = findNode(selected_motors_node, "optics");
+			if (element)
 			{
-				// SN
-				auto node = item->first_node();
-				auto value = node->value();
-				m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
-				// Steps/mm
-				auto steps_node = node->next_sibling();
-				auto steps_per_mm = std::stoi(std::string(steps_node->value()));
-				m_WorkStations->work_station_data[i].motors_steps_per_mm.insert(std::make_pair(wxString(value), steps_per_mm));
-				m_PhysicalMotors->SetStepsPerMMForTheMotor(value, steps_per_mm);
+				for (auto optics = element->first_node(); optics; optics = optics->next_sibling())
+				{
+					// SN
+					auto node = optics->first_node();
+					auto value = node->value();
+					m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
+					// Steps/mm
+					auto steps_node = node->next_sibling();
+					auto steps_per_mm = std::stoi(std::string(steps_node->value()));
+					m_WorkStations->work_station_data[i].motors_steps_per_mm.insert(std::make_pair(wxString(value), steps_per_mm));
+					m_PhysicalMotors->SetStepsPerMMForTheMotor(value, steps_per_mm);
+				}
 			}
 
-			rapidxml::xml_node<>* camera_node = document->first_node("camera");
-			if (!camera_node) return;
-			m_WorkStations->work_station_data[i].selected_camera_in_data_file = wxString(camera_node->first_node()->value());
+			// Camera
+			element = findNode(selected_motors_node, "camera");
+			if (element)
+				m_WorkStations->work_station_data[i].selected_camera_in_data_file = wxString(element->first_node()->value());
 
-			rapidxml::xml_node<>* work_station_node = document->first_node("station");
+			// Station
+			element = findNode(selected_motors_node, "station");
+			if (element)
+			{
+				auto stationName = wxString(element->first_node()->value());
+				m_WorkStations->work_station_data[i].work_station_name = stationName;
+				m_WorkStations->all_work_station_array_str.Add(stationName);
+			}
 
-			if (!work_station_node)
-				return;
-			m_WorkStations->work_station_data[i].work_station_name = wxString(work_station_node->first_node()->value());
-			m_WorkStations->all_work_station_array_str.Add(wxString(work_station_node->first_node()->value()));
 			++i;
 		}
 	}
