@@ -430,8 +430,8 @@ void cSettings::InitDefaultStateWidgets()
 {
 	/* Disabling X and Z Optics motors choices */
 	{
-		m_Motors->m_Optics[0].motor->Disable();
-		m_Motors->m_Optics[2].motor->Disable();
+		//m_Motors->m_Optics[0].motor->Disable();
+		//m_Motors->m_Optics[2].motor->Disable();
 	}
 
 	m_RefreshBtn->Disable();

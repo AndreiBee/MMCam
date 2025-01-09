@@ -1,7 +1,11 @@
 <?xml version="1.0"?>
 <selected_motors>
-	<camera>37680258</camera>
+	<camera>38285758</camera>
 	<detector>
+		<motor>
+			<sn>18808</sn>
+			<steps_per_mm>800</steps_per_mm>
+		</motor>
 		<motor>
 			<sn>15748</sn>
 			<steps_per_mm>800</steps_per_mm>
@@ -10,18 +14,14 @@
 			<sn>15715</sn>
 			<steps_per_mm>800</steps_per_mm>
 		</motor>
-		<motor>
-			<sn>18808</sn>
-			<steps_per_mm>800</steps_per_mm>
-		</motor>
 	</detector>
 	<optics>
 		<motor>
-			<sn>None</sn>
+			<sn>12586</sn>
 			<steps_per_mm>800</steps_per_mm>
 		</motor>
 		<motor>
-			<sn>None</sn>
+			<sn>12538</sn>
 			<steps_per_mm>800</steps_per_mm>
 		</motor>
 		<motor>
