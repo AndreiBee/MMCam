@@ -196,7 +196,8 @@ private:
 	/* Working with XML data and operating with m_Motors variables */
 	auto CompareXMLWithConnectedDevices();
 	auto ReadInitializationFile() -> void;
-	auto ReadWorkStationFiles() -> void;
+	auto LoadWorkStationFiles() -> void;
+	auto ReadWorkStationFile(const std::string& fileName, const int fileNum) -> void;
 	auto IterateOverConnectedCameras() -> void;
 	void ReadXMLFile();
 	void UpdateUniqueArray();
