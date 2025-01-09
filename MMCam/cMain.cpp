@@ -1512,7 +1512,7 @@ void cMain::OnExit(wxCloseEvent& evt)
 		}
 	}
 #endif // !_DEBUG
-	if (m_XimeaControl->IsCameraConnected())
+	if (m_XimeaControl->IsCameraConnected() && m_StartStopLiveCapturingTglBtn->GetValue())
 	{
 		m_XimeaControl->StopAcquisition();
 		m_XimeaControl->TurnOffLastThread();
