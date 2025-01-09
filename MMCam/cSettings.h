@@ -28,22 +28,22 @@ namespace SettingsVariables
 		ID_WORK_STATION_CHOICE,
 		/* Detector X */
 		ID_MOT_DET_X_MOTOR_TXT_CTRL,
-		ID_MOT_DET_X_RANGE_ST_TEXT,
+		ID_MOT_DET_X_STEPS_PER_MM_ST_TEXT,
 		/* Detector Y */
 		ID_MOT_DET_Y_MOTOR_TXT_CTRL,
-		ID_MOT_DET_Y_RANGE_ST_TEXT,
+		ID_MOT_DET_Y_STEPS_PER_MM_ST_TEXT,
 		/* Detector Z */
 		ID_MOT_DET_Z_MOTOR_TXT_CTRL,
-		ID_MOT_DET_Z_RANGE_ST_TEXT,
+		ID_MOT_DET_Z_STEPS_PER_MM_ST_TEXT,
 		/* Optics X */
 		ID_MOT_OPT_X_MOTOR_TXT_CTRL,
-		ID_MOT_OPT_X_RANGE_ST_TEXT,
+		ID_MOT_OPT_X_STEPS_PER_MM_ST_TEXT,
 		/* Optics Y */
 		ID_MOT_OPT_Y_MOTOR_TXT_CTRL,
-		ID_MOT_OPT_Y_RANGE_ST_TEXT,
+		ID_MOT_OPT_Y_STEPS_PER_MM_ST_TEXT,
 		/* Optics Z */
 		ID_MOT_OPT_Z_MOTOR_TXT_CTRL,
-		ID_MOT_OPT_Z_RANGE_ST_TEXT,
+		ID_MOT_OPT_Z_STEPS_PER_MM_ST_TEXT,
 		/* Cameras */
 		ID_CAM_TXT_CTRL,
 	};
@@ -51,7 +51,7 @@ namespace SettingsVariables
 	struct MotorSettings
 	{
 		wxTextCtrl* motor{}; 
-		wxStaticText* ranges{};
+		wxStaticText* steps_per_mm{};
 		wxString motor_sn{};
 		//uint8_t current_selection[2], prev_selection[2];
 		~MotorSettings()
@@ -92,6 +92,7 @@ namespace SettingsVariables
 	struct WorkStationData
 	{
 		wxArrayString selected_motors_in_data_file{};
+		std::map<wxString, int> motors_steps_per_mm{};
 		wxString selected_camera_in_data_file{};
 		wxString work_station_name{};
 	};

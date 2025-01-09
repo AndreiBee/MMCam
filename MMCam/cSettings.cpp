@@ -358,19 +358,19 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				det_x_static_box_sizer->Add(sn_static_box_sizer);
 			}
-			/* Range */
+			/* Steps/mm */
 			det_x_static_box_sizer->AddSpacer(2);
 			{
-				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Range");
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Steps/mm");
 
-				m_Motors->m_Detector[0].ranges = new wxStaticText(
+				m_Motors->m_Detector[0].steps_per_mm = new wxStaticText(
 					main_panel,
-					SettingsVariables::ID_MOT_DET_X_RANGE_ST_TEXT,
+					SettingsVariables::ID_MOT_DET_X_STEPS_PER_MM_ST_TEXT,
 					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					wxALIGN_CENTRE_HORIZONTAL);
-				range_static_box_sizer->Add(m_Motors->m_Detector[0].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
+				range_static_box_sizer->Add(m_Motors->m_Detector[0].steps_per_mm, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
 				det_x_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
@@ -402,19 +402,19 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				det_y_static_box_sizer->Add(sn_static_box_sizer);
 			}
-			/* Range */
+			/* Steps/mm */
 			det_y_static_box_sizer->AddSpacer(2);
 			{
-				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Range");
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Steps/mm");
 
-				m_Motors->m_Detector[1].ranges = new wxStaticText(
+				m_Motors->m_Detector[1].steps_per_mm = new wxStaticText(
 					main_panel, 
-					SettingsVariables::ID_MOT_DET_Y_RANGE_ST_TEXT, 	
+					SettingsVariables::ID_MOT_DET_Y_STEPS_PER_MM_ST_TEXT, 	
 					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize,
 					wxALIGN_CENTRE_HORIZONTAL);
-				range_static_box_sizer->Add(m_Motors->m_Detector[1].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
+				range_static_box_sizer->Add(m_Motors->m_Detector[1].steps_per_mm, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
 				det_y_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
@@ -445,19 +445,19 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				det_z_static_box_sizer->Add(sn_static_box_sizer);
 			}
-			/* Range */
+			/* Steps/mm */
 			det_z_static_box_sizer->AddSpacer(2);
 			{
-				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Range");
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Steps/mm");
 
-				m_Motors->m_Detector[2].ranges = new wxStaticText(
+				m_Motors->m_Detector[2].steps_per_mm = new wxStaticText(
 					main_panel, 
-					SettingsVariables::ID_MOT_DET_Z_RANGE_ST_TEXT, 	
+					SettingsVariables::ID_MOT_DET_Z_STEPS_PER_MM_ST_TEXT, 	
 					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					wxALIGN_CENTRE_HORIZONTAL);
-				range_static_box_sizer->Add(m_Motors->m_Detector[2].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
+				range_static_box_sizer->Add(m_Motors->m_Detector[2].steps_per_mm, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
 				det_z_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
@@ -490,19 +490,19 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				opt_x_static_box_sizer->Add(sn_static_box_sizer);
 			}
-			/* Range */
+			/* Steps/mm */
 			opt_x_static_box_sizer->AddSpacer(2);
 			{
-				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Range");
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Steps/mm");
 
-				m_Motors->m_Optics[0].ranges = new wxStaticText(
+				m_Motors->m_Optics[0].steps_per_mm = new wxStaticText(
 					main_panel, 
-					SettingsVariables::ID_MOT_OPT_X_RANGE_ST_TEXT, 	
+					SettingsVariables::ID_MOT_OPT_X_STEPS_PER_MM_ST_TEXT, 	
 					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					wxALIGN_CENTRE_HORIZONTAL);
-				range_static_box_sizer->Add(m_Motors->m_Optics[0].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
+				range_static_box_sizer->Add(m_Motors->m_Optics[0].steps_per_mm, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
 				opt_x_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
@@ -533,19 +533,19 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				opt_y_static_box_sizer->Add(sn_static_box_sizer);
 			}
-			/* Range */
+			/* Steps/mm */
 			opt_y_static_box_sizer->AddSpacer(2);
 			{
-				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Range");
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Steps/mm");
 
-				m_Motors->m_Optics[1].ranges = new wxStaticText(
+				m_Motors->m_Optics[1].steps_per_mm = new wxStaticText(
 					main_panel, 
-					SettingsVariables::ID_MOT_OPT_Y_RANGE_ST_TEXT, 
+					SettingsVariables::ID_MOT_OPT_Y_STEPS_PER_MM_ST_TEXT, 
 					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					wxALIGN_CENTRE_HORIZONTAL);
-				range_static_box_sizer->Add(m_Motors->m_Optics[1].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
+				range_static_box_sizer->Add(m_Motors->m_Optics[1].steps_per_mm, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
 				opt_y_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
@@ -576,19 +576,19 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 				opt_z_static_box_sizer->Add(sn_static_box_sizer);
 			}
-			/* Range */
+			/* Steps/mm */
 			opt_z_static_box_sizer->AddSpacer(2);
 			{
-				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Range");
+				wxSizer* const range_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, main_panel, "&Steps/mm");
 
-				m_Motors->m_Optics[2].ranges = new wxStaticText(
+				m_Motors->m_Optics[2].steps_per_mm = new wxStaticText(
 					main_panel, 
-					SettingsVariables::ID_MOT_OPT_Z_RANGE_ST_TEXT, 
+					SettingsVariables::ID_MOT_OPT_Z_STEPS_PER_MM_ST_TEXT, 
 					wxT("None"), 
 					wxDefaultPosition, 
 					wxDefaultSize, 
 					wxALIGN_CENTRE_HORIZONTAL);
-				range_static_box_sizer->Add(m_Motors->m_Optics[2].ranges, 1, wxEXPAND | wxTOP, top_offset_static_text);
+				range_static_box_sizer->Add(m_Motors->m_Optics[2].steps_per_mm, 1, wxEXPAND | wxTOP, top_offset_static_text);
 
 				opt_z_static_box_sizer->Add(range_static_box_sizer, 1, wxEXPAND);
 			}
@@ -699,14 +699,14 @@ void cSettings::UpdateRangesTextCtrls()
 			find_string = m_Motors->unique_motors[0][current_index];
 			if (find_string == "None")
 			{
-				m_Motors->m_Detector[motor].ranges->SetLabel("None");
+				m_Motors->m_Detector[motor].steps_per_mm->SetLabel("None");
 				//m_Motors->m_Detector[motor].current_selection[1] = 0;
 				continue;
 			}
 			current_index = m_Motors->xml_all_motors[0].Index(find_string);
 			current_range_text = m_Motors->xml_all_motors[1].Item(current_index);
 
-			m_Motors->m_Detector[motor].ranges->SetLabel(current_range_text);
+			m_Motors->m_Detector[motor].steps_per_mm->SetLabel(current_range_text);
 			/* Update current_selection index of range */
 			current_index = m_Motors->unique_motors[1].Index(current_range_text);
 			//m_Motors->m_Detector[motor].current_selection[1] = current_index;
@@ -717,14 +717,14 @@ void cSettings::UpdateRangesTextCtrls()
 			find_string = m_Motors->unique_motors[0][current_index];
 			if (find_string == "None")
 			{
-				m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel("None");
+				m_Motors->m_Optics[motor - m_MotorsCount / 2].steps_per_mm->SetLabel("None");
 				//m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = 0;
 				continue;
 			}
 			current_index = m_Motors->xml_all_motors[0].Index(find_string);
 			current_range_text = m_Motors->xml_all_motors[1].Item(current_index);
 
-			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel(current_range_text);
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].steps_per_mm->SetLabel(current_range_text);
 			/* Update current_selection index of range */
 			current_index = m_Motors->unique_motors[1].Index(current_range_text);
 			//m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = current_index;
@@ -752,15 +752,23 @@ auto cSettings::UpdateMotorsAndCameraTXTCtrls(const short selected_work_station)
 	m_WorkStations->initialized_work_station = m_WorkStations->all_work_station_array_str[m_WorkStations->initialized_work_station_num];
 	for (auto i{ 0 }; i < m_WorkStations->work_station_data[0].selected_motors_in_data_file.size(); ++i)
 	{
+		auto motorSN = m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[i];
+		auto steps_per_mm = m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].motors_steps_per_mm[motorSN];
 		if (i < 3)
 		{
-			m_Motors->m_Detector[i].motor->SetLabel(m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[i]);
-			m_Motors->m_Detector[i].motor_sn = m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[i];
+			// SN
+			m_Motors->m_Detector[i].motor->SetLabel(motorSN);
+			m_Motors->m_Detector[i].motor_sn = motorSN;
+			// Steps/mm
+			m_Motors->m_Detector[i].steps_per_mm->SetLabel(wxString::Format(wxT("%i"), steps_per_mm));
 		}
 		else
 		{
-			m_Motors->m_Optics[i - 3].motor->SetLabel(m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[i]);
-			m_Motors->m_Optics[i - 3].motor_sn = m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_motors_in_data_file[i];
+			// SN
+			m_Motors->m_Optics[i - 3].motor->SetLabel(motorSN);
+			m_Motors->m_Optics[i - 3].motor_sn = motorSN;
+			// Steps/mm
+			m_Motors->m_Optics[i - 3].steps_per_mm->SetLabel(wxString::Format(wxT("%i"), steps_per_mm));
 		}
 	}
 	m_Cameras->camera->SetLabel(m_WorkStations->work_station_data[m_WorkStations->initialized_work_station_num].selected_camera_in_data_file);
@@ -775,21 +783,11 @@ void cSettings::OnRefreshBtn(wxCommandEvent& evt)
 	{
 		if (motor < m_MotorsCount / 2)
 		{
-			//m_Motors->m_Detector[motor].current_selection[0] = 0;
-			//m_Motors->m_Detector[motor].current_selection[1] = 0;
-			//m_Motors->m_Detector[motor].motors->SetSelection(0);
-			m_Motors->m_Detector[motor].ranges->SetLabel("None");
-			//m_Motors->m_Detector[motor].prev_selection[0] = 0;
-			//m_Motors->m_Detector[motor].prev_selection[1] = 0;
+			m_Motors->m_Detector[motor].steps_per_mm->SetLabel("None");
 		}
 		else
 		{
-			//m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[0] = 0;
-			//m_Motors->m_Optics[motor - m_MotorsCount / 2].current_selection[1] = 0;
-			//m_Motors->m_Optics[motor - m_MotorsCount / 2].motors->SetSelection(0);
-			m_Motors->m_Optics[motor - m_MotorsCount / 2].ranges->SetLabel("None");
-			//m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[0] = 0;
-			//m_Motors->m_Optics[motor - m_MotorsCount / 2].prev_selection[1] = 0;
+			m_Motors->m_Optics[motor - m_MotorsCount / 2].steps_per_mm->SetLabel("None");
 		}
 	}
 	ResetAllMotorsAndRangesInXMLFile();
@@ -972,17 +970,32 @@ auto cSettings::ReadWorkStationFiles() -> void
 			rapidxml::xml_node<>* selected_motors_node = document->first_node("selected_motors");
 			if (!selected_motors_node) return;
 
+			// Detector
 			for (rapidxml::xml_node<>* item = selected_motors_node->first_node()->first_node(); item; item = item->next_sibling())
 			{
+				// SN
 				auto node = item->first_node();
 				auto value = node->value();
 				m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
+				// Steps/mm
+				auto steps_node = node->next_sibling();
+				auto steps_per_mm = std::stoi(std::string(steps_node->value()));
+				m_WorkStations->work_station_data[i].motors_steps_per_mm.insert(std::make_pair(wxString(value), steps_per_mm));
+				m_PhysicalMotors->SetStepsPerMMForTheMotor(value, steps_per_mm);
 			}
+
+			// Optics
 			for (rapidxml::xml_node<>* item = selected_motors_node->first_node()->next_sibling()->first_node(); item; item = item->next_sibling())
 			{
+				// SN
 				auto node = item->first_node();
 				auto value = node->value();
 				m_WorkStations->work_station_data[i].selected_motors_in_data_file.Add(value);
+				// Steps/mm
+				auto steps_node = node->next_sibling();
+				auto steps_per_mm = std::stoi(std::string(steps_node->value()));
+				m_WorkStations->work_station_data[i].motors_steps_per_mm.insert(std::make_pair(wxString(value), steps_per_mm));
+				m_PhysicalMotors->SetStepsPerMMForTheMotor(value, steps_per_mm);
 			}
 
 			rapidxml::xml_node<>* camera_node = document->first_node("camera");

@@ -1455,10 +1455,11 @@ auto cMain::InitializeSelectedCamera() -> void
 	auto curr_camera = m_Settings->GetSelectedCamera();
 	if (curr_camera == "None") return;
 
-	m_SelectedCameraStaticTXT->SetLabel(curr_camera);	
 	m_XimeaControl = std::make_unique<XimeaControl>();
 	m_XimeaControl->InitializeCameraBySN(curr_camera.ToStdString());
+	if (!m_XimeaControl->IsCameraConnected()) return;
 
+	m_SelectedCameraStaticTXT->SetLabel(curr_camera);	
 	//m_StopLiveCapturing = true;
 	//while (!m_LiveCapturingEndedDrawingOnCamPreview)
 	//{
@@ -1511,16 +1512,19 @@ void cMain::OnExit(wxCloseEvent& evt)
 		}
 	}
 #endif // !_DEBUG
-	m_XimeaControl->StopAcquisition();
-	m_XimeaControl->TurnOffLastThread();
+	if (m_XimeaControl->IsCameraConnected())
 	{
-		wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-			? wxString("0") 
-			: m_CamExposure->GetValue();
-		unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-		wxThread::This()->Sleep(exposure_time);
+		m_XimeaControl->StopAcquisition();
+		m_XimeaControl->TurnOffLastThread();
+		{
+			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
+				? wxString("0") 
+				: m_CamExposure->GetValue();
+			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
+			wxThread::This()->Sleep(exposure_time);
+		}
+		m_XimeaControl->ClearAllThreads();
 	}
-	m_XimeaControl->ClearAllThreads();
 
 	Destroy();  // you may also do:  event.Skip();
 	evt.Skip();
@@ -1890,6 +1894,7 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 	//m_StopLiveCapturing = true;		
 	if (m_StartStopLiveCapturingTglBtn->GetValue())
 	{
+		if (!m_XimeaControl->IsCameraConnected()) return;
 		m_XimeaControl->StopAcquisition();
 		m_XimeaControl->TurnOffLastThread();
 		{
@@ -2317,10 +2322,16 @@ void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
 {
 	if (m_StartStopLiveCapturingTglBtn->GetValue())
 	{
+		if (!m_XimeaControl || !m_XimeaControl->IsCameraConnected())
 		{
-			//m_StopLiveCapturing = false;
-			StartLiveCapturing();
+			m_StartStopLiveCapturingTglBtn->SetValue(false);
+			m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Start Live (L)"));
+			if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))
+				m_MenuBar->menu_edit->Check(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
+			return;
 		}
+
+		StartLiveCapturing();
 
 		m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Stop Live (L)"));
 		if (!m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))

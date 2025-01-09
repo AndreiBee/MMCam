@@ -8,7 +8,9 @@
 #include <thread>
 #include <chrono>
 #include <string>
+#include <filesystem>
 #include <ximc.h>
+
 
 
 namespace MotorVariables
@@ -20,6 +22,7 @@ namespace MotorVariables
 		float stagePos{};
 		float minStagePos{}, middleStagePos{}, maxStagePos{};
 		float motorRange{}, stageRange{};
+		float stepsPerMMRatio{ 800.f };
 	};
 }
 
@@ -52,16 +55,27 @@ public:
 	auto SetCalbState(status_calb_t calb_state);
 	auto SetRange(const float min_motor_deg, const float max_motor_deg);
 
+	auto SetStepsPerMMRatio(const int stepsPerMMRatio) -> void
+	{
+		m_MotorSettings->stepsPerMMRatio = stepsPerMMRatio;
+		UpdateStageRange();
+		UpdateCurrentPosition();
+	};
 
-	auto UpdateCurPosThroughStanda();
+	auto UpdateCurrentPosition() -> void
+	{
+		m_MotorSettings->motorPos = m_StandaSettings->state.CurPosition;
+		m_MotorSettings->stagePos = m_MotorSettings->motorPos / m_MotorSettings->stepsPerMMRatio;
+	}
+
 	auto GoCenter();
 	auto GoHomeAndZero();
 	auto GoToPos(const float stage_position);
 
 	/* Move constructor */
-	Motor(Motor&& other) noexcept 
-		: m_MotorSettings(std::move(other.m_MotorSettings)), 
-		m_StandaSettings(std::move(other.m_StandaSettings)), 
+	Motor(Motor&& other) noexcept
+		: m_MotorSettings(std::move(other.m_MotorSettings)),
+		m_StandaSettings(std::move(other.m_StandaSettings)),
 		m_DeviceName(std::move(other.m_DeviceName)),
 		m_SerNum(other.m_SerNum)
 	{
@@ -82,9 +96,26 @@ public:
 	};
 
 private:
+	auto UpdateStageRange() -> void
+	{
+		/* Min position */
+		m_MotorSettings->minStagePos = m_MotorSettings->minMotorPos / m_MotorSettings->stepsPerMMRatio;
+
+		/* Middle position */
+		m_MotorSettings->middleStagePos = m_MotorSettings->middleMotorPos / m_MotorSettings->stepsPerMMRatio;
+
+		/* Max position */
+		m_MotorSettings->maxStagePos = m_MotorSettings->maxMotorPos / m_MotorSettings->stepsPerMMRatio;
+
+		/* Set Whole Motor Range */
+		m_MotorSettings->stageRange = m_MotorSettings->motorRange / m_MotorSettings->stepsPerMMRatio;
+	};
+
+
+private:
 	std::unique_ptr<MotorVariables::Settings> m_MotorSettings{};
 	std::unique_ptr<StandaVariables::C_Settings> m_StandaSettings{};
-	const float deg_per_mm{ 800.f }; // Hardcoded
+	//int m_StepsPerMM{ 800 }; 
 	std::unique_ptr<char[]> m_DeviceName{};
 	unsigned int m_SerNum{};
 	const long long wait_delay_milliseconds{ 500 };
@@ -93,8 +124,8 @@ private:
 class MotorArray final
 {
 public:
-	MotorArray();
-	bool InitAllMotors();
+	MotorArray(const std::string ipAddress = "");
+	bool InitAllMotors(const std::string ip_address);
 	auto FillNames();
 
 	/* Getter */
@@ -108,10 +139,17 @@ public:
 	float GoMotorToAbsPos(const std::string& motor_sn, float abs_pos);
 	float GoMotorOffset(const std::string& motor_sn, float offset);
 
+	auto AreAllMotorsInitialized() const -> bool { return !m_UninitializedMotors.size(); };
+	auto GetUninitializedMotors() const -> std::vector<unsigned int> { return m_UninitializedMotors; };
+
+	auto SetStepsPerMMForTheMotor(const std::string motor_sn, const int stepsPerMM) -> void;
+
 private:
 	std::vector<Motor> m_MotorsArray{};
 	std::map<unsigned int, float> m_NamesOfMotorsWithRanges{};
 	const float error_position = 0.0f;
+
+	std::vector<unsigned int> m_UninitializedMotors{};
 };
 
 #endif

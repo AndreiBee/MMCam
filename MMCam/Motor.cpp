@@ -67,25 +67,23 @@ auto Motor::SetRange(const float min_motor_deg, const float max_motor_deg)
 {
 	/* Min position */
 	m_MotorSettings->minMotorPos = min_motor_deg;
-	m_MotorSettings->minStagePos = min_motor_deg / deg_per_mm;
+	//m_MotorSettings->minStagePos = min_motor_deg / deg_per_mm;
+	m_MotorSettings->minStagePos = min_motor_deg / m_MotorSettings->stepsPerMMRatio;
 
 	/* Middle position */
 	m_MotorSettings->middleMotorPos = (max_motor_deg - min_motor_deg) / 2.f;
-	m_MotorSettings->middleStagePos = m_MotorSettings->middleMotorPos / deg_per_mm;
+	//m_MotorSettings->middleStagePos = m_MotorSettings->middleMotorPos / deg_per_mm;
+	m_MotorSettings->middleStagePos = m_MotorSettings->middleMotorPos / m_MotorSettings->stepsPerMMRatio;
 
 	/* Max position */
 	m_MotorSettings->maxMotorPos = max_motor_deg;
-	m_MotorSettings->maxStagePos = max_motor_deg / deg_per_mm;
+	//m_MotorSettings->maxStagePos = max_motor_deg / deg_per_mm;
+	m_MotorSettings->maxStagePos = max_motor_deg / m_MotorSettings->stepsPerMMRatio;
 
 	/* Set Whole Motor Range */
 	m_MotorSettings->motorRange = max_motor_deg - min_motor_deg;
-	m_MotorSettings->stageRange = (max_motor_deg - min_motor_deg) / deg_per_mm;
-}
-
-auto Motor::UpdateCurPosThroughStanda()
-{
-	m_MotorSettings->motorPos = m_StandaSettings->state.CurPosition;
-	m_MotorSettings->stagePos = m_StandaSettings->state.CurPosition / deg_per_mm;
+	//m_MotorSettings->stageRange = (max_motor_deg - min_motor_deg) / deg_per_mm;
+	m_MotorSettings->stageRange = (max_motor_deg - min_motor_deg) / m_MotorSettings->stepsPerMMRatio;
 }
 
 auto Motor::GoCenter()
@@ -96,8 +94,8 @@ auto Motor::GoCenter()
 	{
 		if ((m_StandaSettings->result = command_move_calb
 		(
-			device_c, 
-			m_MotorSettings->middleMotorPos, 
+			device_c,
+			m_MotorSettings->middleMotorPos,
 			&m_StandaSettings->calibration
 		)
 			) != result_ok)
@@ -108,7 +106,7 @@ auto Motor::GoCenter()
 		/* Wait to Stop */
 		if ((m_StandaSettings->result = command_wait_for_stop
 		(
-			device_c, 
+			device_c,
 			100
 		)
 			) != result_ok)
@@ -121,8 +119,8 @@ auto Motor::GoCenter()
 		/* Get Status */
 		if ((m_StandaSettings->result = get_status
 		(
-			device_c, 
-			&m_StandaSettings->state 
+			device_c,
+			&m_StandaSettings->state
 		)
 			) != result_ok)
 		{
@@ -132,8 +130,8 @@ auto Motor::GoCenter()
 		/* Get Calibrated Status */
 		if ((m_StandaSettings->result = get_status_calb
 		(
-			device_c, 
-			&m_StandaSettings->calb_state, 
+			device_c,
+			&m_StandaSettings->calb_state,
 			&m_StandaSettings->calibration
 		)
 			) != result_ok)
@@ -145,7 +143,7 @@ auto Motor::GoCenter()
 
 	close_device(&device_c);
 
-	UpdateCurPosThroughStanda();
+	UpdateCurrentPosition();
 }
 
 auto Motor::GoHomeAndZero()
@@ -158,7 +156,7 @@ auto Motor::GoHomeAndZero()
 		/* Wait to Stop */
 		if ((m_StandaSettings->result = command_wait_for_stop
 		(
-			device_c, 
+			device_c,
 			100
 		)
 			) != result_ok)
@@ -171,8 +169,8 @@ auto Motor::GoHomeAndZero()
 		/* Get Status */
 		if ((m_StandaSettings->result = get_status
 		(
-			device_c, 
-			&m_StandaSettings->state 
+			device_c,
+			&m_StandaSettings->state
 		)
 			) != result_ok)
 		{
@@ -182,8 +180,8 @@ auto Motor::GoHomeAndZero()
 		/* Get Calibrated Status */
 		if ((m_StandaSettings->result = get_status_calb
 		(
-			device_c, 
-			&m_StandaSettings->calb_state, 
+			device_c,
+			&m_StandaSettings->calb_state,
 			&m_StandaSettings->calibration
 		)
 			) != result_ok)
@@ -195,7 +193,7 @@ auto Motor::GoHomeAndZero()
 
 	close_device(&device_c);
 
-	UpdateCurPosThroughStanda();
+	UpdateCurrentPosition();
 }
 
 auto Motor::GoToPos(const float stage_position)
@@ -206,8 +204,8 @@ auto Motor::GoToPos(const float stage_position)
 	/* Get Status */
 	if ((m_StandaSettings->result = get_status_calb
 	(
-		device_c, 
-		&m_StandaSettings->calb_state, 
+		device_c,
+		&m_StandaSettings->calb_state,
 		&m_StandaSettings->calibration
 	)
 		) != result_ok)
@@ -217,23 +215,25 @@ auto Motor::GoToPos(const float stage_position)
 	}
 
 	/* If stage_position is outside of motor's range -> return */
-	if (stage_position < m_MotorSettings->minStagePos || 
+	if (stage_position < m_MotorSettings->minStagePos ||
 		stage_position > m_MotorSettings->maxStagePos)
 		return false;
 
 	{
-		float motor_position = stage_position * deg_per_mm;
+		//float motor_position = stage_position * deg_per_mm;
+		float motor_position = stage_position * m_MotorSettings->stepsPerMMRatio;
 		if ((m_StandaSettings->result = command_move_calb
 		(
-			device_c, 
-			motor_position, 
+			device_c,
+			motor_position,
 			&m_StandaSettings->calibration
-		) != result_ok)) 
+		) != result_ok))
 			return false;
+
 		/* Wait to Stop */
 		if ((m_StandaSettings->result = command_wait_for_stop
 		(
-			device_c, 
+			device_c,
 			100
 		)
 			) != result_ok)
@@ -241,13 +241,14 @@ auto Motor::GoToPos(const float stage_position)
 			/* Error command_wait_for_stop */
 			return false;
 		}
+
 		/* Wait for elimination of vibrations */
 		std::this_thread::sleep_for(std::chrono::milliseconds(wait_delay_milliseconds));
 		/* Get Status */
 		if ((m_StandaSettings->result = get_status
 		(
-			device_c, 
-			&m_StandaSettings->state 
+			device_c,
+			&m_StandaSettings->state
 		)
 			) != result_ok)
 		{
@@ -257,8 +258,8 @@ auto Motor::GoToPos(const float stage_position)
 		/* Get Calibrated Status */
 		if ((m_StandaSettings->result = get_status_calb
 		(
-			device_c, 
-			&m_StandaSettings->calb_state, 
+			device_c,
+			&m_StandaSettings->calb_state,
 			&m_StandaSettings->calibration
 		)
 			) != result_ok)
@@ -269,13 +270,13 @@ auto Motor::GoToPos(const float stage_position)
 	}
 	close_device(&device_c);
 
-	UpdateCurPosThroughStanda();
+	UpdateCurrentPosition();
 }
 
 /* MotorArray */
-MotorArray::MotorArray()
+MotorArray::MotorArray(const std::string ipAddress)
 {
-	InitAllMotors();
+	InitAllMotors(ipAddress.c_str());
 }
 
 auto MotorArray::FillNames()
@@ -294,7 +295,7 @@ std::map<unsigned int, float> MotorArray::GetNamesWithRanges() const
 float MotorArray::GetActualStagePos(const std::string& motor_sn) const
 {
 	auto serial_num{ 0 };
-	try { serial_num = std::stoi(motor_sn);}
+	try { serial_num = std::stoi(motor_sn); }
 	catch (std::invalid_argument const& ex) { return error_position; }
 
 	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
@@ -308,7 +309,7 @@ float MotorArray::GetActualStagePos(const std::string& motor_sn) const
 auto MotorArray::MotorHasSerialNumber(const std::string& motor_sn) const -> bool
 {
 	auto serial_num{ 0 };
-	try { serial_num = std::stoi(motor_sn);}
+	try { serial_num = std::stoi(motor_sn); }
 	catch (std::invalid_argument const& ex) { return false; }
 
 	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
@@ -320,9 +321,9 @@ auto MotorArray::MotorHasSerialNumber(const std::string& motor_sn) const -> bool
 }
 
 float MotorArray::GoMotorHome(const std::string& motor_sn)
-{	
+{
 	auto serial_num{ 0 };
-	try { serial_num = std::stoi(motor_sn);}
+	try { serial_num = std::stoi(motor_sn); }
 	catch (std::invalid_argument const& ex) { return error_position; }
 
 	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
@@ -339,7 +340,7 @@ float MotorArray::GoMotorHome(const std::string& motor_sn)
 float MotorArray::GoMotorCenter(const std::string& motor_sn)
 {
 	auto serial_num{ 0 };
-	try { serial_num = std::stoi(motor_sn);}
+	try { serial_num = std::stoi(motor_sn); }
 	catch (std::invalid_argument const& ex) { return error_position; }
 
 	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
@@ -356,7 +357,7 @@ float MotorArray::GoMotorCenter(const std::string& motor_sn)
 float MotorArray::GoMotorToAbsPos(const std::string& motor_sn, float abs_pos)
 {
 	auto serial_num{ 0 };
-	try { serial_num = std::stoi(motor_sn);}
+	try { serial_num = std::stoi(motor_sn); }
 	catch (std::invalid_argument const& ex) { return error_position; }
 
 	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
@@ -371,17 +372,17 @@ float MotorArray::GoMotorToAbsPos(const std::string& motor_sn, float abs_pos)
 }
 
 float MotorArray::GoMotorOffset(const std::string& motor_sn, float offset)
-{	
+{
 	auto serial_num{ 0 };
-	try { serial_num = std::stoi(motor_sn);}
+	try { serial_num = std::stoi(motor_sn); }
 	catch (std::invalid_argument const& ex) { return error_position; }
 
 	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
 	{
 		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
 		{
-			if (offset + m_MotorsArray[motor].GetDeviceActualStagePos() < 0.f || 
-				offset + m_MotorsArray[motor].GetDeviceActualStagePos() > m_MotorsArray[motor].GetDeviceRange()) 
+			if (offset + m_MotorsArray[motor].GetDeviceActualStagePos() < 0.f ||
+				offset + m_MotorsArray[motor].GetDeviceActualStagePos() > m_MotorsArray[motor].GetDeviceRange())
 				return m_MotorsArray[motor].GetDeviceActualStagePos();
 
 			m_MotorsArray[motor].GoToPos(m_MotorsArray[motor].GetDeviceActualStagePos() + offset);
@@ -391,19 +392,62 @@ float MotorArray::GoMotorOffset(const std::string& motor_sn, float offset)
 	return error_position;
 }
 
-bool MotorArray::InitAllMotors()
+auto MotorArray::SetStepsPerMMForTheMotor(const std::string motor_sn, const int stepsPerMM) -> void
 {
+	auto serial_num{ 0 };
+	try { serial_num = std::stoi(motor_sn); }
+	catch (std::invalid_argument const& ex) { return; }
+
+	if (stepsPerMM <= 0) return;
+
+	for (auto motor{ 0 }; motor < m_MotorsArray.size(); ++motor)
+	{
+		if (m_MotorsArray[motor].GetDeviceSerNum() == serial_num)
+		{
+			m_MotorsArray[motor].SetStepsPerMMRatio((float)stepsPerMM);
+			break;
+		}
+	}
+}
+
+bool MotorArray::InitAllMotors(const std::string ip_address)
+{
+	auto appendUnitializedMotor = [&](const unsigned int motorSN, const int motorNum)
+		{
+			m_UninitializedMotors.push_back(motorSN);
+			m_MotorsArray[motorNum].SetSerNum(0);
+		};
+
+	m_UninitializedMotors.clear();
+
+	const char* correction_table = "table.txt";
+	// Checking whether table.txt is inside the working directory
+	{
+		auto currPath = std::filesystem::current_path();
+		if (!std::filesystem::exists(currPath / correction_table)) return false;
+	}
+
 	result_t result_c;
 	result_c = set_bindy_key("keyfile.sqlite");
 	if (result_c != result_ok) return false;
 
 	device_enumeration_t devenum_c;
-	const int probe_flags = ENUMERATE_PROBE | ENUMERATE_NETWORK;
+
+#ifdef _DEBUG
+	const int probe_flags = ENUMERATE_PROBE;
 	const char* enumerate_hints = "addr=";
 	devenum_c = enumerate_devices(probe_flags, enumerate_hints);
+#else
+	const int probe_flags = ENUMERATE_PROBE | ENUMERATE_NETWORK;
+	std::string eh = std::string("addr=") + ip_address;
+	const char* enumerate_hints = eh.c_str();
+	//const char* enumerate_hints = "addr=10.0.0.134";
+	devenum_c = enumerate_devices(probe_flags, enumerate_hints);
+#endif // _DEBUG
 	if (!devenum_c) return false;
 
 	int names_count = get_device_count(devenum_c);
+
 	/* Here we need to clear motor list */
 	m_MotorsArray.clear();
 	m_MotorsArray.reserve(names_count);
@@ -412,8 +456,11 @@ bool MotorArray::InitAllMotors()
 	device_t device_c;
 	status_t state_c;
 	status_calb_t state_calb_c;
+	emf_settings_t emfSettings{};
 	calibration_t calibration_c;
+	stage_settings_t stage_settings_c;
 	edges_settings_calb_t edges_settings_calb_c;
+	stage_information_t stage_information_c;
 	unsigned int device_sn{};
 	for (int i = 0; i < names_count; ++i)
 	{
@@ -427,29 +474,40 @@ bool MotorArray::InitAllMotors()
 		m_MotorsArray[i].SetSerNum(device_sn);
 
 		if ((result_c = get_status(device_c, &state_c)) != result_ok)
-			return false;
+		{
+			appendUnitializedMotor(device_sn, i);
+			continue;
+		}
 
-		const char* correction_table = "table.txt";
 		// The device_t device parameter in this function is a C pointer, unlike most library functions that use this parameter
 		if ((result_c = set_correction_table(device_c, correction_table)) != result_ok)
-			return false;
+		{
+			appendUnitializedMotor(device_sn, i);
+			continue;
+		}
 
 		calibration_c.A = 1;
 		calibration_c.MicrostepMode = MICROSTEP_MODE_FULL;
+		//calibration_c.MicrostepMode = MICROSTEP_MODE_FRAC_256;
+
 		m_MotorsArray[i].SetCalibration(calibration_c);
 
 		/* Get Status */
-		if ((result_c = get_status_calb(device_c, &state_calb_c, &calibration_c)) != result_ok) return false;
+		if ((result_c = get_status_calb(device_c, &state_calb_c, &calibration_c)) != result_ok)
+		{
+			appendUnitializedMotor(device_sn, i);
+			continue;
+		}
 		m_MotorsArray[i].SetState(state_c);
 
 		get_edges_settings_calb(device_c, &edges_settings_calb_c, &calibration_c);
 		m_MotorsArray[i].SetRange(edges_settings_calb_c.LeftBorder, edges_settings_calb_c.RightBorder);
 
-		m_MotorsArray[i].UpdateCurPosThroughStanda();
+		m_MotorsArray[i].UpdateCurrentPosition();
 
 		close_device(&device_c);
 	}
-	
+
 	std::sort(m_MotorsArray.begin(), m_MotorsArray.end(), [](Motor& left, Motor& right)
 		{
 			return (left.GetDeviceSerNum() < right.GetDeviceSerNum());
@@ -457,4 +515,5 @@ bool MotorArray::InitAllMotors()
 
 	free_enumerate_devices(devenum_c);
 	FillNames();
+
 }
