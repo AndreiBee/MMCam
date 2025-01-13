@@ -29,6 +29,7 @@ namespace MainFrameVariables
 	{
 		/* Menu Bar */
 		ID_MENUBAR_FILE_QUIT,
+		ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING,
 		ID_MENUBAR_EDIT_ENABLE_DARK_MODE,
 		ID_MENUBAR_EDIT_SETTINGS,
 		ID_MENUBAR_TOOLS_CROSSHAIR,
@@ -239,6 +240,7 @@ private:
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 
 	auto OnEnableDarkMode(wxCommandEvent& evt) -> void;
+	auto OnEnableFWHMDisplaying(wxCommandEvent& evt) -> void;
 
 	void UnCheckAllTools();
 	/* ProgressBar */

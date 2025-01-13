@@ -6,6 +6,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnSingleShotCameraImage)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingMenu)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, cMain::OnEnableDarkMode)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, cMain::OnEnableFWHMDisplaying)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, cMain::OnCrossHairButton)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, cMain::OnValueDisplayingCheck)
@@ -150,6 +151,7 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, wxT("Start Live\tL"));
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, wxT("Dark Mode"));
+	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying"));
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
@@ -1324,6 +1326,11 @@ auto cMain::OnEnableDarkMode(wxCommandEvent& evt) -> void
 	Refresh();
 }
 
+auto cMain::OnEnableFWHMDisplaying(wxCommandEvent& evt) -> void
+{
+	m_CamPreview->ActivateFWHMDisplaying(evt.IsChecked());
+}
+
 void cMain::CreateProgressBar()
 {
 	wxSize size_of_progress_bar{ 400, 190 };
@@ -1461,6 +1468,9 @@ void cMain::OnOpenSettings(wxCommandEvent& evt)
 
 auto cMain::InitializeSelectedCamera() -> void
 {
+	// We don't need to initialize camera twice!
+	if (m_XimeaControl) return;
+
 	auto curr_camera = m_Settings->GetSelectedCamera();
 	if (curr_camera == "None") return;
 

@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <selected_motors>
-	<camera>38285758</camera>
+	<camera>37680258</camera> 
+	<!--<camera>38285758</camera>--> <!--BlackLab-->
 	<detector>
 		<motor>
 			<sn>18808</sn>

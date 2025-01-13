@@ -49,6 +49,12 @@ auto cCamPreview::SetValueDisplayingActive(bool activate) -> void
 	m_DisplayPixelValues = activate;
 }
 
+auto cCamPreview::ActivateFWHMDisplaying(bool activate) -> void
+{
+	m_DisplayFWHM = activate;
+	Refresh();
+}
+
 void cCamPreview::SetXCrossHairPosFromParentWindow(const int& x_pos)
 {
 	int corrected_x_pos = x_pos - 1;
@@ -143,6 +149,19 @@ void cCamPreview::SetCameraCapturedImage()
 		));
 		//m_CrossHairTool->SetXPosFromParent(m_ImageSize.GetWidth() / 2);
 		//m_CrossHairTool->SetYPosFromParent(m_ImageSize.GetHeight() / 2);
+	}
+
+	// FWHM
+	if (m_DisplayFWHM)
+	{
+		// Horizontal
+		if (!m_HorizontalSumArray) m_HorizontalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetHeight());
+		ToolsVariables::CalculateHorizontalFWHM(m_ImageData.get(), m_ImageSize, m_HorizontalSumArray.get());
+		m_HorizontalFWHM = ToolsVariables::CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetHeight());
+		// Vertical
+		if (!m_VerticalSumArray) m_VerticalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetWidth());
+		ToolsVariables::CalculateVerticalFWHM(m_ImageData.get(), m_ImageSize, m_VerticalSumArray.get());
+		m_VerticalFWHM = ToolsVariables::CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetWidth());
 	}
 
 	m_IsImageSet = true;
@@ -525,23 +544,21 @@ void cCamPreview::PaintEvent(wxPaintEvent& evt)
 void cCamPreview::Render(wxBufferedPaintDC& dc)
 {
 	dc.Clear();
-	wxGraphicsContext* gc_image{};
-	gc_image = wxGraphicsContext::Create(dc);
-	if (gc_image)
-	{
-		DrawCameraCapturedImage(gc_image);
-		delete gc_image;
+	auto gc = wxGraphicsContext::Create(dc);
+	if (!gc) return;
 
-		if (m_IsImageSet)
-		{
-			/* CrossHair */
-			wxGraphicsContext* gc_cross = wxGraphicsContext::Create(dc);
-			if (gc_cross)
-			{
-				DrawCrossHair(gc_cross);
-				delete gc_cross;
-			}
-		}
+	DrawCameraCapturedImage(gc);
+	delete gc;
+
+	if (m_IsImageSet)
+	{
+		/* CrossHair */
+		auto gc = wxGraphicsContext::Create(dc);
+		if (!gc) return;
+
+		DrawCrossHair(gc);
+		DrawFWHMValues(gc);
+		delete gc;
 	}
 }
 
@@ -571,6 +588,48 @@ void cCamPreview::DrawCameraCapturedImage(wxGraphicsContext* gc_)
 			gc_->DrawBitmap(*m_GraphicsBitmapImage.get(),
 				m_StartDrawPos.x, m_StartDrawPos.y,
 				m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
+	}
+}
+
+auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
+{
+	if (!m_Image->IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray) return;
+
+	wxColour fontColour(181, 230, 29, 200);
+	wxFont font = wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+	gc_->SetFont(font, fontColour);
+
+	wxDouble widthText{}, heightText{};
+
+	wxDouble offsetX{ 5.0 }, offsetY{ 5.0 };
+	wxRealPoint drawPoint{};
+	wxString curr_value{};
+
+	// Horizontal FWHM
+	{
+		curr_value = "FWHM: ";
+
+		curr_value += wxString::Format(wxT("%.2f"), m_HorizontalFWHM);
+		gc_->GetTextExtent(curr_value, &widthText, &heightText);
+		drawPoint.x = m_CanvasSize.GetWidth() / 2 - widthText / 2;
+		drawPoint.y = m_CanvasSize.GetHeight() - offsetY - heightText;
+		gc_->DrawText(curr_value, drawPoint.x, drawPoint.y);
+	}
+
+	// Vertical FWHM
+	{
+		curr_value = "FWHM: ";
+
+		curr_value += wxString::Format(wxT("%.2f"), m_VerticalFWHM);
+		gc_->GetTextExtent(curr_value, &widthText, &heightText);
+		drawPoint.x = m_CanvasSize.GetWidth() - offsetX - heightText;
+		drawPoint.y = m_CanvasSize.GetHeight() / 2 + widthText / 2;
+
+		// Set up the transformation matrix for a 90-degree counterclockwise rotation
+		gc_->Translate(drawPoint.x, drawPoint.y);
+		gc_->Rotate(-M_PI / 2.0); // Rotate 90 degrees counterclockwise (pi/2 radians)
+		gc_->Translate(-drawPoint.x, -drawPoint.y);
+		gc_->DrawText(curr_value, drawPoint.x, drawPoint.y);
 	}
 }
 

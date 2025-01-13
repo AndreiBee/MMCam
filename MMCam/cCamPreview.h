@@ -54,6 +54,7 @@ public:
 	auto SetBackgroundColor(wxColour bckg_colour) -> void;
 	auto SetCrossHairButtonActive(bool activate = false) -> void;
 	auto SetValueDisplayingActive(bool activate = false) -> void;
+	auto ActivateFWHMDisplaying(bool activate = false) -> void;
 	void SetXCrossHairPosFromParentWindow(const int& x_pos);
 	void SetYCrossHairPosFromParentWindow(const int& y_pos);
 	auto SettingCrossHairPosFromParentWindow(bool set = false) -> void;
@@ -96,6 +97,7 @@ private:
 	void DrawImage(wxGraphicsContext* gc);
 	void CreateGraphicsBitmapImage(wxGraphicsContext* gc_);
 	void DrawCameraCapturedImage(wxGraphicsContext* gc_);
+	auto DrawFWHMValues(wxGraphicsContext* gc_) -> void;
 	void OnSize(wxSizeEvent& evt);
 	void ChangeSizeOfImageInDependenceOnCanvasSize();
 	auto UpdateCrossHairOnSize() -> void;
@@ -149,6 +151,10 @@ private:
 	//bool m_SettingCrossHairPos{};
 
 	bool m_DisplayPixelValues{};
+
+	bool m_DisplayFWHM{};
+	std::unique_ptr<unsigned long long[]> m_HorizontalSumArray{}, m_VerticalSumArray{};
+	double m_HorizontalFWHM{}, m_VerticalFWHM{};
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};
 

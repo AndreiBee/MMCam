@@ -5,6 +5,10 @@
 #include "wx/wx.h"
 #include "wx/graphics.h"
 
+#include <numeric>
+#include <thread>
+#include <memory>
+
 // Macros
 #ifdef _DEBUG
 #define LOG(message) wxLogDebug(message);
@@ -32,6 +36,134 @@ namespace ToolsVariables
 		DATA_U12 = 1,
 		DATA_U16 = 2,
 	};
+
+	static auto CalculateHorizontalFWHM(unsigned short* const dataPtr, const wxSize& imageSize, unsigned long long* const results) -> void
+	{
+		if (!dataPtr) return;
+		if (!imageSize.GetWidth() || !imageSize.GetHeight()) return;
+
+		auto calculateSum = []
+		(
+			const unsigned short* start,
+			const unsigned short* end,
+			int row_index,
+			unsigned long long* results
+			)
+			{
+				auto result = std::accumulate(start, end, 0);
+				results[row_index] = result;
+			};
+
+		auto dataSize = imageSize.GetHeight();
+		//m_MinMaxRowsData = std::make_unique<std::pair<unsigned short, unsigned short>[]>(dataSize);
+
+		int num_threads = dataSize;
+		std::vector<std::thread> threads;
+		threads.reserve(num_threads);
+		// Split the data into chunks and process each chunk in a separate thread
+		int chunk_size = imageSize.GetWidth();
+
+		for (auto i = 0; i < num_threads; ++i)
+		{
+			const unsigned short* chunk_start = dataPtr + i * chunk_size;
+			const unsigned short* chunk_end = (i == num_threads - 1) ? dataPtr + imageSize.GetWidth() * imageSize.GetHeight() : chunk_start + chunk_size;
+			threads.emplace_back
+			(
+				calculateSum,
+				chunk_start,
+				chunk_end,
+				i,
+				results
+			);
+		}
+
+		for (auto& t : threads)
+			t.join();
+	};
+
+	static auto CalculateVerticalFWHM(unsigned short* const dataPtr, const wxSize& imageSize, unsigned long long* const results) -> void
+	{
+		if (!dataPtr) return;
+		if (!imageSize.GetWidth() || !imageSize.GetHeight()) return;
+
+		auto calculateSum = []
+		(
+			const unsigned short* dataPtr,
+			const wxSize imgSize,
+			int col_index,
+			unsigned long long* results
+			)
+			{
+				unsigned long long result{};
+				for (auto i{ 0 }; i < imgSize.GetHeight(); ++i)
+				{
+					result += dataPtr[i * imgSize.GetWidth()];
+				}
+				results[col_index] = result;
+			};
+
+		auto dataSize = imageSize.GetWidth();
+		//m_MinMaxRowsData = std::make_unique<std::pair<unsigned short, unsigned short>[]>(dataSize);
+
+		int num_threads = dataSize;
+		std::vector<std::thread> threads;
+		threads.reserve(num_threads);
+		// Split the data into chunks and process each chunk in a separate thread
+		//int chunk_size = imageSize.GetHeight();
+
+		for (auto i = 0; i < num_threads; ++i)
+		{
+			const unsigned short* data_start = dataPtr + i;
+			//const unsigned short* chunk_end = (i == num_threads - 1) ? dataPtr + imageSize.GetWidth() * imageSize.GetHeight() : chunk_start + chunk_size;
+			threads.emplace_back
+			(
+				calculateSum,
+				data_start,
+				imageSize,
+				i,
+				results
+			);
+		}
+
+		for (auto& t : threads)
+			t.join();
+	};
+
+
+	static auto CalculateFWHM(const unsigned long long* const array, size_t size) -> double
+	{
+
+		if (!size) return -1.0;
+
+		// Step 1: Find the maximum value
+		auto maxElementIter = std::max_element(array, &array[size - 1]);
+		unsigned long long maxValue = *maxElementIter;
+
+		// Step 2: Calculate the half-maximum
+		double halfMax = static_cast<double>(maxValue) / 2.0;
+
+		// Step 3: Find indices where array crosses the half-maximum
+		int leftIndex = -1, rightIndex = -1;
+		for (auto i = 0; i < size; ++i) 
+		{
+			if (leftIndex == -1 && array[i] >= halfMax) 
+			{
+				leftIndex = static_cast<int>(i);
+			}
+			if (leftIndex != -1 && array[i] < halfMax) 
+			{
+				rightIndex = static_cast<int>(i - 1);
+				break;
+			}
+		}
+
+		// Handle edge cases where the full width is not well-defined
+		if (leftIndex == -1 || rightIndex == -1 || rightIndex <= leftIndex) return -1.0;
+
+		// Step 4: Compute FWHM
+		return static_cast<double>(rightIndex - leftIndex);
+	}
+
 }
 
 class Tool
