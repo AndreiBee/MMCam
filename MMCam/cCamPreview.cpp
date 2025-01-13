@@ -156,11 +156,11 @@ void cCamPreview::SetCameraCapturedImage()
 	{
 		// Horizontal
 		if (!m_HorizontalSumArray) m_HorizontalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetHeight());
-		ToolsVariables::CalculateHorizontalFWHM(m_ImageData.get(), m_ImageSize, m_HorizontalSumArray.get());
+		ToolsVariables::CalculateSumVertically(m_ImageData.get(), m_ImageSize, m_HorizontalSumArray.get());
 		m_HorizontalFWHM = ToolsVariables::CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetHeight());
 		// Vertical
 		if (!m_VerticalSumArray) m_VerticalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetWidth());
-		ToolsVariables::CalculateVerticalFWHM(m_ImageData.get(), m_ImageSize, m_VerticalSumArray.get());
+		ToolsVariables::CalculateSumHorizontally(m_ImageData.get(), m_ImageSize, m_VerticalSumArray.get());
 		m_VerticalFWHM = ToolsVariables::CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetWidth());
 	}
 

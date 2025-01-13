@@ -37,7 +37,7 @@ namespace ToolsVariables
 		DATA_U16 = 2,
 	};
 
-	static auto CalculateHorizontalFWHM(unsigned short* const dataPtr, const wxSize& imageSize, unsigned long long* const results) -> void
+	static auto CalculateSumHorizontally(unsigned short* const dataPtr, const wxSize& imageSize, unsigned long long* const results) -> void
 	{
 		if (!dataPtr) return;
 		if (!imageSize.GetWidth() || !imageSize.GetHeight()) return;
@@ -55,7 +55,6 @@ namespace ToolsVariables
 			};
 
 		auto dataSize = imageSize.GetHeight();
-		//m_MinMaxRowsData = std::make_unique<std::pair<unsigned short, unsigned short>[]>(dataSize);
 
 		int num_threads = dataSize;
 		std::vector<std::thread> threads;
@@ -81,7 +80,7 @@ namespace ToolsVariables
 			t.join();
 	};
 
-	static auto CalculateVerticalFWHM(unsigned short* const dataPtr, const wxSize& imageSize, unsigned long long* const results) -> void
+	static auto CalculateSumVertically(unsigned short* const dataPtr, const wxSize& imageSize, unsigned long long* const results) -> void
 	{
 		if (!dataPtr) return;
 		if (!imageSize.GetWidth() || !imageSize.GetHeight()) return;
@@ -103,18 +102,14 @@ namespace ToolsVariables
 			};
 
 		auto dataSize = imageSize.GetWidth();
-		//m_MinMaxRowsData = std::make_unique<std::pair<unsigned short, unsigned short>[]>(dataSize);
 
 		int num_threads = dataSize;
 		std::vector<std::thread> threads;
 		threads.reserve(num_threads);
-		// Split the data into chunks and process each chunk in a separate thread
-		//int chunk_size = imageSize.GetHeight();
 
 		for (auto i = 0; i < num_threads; ++i)
 		{
 			const unsigned short* data_start = dataPtr + i;
-			//const unsigned short* chunk_end = (i == num_threads - 1) ? dataPtr + imageSize.GetWidth() * imageSize.GetHeight() : chunk_start + chunk_size;
 			threads.emplace_back
 			(
 				calculateSum,
@@ -137,6 +132,7 @@ namespace ToolsVariables
 
 		// Step 1: Find the maximum value
 		auto maxElementIter = std::max_element(array, &array[size - 1]);
+		auto maxElementPos = static_cast<int>(std::distance(array, maxElementIter));
 		unsigned long long maxValue = *maxElementIter;
 
 		// Step 2: Calculate the half-maximum
@@ -144,18 +140,40 @@ namespace ToolsVariables
 
 		// Step 3: Find indices where array crosses the half-maximum
 		int leftIndex = -1, rightIndex = -1;
-		for (auto i = 0; i < size; ++i) 
+		if (maxElementPos == 0 || maxElementPos >= size - 1) return -1.0;
+
+		// Looking for the left index
+		for (auto i = maxElementPos; i >= 0; --i)
 		{
-			if (leftIndex == -1 && array[i] >= halfMax) 
+			if (leftIndex == -1 && array[i] < halfMax) 
 			{
-				leftIndex = static_cast<int>(i);
-			}
-			if (leftIndex != -1 && array[i] < halfMax) 
-			{
-				rightIndex = static_cast<int>(i - 1);
+				leftIndex = static_cast<int>(i + 1);
 				break;
 			}
 		}
+
+		// Looking for the right index
+		for (auto i = maxElementPos; i < size; ++i)
+		{
+			if (leftIndex != -1 && array[i] < halfMax) 
+			{
+				leftIndex = static_cast<int>(i - 1);
+				break;
+			}
+		}
+
+		//for (auto i = 0; i < size; ++i) 
+		//{
+		//	if (leftIndex == -1 && array[i] >= halfMax) 
+		//	{
+		//		leftIndex = static_cast<int>(i);
+		//	}
+		//	if (leftIndex != -1 && array[i] < halfMax) 
+		//	{
+		//		rightIndex = static_cast<int>(i - 1);
+		//		break;
+		//	}
+		//}
 
 		// Handle edge cases where the full width is not well-defined
 		if (leftIndex == -1 || rightIndex == -1 || rightIndex <= leftIndex) return -1.0;

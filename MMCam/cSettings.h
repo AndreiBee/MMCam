@@ -127,6 +127,16 @@ namespace SettingsVariables
 		int current_capture{}, whole_captures_num{};
 		bool is_finished{};
 	};
+
+	static auto FindNode(rapidxml::xml_node<>* xmlNode, std::string nodeName) -> rapidxml::xml_node<>*
+	{
+		for (auto node = xmlNode->first_node(); node; node = node->next_sibling())
+		{
+			if (node->name() == nodeName)
+				return node;
+		}
+	};
+
 }
 
 class cSettings final : public wxDialog
@@ -238,6 +248,7 @@ private:
 private:
 	const wxString initialization_file_path = "src\\init.ini";
 	const wxString work_stations_path = "src\\";
+	double m_PixelSizeUM{};
 	//const wxString xml_file_path = "src\\old_xml\\mtrs.xml";
 	std::unique_ptr<SettingsVariables::WorkStations> m_WorkStations{};
 	std::unique_ptr<wxButton> m_OkBtn{}, m_CancelBtn{}, m_RefreshBtn{};

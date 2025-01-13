@@ -718,15 +718,6 @@ auto cSettings::LoadWorkStationFiles() -> void
 
 auto cSettings::ReadWorkStationFile(const std::string& fileName, const int fileNum) -> void
 {
-	auto findNode = [&](rapidxml::xml_node<>* xmlNode, std::string nodeName)
-		{
-			for (auto node = xmlNode->first_node(); node; node = node->next_sibling())
-			{
-				if (node->name() == nodeName)
-					return node;
-			}
-		};
-
 	auto xmlFile = std::make_unique<rapidxml::file<>>(fileName.c_str());
 	auto document = std::make_unique<rapidxml::xml_document<>>();
 	document->parse<0>(xmlFile->data());
@@ -735,7 +726,7 @@ auto cSettings::ReadWorkStationFile(const std::string& fileName, const int fileN
 	if (!selected_motors_node) return;
 
 	// Detector
-	auto element = findNode(selected_motors_node, "detector");
+	auto element = SettingsVariables::FindNode(selected_motors_node, "detector");
 	if (element)
 	{
 		for (auto detector = element->first_node(); detector; detector = detector->next_sibling())
@@ -753,7 +744,7 @@ auto cSettings::ReadWorkStationFile(const std::string& fileName, const int fileN
 	}
 
 	// Optics
-	element = findNode(selected_motors_node, "optics");
+	element = SettingsVariables::FindNode(selected_motors_node, "optics");
 	if (element)
 	{
 		for (auto optics = element->first_node(); optics; optics = optics->next_sibling())
@@ -771,12 +762,12 @@ auto cSettings::ReadWorkStationFile(const std::string& fileName, const int fileN
 	}
 
 	// Camera
-	element = findNode(selected_motors_node, "camera");
+	element = SettingsVariables::FindNode(selected_motors_node, "camera");
 	if (element)
 		m_WorkStations->work_station_data[fileNum].selected_camera_in_data_file = wxString(element->first_node()->value());
 
 	// Station
-	element = findNode(selected_motors_node, "station");
+	element = SettingsVariables::FindNode(selected_motors_node, "station");
 	if (element)
 	{
 		auto stationName = wxString(element->first_node()->value());
@@ -790,12 +781,15 @@ auto cSettings::ReadInitializationFile() -> void
 	auto xmlFile = std::make_unique<rapidxml::file<>>(initialization_file_path.c_str());
 	auto document = std::make_unique<rapidxml::xml_document<>>();
 	document->parse<0>(xmlFile->data());
-	rapidxml::xml_node<>* work_station_node = document->first_node("work_station");
+	rapidxml::xml_node<>* app_node = document->first_node("MMCam");
 
-	if (!work_station_node)
-		return;
-	
-	m_WorkStations->initialized_work_station = wxString(work_station_node->first_node()->value());
+	auto element = SettingsVariables::FindNode(app_node, "work_station");
+	if (element)
+		m_WorkStations->initialized_work_station = wxString(element->first_node()->value());
+
+	element = SettingsVariables::FindNode(app_node, "pixel_size_um");
+	if (element)
+		m_PixelSizeUM = std::atof(element->first_node()->value());
 }
 
 auto cSettings::IterateOverConnectedCameras() -> void
@@ -813,61 +807,6 @@ auto cSettings::IterateOverConnectedCameras() -> void
 
 void cSettings::ReadXMLFile()
 {
-	//auto xmlFile = std::make_unique<rapidxml::file<>>(xml_file_path.c_str());
-	//auto document = std::make_unique<rapidxml::xml_document<>>();
-	//document->parse<0>(xmlFile->data());
-	//rapidxml::xml_node<>* motors_node = document->first_node("motors");
-
-	//if (!motors_node)
-	//	return;
-
-	//auto xml_parser = [&](rapidxml::xml_node<>* motor_array) 
-	//{
-	//	auto motor = motor_array->first_node();
-	//	auto value = motor->value();
-	//	m_Motors->xml_selected_motors[0].Add(motor->value());
-	//	value = motor->next_sibling()->value();
-	//	m_Motors->xml_selected_motors[1].Add(motor->next_sibling()->value());
-	//};
-
-	//m_Motors->xml_all_motors[0].Clear();
-	//m_Motors->xml_all_motors[1].Clear();
-	//m_Motors->xml_selected_motors[0].Clear();
-	//m_Motors->xml_selected_motors[1].Clear();
-
-	///* Filling all_motors array */
-	//for (rapidxml::xml_node<>* item = motors_node->first_node()->first_node(); item; item = item->next_sibling())
-	//{
-	//	auto node = item->first_node();
-	//	auto value = node->value();
-	//	m_Motors->xml_all_motors[0].Add(node->value());
-	//	value = node->next_sibling()->value();
-	//	m_Motors->xml_all_motors[1].Add(node->next_sibling()->value());
-	//}
-	///* Filling selected motors data */
-	//for (rapidxml::xml_node<>* detector = motors_node->first_node()->next_sibling()->first_node()->first_node(); detector; detector = detector->next_sibling())
-	//{
-	//	xml_parser(detector);
-	//}
-	//for (rapidxml::xml_node<>* optics = motors_node->first_node()->next_sibling()->first_node()->next_sibling()->first_node(); optics; optics = optics->next_sibling())
-	//{
-	//	xml_parser(optics);
-	//}
-
-	///* Adding unique elements from xml_motors_list into std::map */
-	//m_Motors->unique_motors_map.clear();
-
-	//int count{};
-	//for (const auto& note : m_Motors->xml_all_motors[0])
-	//{
-	//	if (note != "None")
-	//	{
-	//		m_Motors->unique_motors_map.emplace(std::make_pair(wxAtoi(note), wxAtof(m_Motors->xml_all_motors[1][count])));
-	//		++count;
-	//	}
-	//}
-	//CompareXMLWithConnectedDevices();
-	//UpdateUniqueArray();
 }
 
 void cSettings::UpdateUniqueArray()
