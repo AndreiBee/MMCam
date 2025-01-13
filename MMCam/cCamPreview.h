@@ -47,8 +47,8 @@ class cCamPreview final : public wxPanel
 public:
 	cCamPreview
 	(
-		wxFrame* parent_frame, 
-		wxSizer* parent_sizer, 
+		wxFrame* parent_frame,
+		wxSizer* parent_sizer,
 		std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> input_preview_panel_args
 	);
 	auto SetBackgroundColor(wxColour bckg_colour) -> void;
@@ -60,35 +60,40 @@ public:
 	auto SettingCrossHairPosFromParentWindow(bool set = false) -> void;
 	auto SetImageSize(const wxSize& img_size) -> void;
 	auto GetDataPtr() const -> unsigned short*;
-	auto GetImagePtr() const -> wxImage*;
+	auto GetImagePtr() const->wxImage*;
 	auto GetImageSize() const->wxSize;
 	auto InitializeSelectedCamera(const std::string& camera_sn) -> void;
 	auto SetCameraCapturedImage() -> void;
 	void CaptureAndSaveDataFromCamera
 	(
-		const unsigned long& exposure_time_us, 
-		const wxString& path, 
+		const unsigned long& exposure_time_us,
+		const wxString& path,
 		const std::string& start_hours,
 		const std::string& start_minutes,
 		const std::string& start_seconds,
-		const int& frame_number, 
-		const float& first_axis_position, 
+		const int& frame_number,
+		const float& first_axis_position,
 		const float& second_axis_position = 0.f
 	);
 	void CalculateMatlabJetColormapPixelRGB8bit
 	(
-		const unsigned char& value, 
-		unsigned char& r, 
-		unsigned char& g, 
+		const unsigned char& value,
+		unsigned char& r,
+		unsigned char& g,
 		unsigned char& b
 	);
 	void CalculateMatlabJetColormapPixelRGB12bit
 	(
-		const unsigned short& value, 
-		unsigned char& r, 
-		unsigned char& g, 
+		const unsigned short& value,
+		unsigned char& r,
+		unsigned char& g,
 		unsigned char& b
 	);
+
+	// FWHM
+	auto SetPixelSizeUM(const double pixel_sizeUM) { m_PixelSizeUM = pixel_sizeUM; };
+	auto SetCropSizeMM(const double crop_sizeMM) { m_CropSizeMM = crop_sizeMM; };
+
 
 private:
 	void InitDefaultComponents();
@@ -155,6 +160,7 @@ private:
 	bool m_DisplayFWHM{};
 	std::unique_ptr<unsigned long long[]> m_HorizontalSumArray{}, m_VerticalSumArray{};
 	double m_HorizontalFWHM{}, m_VerticalFWHM{};
+	double m_PixelSizeUM{}, m_CropSizeMM{};
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};
 

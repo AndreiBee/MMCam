@@ -783,13 +783,17 @@ auto cSettings::ReadInitializationFile() -> void
 	document->parse<0>(xmlFile->data());
 	rapidxml::xml_node<>* app_node = document->first_node("MMCam");
 
-	auto element = SettingsVariables::FindNode(app_node, "work_station");
+	auto element = SettingsVariables::FindNode(app_node, "crop_size_mm");
 	if (element)
-		m_WorkStations->initialized_work_station = wxString(element->first_node()->value());
+		m_CropSizeMM = std::atof(element->first_node()->value());
 
 	element = SettingsVariables::FindNode(app_node, "pixel_size_um");
 	if (element)
 		m_PixelSizeUM = std::atof(element->first_node()->value());
+
+	element = SettingsVariables::FindNode(app_node, "work_station");
+	if (element)
+		m_WorkStations->initialized_work_station = wxString(element->first_node()->value());
 }
 
 auto cSettings::IterateOverConnectedCameras() -> void

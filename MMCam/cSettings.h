@@ -207,6 +207,10 @@ public:
 
 	/* Camera */
 	auto GetSelectedCamera() const -> wxString;
+
+	auto GetPixelSizeUM() const -> double { return m_PixelSizeUM; };
+	auto GetCropSizeMM() const -> double { return m_CropSizeMM; };
+
 private:
 	void CreateMainFrame();
 	void CreateSettings();
@@ -248,7 +252,7 @@ private:
 private:
 	const wxString initialization_file_path = "src\\init.ini";
 	const wxString work_stations_path = "src\\";
-	double m_PixelSizeUM{};
+	double m_PixelSizeUM{}, m_CropSizeMM{};
 	//const wxString xml_file_path = "src\\old_xml\\mtrs.xml";
 	std::unique_ptr<SettingsVariables::WorkStations> m_WorkStations{};
 	std::unique_ptr<wxButton> m_OkBtn{}, m_CancelBtn{}, m_RefreshBtn{};
