@@ -72,17 +72,6 @@ Copy-Item -Path "${other_files_folder}\keyfile.sqlite" -Destination "${release_f
 Write-Output "Copying XIMEA files into ${release_folder} [$(Get-Date)]" >> "${path_to_repository}\log.txt"
 Copy-Item -Path "${ximea_folder}\xiapi64.dll" -Destination "${release_folder}\xiapi64.dll" -Force
 
-# Copy FWHM Python files
-Write-Output "Copying FWHM Python files into ${release_folder}\FWHM [$(Get-Date)]" >> "${path_to_repository}\log.txt"
-$fwhm_folder = "${release_folder}\FWHM"
-# Check if the temp folder exists, and create it if not
-if (-not (Test-Path -Path $fwhm_folder)) 
-{
-    New-Item -Path $fwhm_folder -ItemType Directory
-}
-Copy-Item -Path "${path_to_repository}\FWHM\main.py" -Destination "${fwhm_folder}\main.py" -Force
-Copy-Item -Path "${path_to_repository}\FWHM\requirements.txt" -Destination "${fwhm_folder}\requirements.txt" -Force
-
 # Copy Other files
 Write-Output "Copying other files into ${release_folder} [$(Get-Date)]" >> "${path_to_repository}\log.txt"
 Copy-Item -Path "${other_files_folder}\table.txt" -Destination "${release_folder}\table.txt" -Force
@@ -108,7 +97,6 @@ $archive_path = "${release_folder}\${archive_name}"
 # Specify files to include in the archive
 $files_to_archive = @(
     "${release_folder}\src",
-	"${release_folder}\FWHM",
     "${release_folder}\bindy.dll",
 	"${release_folder}\keyfile.sqlite",
 	"${release_folder}\libximc.dll",
