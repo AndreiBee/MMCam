@@ -694,7 +694,7 @@ private:
 	/* Measurement */
 	std::unique_ptr<wxTextCtrl> m_OutDirTextCtrl{};
 	std::unique_ptr<wxButton> m_OutDirBtn{};
-	std::unique_ptr<MainFrameVariables::MeasurementStage> m_FirstStage{}, m_SecondStage{};
+	std::unique_ptr<MainFrameVariables::MeasurementStage> m_FirstStage{};
 	std::unique_ptr<wxButton> m_StartMeasurement{};
 
 	/* Progress */

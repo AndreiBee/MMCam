@@ -133,7 +133,7 @@ void cMain::InitComponents()
 	m_Settings->SetIcon(logo_xpm);
 	/* Measurement */
 	m_FirstStage = std::make_unique<MainFrameVariables::MeasurementStage>();
-	m_SecondStage = std::make_unique<MainFrameVariables::MeasurementStage>();
+	//m_SecondStage = std::make_unique<MainFrameVariables::MeasurementStage>();
 }
 
 void cMain::CreateMenuBarOnFrame()
@@ -150,14 +150,18 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, wxT("Single Shot\tS"));
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, wxT("Start Live\tL"));
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, wxT("Dark Mode"));
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying"));
+	m_MenuBar->menu_edit->Check(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
 
 	// Intensity Profile SubMenu
 	m_MenuBar->submenu_intensity_profile->AppendCheckItem(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, wxT("Crosshair\tC"));
+	m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
 	// Append Submenu Selection Tools to the Tools Menu
 	m_MenuBar->menu_tools->Append(wxID_ANY, wxT("&Intensity Profile"), m_MenuBar->submenu_intensity_profile);
 	// Append Value Displaying Check
@@ -240,10 +244,10 @@ void cMain::InitDefaultStateWidgets()
 		}
 		/* Second Stage */
 		{
-			m_SecondStage->start->ChangeValue(wxString::Format(wxT("%.3f"), default_start));
-			m_SecondStage->step->ChangeValue(wxString::Format(wxT("%.3f"), default_step));
-			m_SecondStage->finish->ChangeValue(wxString::Format(wxT("%.3f"), default_finish));
-			m_SecondStage->DisableAllControls();
+			//m_SecondStage->start->ChangeValue(wxString::Format(wxT("%.3f"), default_start));
+			//m_SecondStage->step->ChangeValue(wxString::Format(wxT("%.3f"), default_step));
+			//m_SecondStage->finish->ChangeValue(wxString::Format(wxT("%.3f"), default_finish));
+			//m_SecondStage->DisableAllControls();
 		}
 		/* Start Capturing */
 		m_StartMeasurement->Disable();
@@ -978,6 +982,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 					wxTE_CENTRE | wxTE_PROCESS_ENTER, 
 					exposure_val
 				);
+			m_CamExposure->Disable();
 
 			exposure_static_box_sizer->AddStretchSpacer();
 			exposure_static_box_sizer->Add(m_CamExposure.get(), 0, wxEXPAND);
@@ -1006,6 +1011,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 					MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, 
 					wxT("Start Live (L)")
 				);
+			m_StartStopLiveCapturingTglBtn->Disable();
 			ss_and_start_stop_box_sizer->Add(m_StartStopLiveCapturingTglBtn.get(), 0, wxEXPAND | wxTOP, 5);
 
 			first_row_sizer->AddStretchSpacer();
@@ -1016,6 +1022,8 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 
 	wxSizer* const second_row_sizer = new wxBoxSizer(wxHORIZONTAL);
 	{
+		wxSize txt_ctrl_size = { 64, 20 };
+		wxSize btn_size = { 36, 20 };
 		wxSizer* const cross_hair_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&CrossHair");
 		/* X Position */
 		{
@@ -1030,12 +1038,12 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 					MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL,
 					wxT("1"), 
 					wxDefaultPosition, 
-					wxDefaultSize, 
+					txt_ctrl_size, 
 					wxTE_CENTRE
 					);
 			m_CrossHairPosXTxtCtrl->Disable();
-			x_pos_sizer->Add(m_CrossHairPosXTxtCtrl.get(), 1, wxEXPAND);
-			cross_hair_sizer->Add(x_pos_sizer, 1, wxEXPAND | wxRIGHT, 2);
+			x_pos_sizer->Add(m_CrossHairPosXTxtCtrl.get(), 0, wxEXPAND);
+			cross_hair_sizer->Add(x_pos_sizer, 0, wxEXPAND | wxRIGHT, 2);
 		}
 
 		/* Y Position */
@@ -1051,12 +1059,12 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 					MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL,
 					wxT("1"), 
 					wxDefaultPosition, 
-					wxDefaultSize, 
+					txt_ctrl_size, 
 					wxTE_CENTRE
 					);
 			m_CrossHairPosYTxtCtrl->Disable();
-			y_pos_sizer->Add(m_CrossHairPosYTxtCtrl.get(), 1, wxEXPAND);
-			cross_hair_sizer->Add(y_pos_sizer, 1, wxEXPAND);
+			y_pos_sizer->Add(m_CrossHairPosYTxtCtrl.get(), 0, wxEXPAND);
+			cross_hair_sizer->Add(y_pos_sizer, 0, wxEXPAND);
 		}
 
 		/* Set Postion */
@@ -1065,15 +1073,18 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 				(
 					right_side_panel,
 					MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_SET_POS_TGL_BTN,
-					wxT("Set")
+					wxT("Set"),
+					wxDefaultPosition,
+					btn_size
 				);
+			m_SetCrossHairPosTglBtn->Disable();
 
-			cross_hair_sizer->AddSpacer(2);
+			cross_hair_sizer->AddSpacer(5);
 			cross_hair_sizer->Add(m_SetCrossHairPosTglBtn.get(), 0, wxALIGN_CENTER);
 		}
-		second_row_sizer->Add(cross_hair_sizer, 1, wxEXPAND);
+		second_row_sizer->Add(cross_hair_sizer, 0, wxALIGN_CENTER);
 	}
-	cam_static_box_sizer->Add(second_row_sizer, 0, wxEXPAND);
+	cam_static_box_sizer->Add(second_row_sizer, 0, wxALIGN_CENTER);
 
 	right_side_panel_sizer->Add(cam_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
 }
@@ -1199,89 +1210,89 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 		}
 
 		/* Second axis */
-		{
-			wxSizer* const second_axis_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Second axis");
+		//{
+		//	wxSizer* const second_axis_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Second axis");
 
-			/* Stage */
-			{
-				wxSizer* const stage_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Stage");
-				m_SecondStage->stage = new wxChoice(
-					right_side_panel, 
-					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, 
-					wxDefaultPosition, 
-					wxDefaultSize, 
-					m_SecondStage->motors);
-				m_SecondStage->stage->SetSelection(0);
-				stage_static_box_sizer->Add(m_SecondStage->stage, 0, wxEXPAND);
-				second_axis_static_box_sizer->Add(stage_static_box_sizer, 0, wxEXPAND);
-			}
+		//	/* Stage */
+		//	{
+		//		wxSizer* const stage_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Stage");
+		//		m_SecondStage->stage = new wxChoice(
+		//			right_side_panel, 
+		//			MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, 
+		//			wxDefaultPosition, 
+		//			wxDefaultSize, 
+		//			m_SecondStage->motors);
+		//		m_SecondStage->stage->SetSelection(0);
+		//		stage_static_box_sizer->Add(m_SecondStage->stage, 0, wxEXPAND);
+		//		second_axis_static_box_sizer->Add(stage_static_box_sizer, 0, wxEXPAND);
+		//	}
 
-			/* Start */
-			{
-				wxSizer* const start_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Start");
+		//	/* Start */
+		//	{
+		//		wxSizer* const start_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Start");
 
-				wxFloatingPointValidator<float>	start_val(3, NULL, wxNUM_VAL_DEFAULT);
-				start_val.SetMin(-1000.0);
-				start_val.SetMax(1000.0);
+		//		wxFloatingPointValidator<float>	start_val(3, NULL, wxNUM_VAL_DEFAULT);
+		//		start_val.SetMin(-1000.0);
+		//		start_val.SetMax(1000.0);
 
-				m_SecondStage->start = new wxTextCtrl(
-					right_side_panel,
-					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_START,
-					wxT("123.456"), 
-					wxDefaultPosition, 
-					start_text_ctrl_size, 
-					wxTE_CENTRE, 
-					start_val);
+		//		m_SecondStage->start = new wxTextCtrl(
+		//			right_side_panel,
+		//			MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_START,
+		//			wxT("123.456"), 
+		//			wxDefaultPosition, 
+		//			start_text_ctrl_size, 
+		//			wxTE_CENTRE, 
+		//			start_val);
 
-				start_static_box_sizer->Add(m_SecondStage->start, 0, wxEXPAND);
+		//		start_static_box_sizer->Add(m_SecondStage->start, 0, wxEXPAND);
 
-				second_axis_static_box_sizer->Add(start_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
-			}
+		//		second_axis_static_box_sizer->Add(start_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
+		//	}
 
-			/* Step */
-			{
-				wxSizer* const step_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Step");
+		//	/* Step */
+		//	{
+		//		wxSizer* const step_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Step");
 
-				wxFloatingPointValidator<float>	step_val(3, NULL, wxNUM_VAL_DEFAULT);
-				step_val.SetMin(-1000.0);
-				step_val.SetMax(1000.0);
+		//		wxFloatingPointValidator<float>	step_val(3, NULL, wxNUM_VAL_DEFAULT);
+		//		step_val.SetMin(-1000.0);
+		//		step_val.SetMax(1000.0);
 
-				m_SecondStage->step = new wxTextCtrl(
-					right_side_panel, 
-					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_STEP,
-					wxT("123.456"), 
-					wxDefaultPosition, 
-					step_text_ctrl_size, 
-					wxTE_CENTRE, 
-					step_val);
-				
-				step_static_box_sizer->Add(m_SecondStage->step, 0, wxEXPAND);
-				second_axis_static_box_sizer->Add(step_static_box_sizer, 0, wxEXPAND | wxRIGHT, 2);
-			}
+		//		m_SecondStage->step = new wxTextCtrl(
+		//			right_side_panel, 
+		//			MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_STEP,
+		//			wxT("123.456"), 
+		//			wxDefaultPosition, 
+		//			step_text_ctrl_size, 
+		//			wxTE_CENTRE, 
+		//			step_val);
+		//		
+		//		step_static_box_sizer->Add(m_SecondStage->step, 0, wxEXPAND);
+		//		second_axis_static_box_sizer->Add(step_static_box_sizer, 0, wxEXPAND | wxRIGHT, 2);
+		//	}
 
-			/* Finish */
-			{
-				wxSizer* const finish_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Finish");
+		//	/* Finish */
+		//	{
+		//		wxSizer* const finish_static_box_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Finish");
 
-				wxFloatingPointValidator<float>	finish_val(3, NULL, wxNUM_VAL_DEFAULT);
-				finish_val.SetMin(-1000.0);
-				finish_val.SetMax(1000.0);
+		//		wxFloatingPointValidator<float>	finish_val(3, NULL, wxNUM_VAL_DEFAULT);
+		//		finish_val.SetMin(-1000.0);
+		//		finish_val.SetMax(1000.0);
 
-				m_SecondStage->finish = new wxTextCtrl(
-					right_side_panel, 
-					MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_FINISH,
-					wxT("123.456"), 
-					wxDefaultPosition, 
-					finish_text_ctrl_size, 
-					wxTE_CENTRE, 
-					finish_val);
+		//		m_SecondStage->finish = new wxTextCtrl(
+		//			right_side_panel, 
+		//			MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_FINISH,
+		//			wxT("123.456"), 
+		//			wxDefaultPosition, 
+		//			finish_text_ctrl_size, 
+		//			wxTE_CENTRE, 
+		//			finish_val);
 
-				finish_static_box_sizer->Add(m_SecondStage->finish, 0, wxEXPAND);
-				second_axis_static_box_sizer->Add(finish_static_box_sizer, 0, wxEXPAND);
-			}
+		//		finish_static_box_sizer->Add(m_SecondStage->finish, 0, wxEXPAND);
+		//		second_axis_static_box_sizer->Add(finish_static_box_sizer, 0, wxEXPAND);
+		//	}
 
-			directions_static_box_sizer->Add(second_axis_static_box_sizer, 0, wxEXPAND);
-		}
+		//	directions_static_box_sizer->Add(second_axis_static_box_sizer, 0, wxEXPAND);
+		//}
 
 		mmt_static_box_sizer->Add(directions_static_box_sizer, 0, wxEXPAND);
 	}
@@ -1300,10 +1311,11 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 		horizontal_sizer->AddStretchSpacer();
 		horizontal_sizer->Add(capturing_sizer);
 		capturing_sizer->Add(m_StartMeasurement.get());
+		mmt_static_box_sizer->AddStretchSpacer();
 		mmt_static_box_sizer->Add(horizontal_sizer, 0, wxEXPAND);
 	}
 
-	right_side_panel_sizer->Add(mmt_static_box_sizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
+	right_side_panel_sizer->Add(mmt_static_box_sizer, 1, wxEXPAND | wxLEFT | wxRIGHT, 2);
 }
 
 auto cMain::OnEnableDarkMode(wxCommandEvent& evt) -> void
@@ -1446,6 +1458,8 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 	if (save_dialog.ShowModal() == wxID_CANCEL)
 		return;
 
+	if (!m_XimeaControl || !m_XimeaControl->IsCameraConnected()) return;
+
 	m_OutDirTextCtrl->SetValue(save_dialog.GetPath());
 	m_FirstStage->EnableAllControls();
 	//m_SecondStage->EnableAllControls();
@@ -1481,12 +1495,15 @@ auto cMain::InitializeSelectedCamera() -> void
 	if (!m_XimeaControl->IsCameraConnected()) return;
 
 	m_SelectedCameraStaticTXT->SetLabel(curr_camera);	
-	//m_StopLiveCapturing = true;
-	//while (!m_LiveCapturingEndedDrawingOnCamPreview)
-	//{
-	//	wxThread::This()->Sleep(10);
-	//}
-	//m_StopLiveCapturing = false;
+
+	// Successful initialization of the camera
+	// Enabling controls
+	m_CamExposure->Enable();
+	m_StartStopLiveCapturingTglBtn->Enable();
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+	m_VerticalToolBar->tool_bar->Enable();
 
 	m_StartStopLiveCapturingTglBtn->SetValue(true);
 	wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
@@ -1657,6 +1674,7 @@ void cMain::CreateVerticalToolBar()
 	m_VerticalToolBar->tool_bar->SetToolShortHelp(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, wxT("Crosshair (C)"));
 
 	m_VerticalToolBar->tool_bar->SetToolBitmapSize(wxSize(30, 30));
+	m_VerticalToolBar->tool_bar->Disable();
 	m_VerticalToolBar->tool_bar->Realize();
 }
 
@@ -1683,6 +1701,7 @@ void cMain::UnCheckAllTools()
 	m_CamPreview->SetCrossHairButtonActive(false);
 	m_CrossHairPosXTxtCtrl->Disable();
 	m_CrossHairPosYTxtCtrl->Disable();
+	m_SetCrossHairPosTglBtn->Disable();
 }
 
 void cMain::OnFirstStageChoice(wxCommandEvent& evt)
@@ -1738,53 +1757,53 @@ void cMain::OnFirstStageChoice(wxCommandEvent& evt)
 
 void cMain::OnSecondStageChoice(wxCommandEvent& evt)
 {
-	auto second_stage_selection = m_SecondStage->stage->GetCurrentSelection() - 1;
-	double start_stage_value{}, step_stage_value{}, finish_stage_value{};
-	switch (second_stage_selection)
-	{
-	/* Detector */
-	case 0:
-		if (!m_Detector[0].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
-		break;
-	case 1:
-		if (!m_Detector[1].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
-		break;
-	case 2:
-		if (!m_Detector[2].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
-		break;
-	/* Optics */
-	case 3:
-		if (!m_Optics[0].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
-		break;
-	case 4:
-		if (!m_Optics[1].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
-		break;
-	case 5:
-		if (!m_Optics[2].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
-		break;
-	default:
-		break;
-	}
-	/* Set Start To Current position of motor */
-	m_SecondStage->start->SetValue
-	(
-		wxString::Format
-		(
-			wxT("%.3f"), 
-			(float)start_stage_value
-		)
-	);
-	/* Set Finish To Current position of motor + Step */
-	if (!m_SecondStage->step->GetValue().ToDouble(&step_stage_value)) return;
-	finish_stage_value = start_stage_value + step_stage_value;
-	m_SecondStage->finish->SetValue
-	(
-		wxString::Format
-		(
-			wxT("%.3f"), 
-			(float)finish_stage_value
-		)
-	);
+	//auto second_stage_selection = m_SecondStage->stage->GetCurrentSelection() - 1;
+	//double start_stage_value{}, step_stage_value{}, finish_stage_value{};
+	//switch (second_stage_selection)
+	//{
+	///* Detector */
+	//case 0:
+	//	if (!m_Detector[0].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+	//	break;
+	//case 1:
+	//	if (!m_Detector[1].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+	//	break;
+	//case 2:
+	//	if (!m_Detector[2].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+	//	break;
+	///* Optics */
+	//case 3:
+	//	if (!m_Optics[0].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+	//	break;
+	//case 4:
+	//	if (!m_Optics[1].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+	//	break;
+	//case 5:
+	//	if (!m_Optics[2].absolute_text_ctrl->GetValue().ToDouble(&start_stage_value)) return;
+	//	break;
+	//default:
+	//	break;
+	//}
+	///* Set Start To Current position of motor */
+	//m_SecondStage->start->SetValue
+	//(
+	//	wxString::Format
+	//	(
+	//		wxT("%.3f"), 
+	//		(float)start_stage_value
+	//	)
+	//);
+	///* Set Finish To Current position of motor + Step */
+	//if (!m_SecondStage->step->GetValue().ToDouble(&step_stage_value)) return;
+	//finish_stage_value = start_stage_value + step_stage_value;
+	//m_SecondStage->finish->SetValue
+	//(
+	//	wxString::Format
+	//	(
+	//		wxT("%.3f"), 
+	//		(float)finish_stage_value
+	//	)
+	//);
 }
 
 void cMain::OnStartCapturingButton(wxCommandEvent& evt)
@@ -1856,7 +1875,7 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 				(int)(step_first_stage_value * 1000.0) + 1;
 		}
 		/* Checking second stage */
-		if (m_SecondStage->stage->GetCurrentSelection() - 1 == first_axis->axis_number) return;
+		//if (m_SecondStage->stage->GetCurrentSelection() - 1 == first_axis->axis_number) return;
 		/* 
 		if (m_SecondStage->stage->GetCurrentSelection() == 0) return;
 		else selected_second_stage = m_SecondStage->stage->GetCurrentSelection() - 1;		
@@ -1981,6 +2000,7 @@ void cMain::OnCrossHairButton(wxCommandEvent& evt)
 		m_CamPreview->SetCrossHairButtonActive(true);
 		m_CrossHairPosXTxtCtrl->Enable();
 		m_CrossHairPosYTxtCtrl->Enable();
+		m_SetCrossHairPosTglBtn->Enable();
 		{
 			auto img_size = m_CamPreview->GetImageSize();
 			//m_CamPreview->SetXCrossHairPosFromParentWindow(img_size.GetWidth() / 2);
@@ -2215,6 +2235,7 @@ void cMain::UpdateAllAxisGlobalPositions()
 
 void cMain::ExposureValueChanged(wxCommandEvent& evt)
 {
+	if (!m_XimeaControl || !m_XimeaControl->IsCameraConnected()) return;
 	m_XimeaControl->StopAcquisition();
 	m_XimeaControl->TurnOffLastThread();
 	//m_StopLiveCapturing = true;
