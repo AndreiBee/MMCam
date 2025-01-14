@@ -1460,6 +1460,8 @@ void cMain::OnOpenSettings(wxCommandEvent& evt)
 	m_Settings->ShowModal();
 	if (!m_Settings->IsActive())
 	{
+		m_CamPreview->SetPixelSizeUM(m_Settings->GetPixelSizeUM());
+		m_CamPreview->SetCropSizeMM(m_Settings->GetCropSizeMM());
 		InitializeSelectedCamera();
 		UpdateStagePositions();
 		EnableUsedAndDisableNonUsedMotors();	

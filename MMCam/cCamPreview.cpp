@@ -157,11 +157,11 @@ void cCamPreview::SetCameraCapturedImage()
 		// Horizontal
 		if (!m_HorizontalSumArray) m_HorizontalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetHeight());
 		ToolsVariables::CalculateSumVertically(m_ImageData.get(), m_ImageSize, m_HorizontalSumArray.get());
-		m_HorizontalFWHM = ToolsVariables::CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetHeight());
+		m_HorizontalFWHM = ToolsVariables::CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetHeight(), &m_HorizonalBestPosSum.first, &m_HorizonalBestPosSum.second);
 		// Vertical
 		if (!m_VerticalSumArray) m_VerticalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetWidth());
 		ToolsVariables::CalculateSumHorizontally(m_ImageData.get(), m_ImageSize, m_VerticalSumArray.get());
-		m_VerticalFWHM = ToolsVariables::CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetWidth());
+		m_VerticalFWHM = ToolsVariables::CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetWidth(), &m_VerticalBestPosSum.first, &m_VerticalBestPosSum.second);
 	}
 
 	m_IsImageSet = true;
@@ -558,6 +558,7 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 
 		DrawCrossHair(gc);
 		DrawFWHMValues(gc);
+		DrawSpotCroppedWindow(gc);
 		delete gc;
 	}
 }
@@ -593,7 +594,7 @@ void cCamPreview::DrawCameraCapturedImage(wxGraphicsContext* gc_)
 
 auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
 {
-	if (!m_Image->IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray) return;
+	if (!m_Image->IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
 
 	wxColour fontColour(181, 230, 29, 200);
 	wxFont font = wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
@@ -625,12 +626,45 @@ auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
 		drawPoint.x = m_CanvasSize.GetWidth() - offsetX - heightText;
 		drawPoint.y = m_CanvasSize.GetHeight() / 2 + widthText / 2;
 
-		// Set up the transformation matrix for a 90-degree counterclockwise rotation
+		// Set up the transformation matrix for a 90-degree counter clockwise rotation
 		gc_->Translate(drawPoint.x, drawPoint.y);
-		gc_->Rotate(-M_PI / 2.0); // Rotate 90 degrees counterclockwise (pi/2 radians)
+		gc_->Rotate(-M_PI / 2.0); // Rotate 90 degrees counter clockwise (pi/2 radians)
 		gc_->Translate(-drawPoint.x, -drawPoint.y);
 		gc_->DrawText(curr_value, drawPoint.x, drawPoint.y);
 	}
+}
+
+auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
+{
+	if (!m_Image->IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
+	if (m_HorizontalFWHM == -1.0 || m_VerticalFWHM == -1.0) return;
+	
+	if (m_ROIWindowWidth <= 0) return;
+
+	auto penColour = wxColour("black");
+	auto penSize = 2;
+	auto penStyle = wxPENSTYLE_DOT_DASH;
+	gc_->SetPen(wxPen(penColour, penSize, penStyle));
+
+	auto rectangle_start_draw = wxRealPoint
+	(
+		m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage + (m_HorizonalBestPosSum.first - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage,
+		m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage + (m_VerticalBestPosSum.first - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage
+	);
+
+	auto rectangleSize = wxSize
+	(
+		m_ROIWindowWidth * m_Zoom / m_ZoomOnOriginalSizeImage,
+		m_ROIWindowWidth * m_Zoom / m_ZoomOnOriginalSizeImage
+	);
+
+	gc_->DrawRectangle
+	(
+		rectangle_start_draw.x, 
+		rectangle_start_draw.y, 
+		rectangleSize.GetWidth(), 
+		rectangleSize.GetHeight()
+	);
 }
 
 void cCamPreview::OnSize(wxSizeEvent& evt)

@@ -125,25 +125,26 @@ namespace ToolsVariables
 	};
 
 
-	static auto CalculateFWHM(const unsigned long long* const array, size_t size) -> double
+	static auto CalculateFWHM(const unsigned long long* const array, size_t size, int* bestPos, unsigned long long* bestSum) -> double
 	{
 
 		if (!size) return -1.0;
 
 		// Step 1: Find the maximum value
 		auto maxElementIter = std::max_element(array, &array[size - 1]);
-		auto maxElementPos = static_cast<int>(std::distance(array, maxElementIter));
-		unsigned long long maxValue = *maxElementIter;
+		*bestPos = static_cast<int>(std::distance(array, maxElementIter));
+		*bestSum = *maxElementIter;
 
 		// Step 2: Calculate the half-maximum
-		double halfMax = static_cast<double>(maxValue) / 2.0;
+		double halfMax = static_cast<double>(*bestSum) / 2.0;
+
+		if (*bestPos < 0 || *bestPos > size - 1) return -1.0;
 
 		// Step 3: Find indices where array crosses the half-maximum
 		int leftIndex = -1, rightIndex = -1;
-		if (maxElementPos == 0 || maxElementPos >= size - 1) return -1.0;
 
 		// Looking for the left index
-		for (auto i = maxElementPos; i >= 0; --i)
+		for (auto i = *bestPos; i >= 0; --i)
 		{
 			if (leftIndex == -1 && array[i] < halfMax) 
 			{
@@ -153,7 +154,7 @@ namespace ToolsVariables
 		}
 
 		// Looking for the right index
-		for (auto i = maxElementPos; i < size; ++i)
+		for (auto i = *bestPos; i < size; ++i)
 		{
 			if (leftIndex != -1 && array[i] < halfMax) 
 			{

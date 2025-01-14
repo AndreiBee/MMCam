@@ -91,8 +91,18 @@ public:
 	);
 
 	// FWHM
-	auto SetPixelSizeUM(const double pixel_sizeUM) { m_PixelSizeUM = pixel_sizeUM; };
-	auto SetCropSizeMM(const double crop_sizeMM) { m_CropSizeMM = crop_sizeMM; };
+	auto SetPixelSizeUM(const double pixel_sizeUM) 
+	{ 
+		m_PixelSizeUM = pixel_sizeUM > 0.0 ? pixel_sizeUM : 1.0;
+		if (m_CropSizeMM != 0.0)
+			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / m_PixelSizeUM));
+	};
+	auto SetCropSizeMM(const double crop_sizeMM) 
+	{ 
+		m_CropSizeMM = crop_sizeMM > 0.0 ? crop_sizeMM : 0.0; 
+		if (m_PixelSizeUM != 0.0)
+			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / m_PixelSizeUM));
+	};
 
 
 private:
@@ -103,6 +113,7 @@ private:
 	void CreateGraphicsBitmapImage(wxGraphicsContext* gc_);
 	void DrawCameraCapturedImage(wxGraphicsContext* gc_);
 	auto DrawFWHMValues(wxGraphicsContext* gc_) -> void;
+	auto DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void;
 	void OnSize(wxSizeEvent& evt);
 	void ChangeSizeOfImageInDependenceOnCanvasSize();
 	auto UpdateCrossHairOnSize() -> void;
@@ -160,7 +171,9 @@ private:
 	bool m_DisplayFWHM{};
 	std::unique_ptr<unsigned long long[]> m_HorizontalSumArray{}, m_VerticalSumArray{};
 	double m_HorizontalFWHM{}, m_VerticalFWHM{};
+	std::pair<int, unsigned long long> m_HorizonalBestPosSum{}, m_VerticalBestPosSum{};
 	double m_PixelSizeUM{}, m_CropSizeMM{};
+	int m_ROIWindowWidth{};
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};
 
