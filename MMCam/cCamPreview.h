@@ -62,10 +62,16 @@ public:
 	auto SettingCrossHairPosFromParentWindow(bool set = false) -> void;
 	auto SetImageSize(const wxSize& img_size) -> void;
 	auto GetDataPtr() const -> unsigned short*;
-	auto GetImagePtr() const->wxImage*;
+	//auto GetImagePtr() const->wxImage*;
 	auto GetImageSize() const->wxSize;
 	auto InitializeSelectedCamera(const std::string& camera_sn) -> void;
-	auto SetCameraCapturedImage() -> void;
+	auto UpdateImageParameters() -> void;
+
+	auto SetCameraCapturedImage
+	(
+		unsigned short* data_ptr
+	) -> void;
+
 	void CaptureAndSaveDataFromCamera
 	(
 		const unsigned long& exposure_time_us,
@@ -112,6 +118,18 @@ private:
 	void PaintEvent(wxPaintEvent& evt);
 	void Render(wxBufferedPaintDC& dc);
 	void DrawImage(wxGraphicsContext* gc);
+	
+	auto UpdateWXImage() -> void;
+	auto AdjustImageParts
+	(
+		const unsigned short* data_ptr,
+		const unsigned int start_x,
+		const unsigned int start_y,
+		const unsigned int finish_x,
+		const unsigned int finish_y
+	) -> void;
+
+
 	void CreateGraphicsBitmapImage(wxGraphicsContext* gc_);
 	void DrawCameraCapturedImage(wxGraphicsContext* gc_);
 	auto DrawFWHMValues(wxGraphicsContext* gc_) -> void;
@@ -143,10 +161,10 @@ private:
 private:
 	int m_Width{}, m_Height{};
 	bool m_IsGraphicsBitmapSet{}, m_IsImageSet{};
-	std::unique_ptr<wxGraphicsBitmap> m_GraphicsBitmapImage{};
+	wxGraphicsBitmap m_GraphicsBitmapImage{};
 
-	std::shared_ptr<wxImage> m_Image{};
-	std::shared_ptr<unsigned short[]> m_ImageData{};
+	wxImage m_Image{};
+	std::unique_ptr<unsigned short[]> m_ImageData{};
 	
 	wxSize m_ImageSize{}, m_ImageOnCanvasSize{}, m_CanvasSize{};
 	wxRealPoint m_NotCheckedCursorPosOnImage{}, m_CheckedCursorPosOnImage{}, m_CursorPosOnCanvas{};

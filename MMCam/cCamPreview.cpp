@@ -85,12 +85,14 @@ auto cCamPreview::SettingCrossHairPosFromParentWindow(bool set) -> void
 
 auto cCamPreview::SetImageSize(const wxSize& img_size) -> void
 {
-	m_Image = std::make_shared<wxImage>();
-	m_ImageData = std::make_shared<unsigned short[]>(img_size.GetWidth() * img_size.GetHeight());
-	 m_HorizontalSumArray = std::make_unique<unsigned int[]>(m_ImageSize.GetHeight());
-	 m_VerticalSumArray = std::make_unique<unsigned int[]>(m_ImageSize.GetWidth());
-	m_Image->Create(img_size);
 	m_ImageSize = img_size;
+
+	m_ImageData = std::make_unique<unsigned short[]>(img_size.GetWidth() * img_size.GetHeight());
+
+	m_HorizontalSumArray = std::make_unique<unsigned int[]>(m_ImageSize.GetWidth());
+	m_VerticalSumArray = std::make_unique<unsigned int[]>(m_ImageSize.GetHeight());
+
+	m_Image.Create(img_size);
 }
 
 auto cCamPreview::GetDataPtr() const -> unsigned short*
@@ -98,10 +100,10 @@ auto cCamPreview::GetDataPtr() const -> unsigned short*
 	return m_ImageData.get();
 }
 
-auto cCamPreview::GetImagePtr() const -> wxImage*
-{
-	return m_Image.get();
-}
+//auto cCamPreview::GetImagePtr() const -> wxImage*
+//{
+//	return &m_Image;
+//}
 
 auto cCamPreview::GetImageSize() const -> wxSize
 {
@@ -117,7 +119,7 @@ auto cCamPreview::InitializeSelectedCamera(const std::string& camera_sn) -> void
 	}
 }
 
-void cCamPreview::SetCameraCapturedImage()
+void cCamPreview::UpdateImageParameters()
 {
 	/* 
 	Saving previous values for correct displaying of the image in the same place, 
@@ -157,16 +159,38 @@ void cCamPreview::SetCameraCapturedImage()
 	if (m_DisplayFWHM)
 	{
 		// Horizontal
-		//CalculateSumVertically(m_ImageData.get(), m_ImageSize, m_HorizontalSumArray.get());
-		m_HorizontalFWHM = CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetHeight(), &m_HorizonalBestPosSum.first, &m_HorizonalBestPosSum.second);
+		CalculateSumVertically(m_ImageData.get(), m_ImageSize.GetWidth(), m_ImageSize.GetHeight(), m_HorizontalSumArray.get());
+		m_HorizontalFWHM = CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetWidth(), &m_HorizonalBestPosSum.first, &m_HorizonalBestPosSum.second);
 		// Vertical
-		//ToolsVariables::CalculateSumHorizontally(m_ImageData.get(), m_ImageSize, m_VerticalSumArray.get());
-		//m_VerticalFWHM = ToolsVariables::CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetWidth(), &m_VerticalBestPosSum.first, &m_VerticalBestPosSum.second);
+		CalculateSumHorizontally(m_ImageData.get(), m_ImageSize.GetWidth(), m_ImageSize.GetHeight(), m_VerticalSumArray.get());
+		m_VerticalFWHM = CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetHeight(), &m_VerticalBestPosSum.first, &m_VerticalBestPosSum.second);
 	}
 
 	m_IsImageSet = true;
 	m_IsGraphicsBitmapSet = false;
 	Refresh();
+}
+
+auto cCamPreview::SetCameraCapturedImage
+(
+	unsigned short* data_ptr
+) -> void
+{
+	if (!data_ptr) return;
+	if (!m_ImageSize.GetWidth() || !m_ImageSize.GetHeight()) return;
+
+	unsigned long long readDataSize = m_ImageSize.GetWidth() * m_ImageSize.GetHeight();
+	if (!m_ImageData)
+	{
+		m_ImageData = std::make_unique<unsigned short[]>(readDataSize);
+		m_Image = wxImage(m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
+	}
+
+	memcpy(m_ImageData.get(), data_ptr, sizeof(unsigned short) * readDataSize);
+
+	UpdateWXImage();
+
+	UpdateImageParameters();
 }
 
 void cCamPreview::CaptureAndSaveDataFromCamera
@@ -562,22 +586,89 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 		DrawCrossHair(gc);
 
 		/* FWHM */
-		//DrawFWHMValues(gc);
-		//DrawSpotCroppedWindow(gc);
+		DrawFWHMValues(gc);
+		DrawSpotCroppedWindow(gc);
 
 		delete gc;
 	}
+}
+
+auto cCamPreview::UpdateWXImage() -> void
+{
+	// Check number of threads on the current machine
+	auto numThreads = std::thread::hardware_concurrency();
+
+#ifdef _DEBUG
+	//numThreads = 1;
+#endif // _DEBUG
+
+	std::vector<std::thread> threads;
+	threads.reserve(numThreads);
+
+	unsigned int tileSize{};
+	tileSize = m_ImageSize.GetHeight() % numThreads > 0 ? m_ImageSize.GetHeight() / numThreads + 1 : m_ImageSize.GetHeight() / numThreads;
+
+	for (auto i{ 0 }; i < numThreads; ++i)
+	{
+		wxPoint start{}, finish{};
+		start.x = 0;
+		start.y = i * tileSize;
+
+		finish.x = m_ImageSize.GetWidth();
+		finish.y = (i + 1) * tileSize > m_ImageSize.GetHeight() ? m_ImageSize.GetHeight() : (i + 1) * tileSize;
+
+		threads.emplace_back
+		(
+			std::thread
+			(
+				&cCamPreview::AdjustImageParts,
+				this,
+				&m_ImageData[start.y * m_ImageSize.GetWidth() + start.x],
+				start.x, start.y, finish.x, finish.y
+			)
+		);
+	}
+	for (auto& thread : threads)
+	{
+		thread.join();
+	}
+}
+
+auto cCamPreview::AdjustImageParts
+(
+	const unsigned short* data_ptr, 
+	const unsigned int start_x, 
+	const unsigned int start_y, 
+	const unsigned int finish_x, 
+	const unsigned int finish_y
+) -> void
+{
+	if (!data_ptr) return;
+	unsigned short current_value{};
+	unsigned char red{}, green{}, blue{};
+	unsigned long long position_in_data_pointer{};
+
+	for (auto y{ start_y }; y < finish_y; ++y)
+	{
+		for (auto x{ start_x }; x < finish_x; ++x)
+		{
+			current_value = data_ptr[position_in_data_pointer];
+			/* Matlab implementation of JetColormap */
+			/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
+			CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
+			m_Image.SetRGB(x, y, red, green, blue);
+			++position_in_data_pointer;
+		}
+	}
+
 }
 
 void cCamPreview::CreateGraphicsBitmapImage(wxGraphicsContext* gc_)
 {
 	if (!m_IsGraphicsBitmapSet && m_IsImageSet)
 	{
-		if (m_Image)
-		{
-			m_GraphicsBitmapImage = std::make_unique<wxGraphicsBitmap>(gc_->CreateBitmapFromImage(*m_Image));;
-			m_IsGraphicsBitmapSet = true;
-		}
+		m_GraphicsBitmapImage = wxGraphicsBitmap(gc_->CreateBitmapFromImage(m_Image));;
+		m_IsGraphicsBitmapSet = true;
 	}
 }
 
@@ -591,16 +682,15 @@ void cCamPreview::DrawCameraCapturedImage(wxGraphicsContext* gc_)
 
 		gc_->SetInterpolationQuality(interpolation_quality);
 		gc_->Scale(m_Zoom / m_ZoomOnOriginalSizeImage, m_Zoom / m_ZoomOnOriginalSizeImage);
-		if (m_GraphicsBitmapImage)
-			gc_->DrawBitmap(*m_GraphicsBitmapImage.get(),
-				m_StartDrawPos.x, m_StartDrawPos.y,
-				m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
+		gc_->DrawBitmap(m_GraphicsBitmapImage,
+			m_StartDrawPos.x, m_StartDrawPos.y,
+			m_ImageSize.GetWidth(), m_ImageSize.GetHeight());
 	}
 }
 
 auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
 {
-	if (!m_Image->IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
+	if (!m_Image.IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
 
 	wxColour fontColour(181, 230, 29, 200);
 	wxFont font = wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
@@ -642,7 +732,7 @@ auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
 
 auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 {
-	if (!m_Image->IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
+	if (!m_Image.IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
 	if (m_HorizontalFWHM == -1.0 || m_VerticalFWHM == -1.0) return;
 	
 	if (m_ROIWindowWidth <= 0) return;

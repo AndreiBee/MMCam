@@ -747,14 +747,15 @@ public:
 private:
 	auto CaptureImage
 	(
-		unsigned short* short_data_ptr, 
-		wxImage* image_ptr
+		unsigned short* dataPtr
 	) -> bool;
+
 	auto UpdatePixelsMultithread
 	(
 		unsigned short* short_data_ptr, 
 		wxImage* image_ptr
 	) -> void;
+
 	auto AdjustImageParts
 	(
 		const unsigned short* data_ptr,
@@ -800,8 +801,7 @@ private:
 	auto CaptureAndSaveImage
 	(
 		const auto& camera_pointer, 
-		unsigned short* short_data_ptr, 
-		wxImage* image_ptr,
+		unsigned short* dataPtr, 
 		const int& image_number,
 		const float& first_stage_position,
 		const float& second_stage_position,
@@ -809,6 +809,7 @@ private:
 		const std::string& minutes,
 		const std::string& seconds
 	) -> bool;
+
 	auto SaveImageOnDisk(const int& image_number) -> bool;
 
 private:

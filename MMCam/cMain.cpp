@@ -1560,7 +1560,7 @@ void cMain::OnExit(wxCloseEvent& evt)
 #endif // !_DEBUG
 	if (m_XimeaControl->IsCameraConnected() && m_StartStopLiveCapturingTglBtn->GetValue())
 	{
-		m_XimeaControl->StopAcquisition();
+		//m_XimeaControl->StopAcquisition();
 		m_XimeaControl->TurnOffLastThread();
 		{
 			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
@@ -2027,21 +2027,23 @@ auto cMain::LiveCapturingThread(wxThreadEvent& evt) -> void
 {
 	auto curr_code = evt.GetInt();
 
+	// 0 == Camera is Connected and everything is fine
+	if (curr_code == 0)
+	{
+		auto imgPtr = evt.GetPayload<unsigned short*>();
+		LOG("Set camera captured image");
+		m_CamPreview->SetCameraCapturedImage
+		(
+			imgPtr
+		);
+		delete[] imgPtr;
+	}
 	// -1 == Camera is disconnected
-	if (curr_code == -1)
+	else if (curr_code == -1)
 	{
 		//m_StartStopLiveCapturingTglBtn->SetValue(false);
 		//wxCommandEvent live_capturing_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
 		//ProcessEvent(live_capturing_evt);
-	}
-	// 0 == Camera is Connected and everything is allright
-	else if (curr_code == 0)
-	{
-		//if (!m_StartStopLiveCapturingTglBtn->GetValue())
-		//{
-		//	m_StartStopLiveCapturingTglBtn->SetValue(true);
-		//	m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Stop Live (L)"));
-		//}
 	}
 }
 
@@ -2243,21 +2245,29 @@ void cMain::UpdateAllAxisGlobalPositions()
 
 void cMain::ExposureValueChanged(wxCommandEvent& evt)
 {
-	if (!m_XimeaControl || !m_XimeaControl->IsCameraConnected()) return;
-	m_XimeaControl->StopAcquisition();
-	m_XimeaControl->TurnOffLastThread();
-	//m_StopLiveCapturing = true;
-	//if (m_XimeaControl->IsCameraInitialized()) m_XimeaControl->StopAcquisition();	
+	if (!m_StartStopLiveCapturingTglBtn->GetValue()) return;
 
-	{
-		wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-			? wxString("0") 
-			: m_CamExposure->GetValue();
-		unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-		wxThread::This()->Sleep(exposure_time);
-	}
-	//m_StopLiveCapturing = false;
-	StartLiveCapturing();
+	wxCommandEvent artStopLiveCapturingPressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+	ProcessEvent(artStopLiveCapturingPressed);
+
+	wxCommandEvent artStartLiveCapturingPressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+	ProcessEvent(artStartLiveCapturingPressed);
+
+	//if (!m_XimeaControl || !m_XimeaControl->IsCameraConnected()) return;
+	////m_XimeaControl->StopAcquisition();
+	//m_XimeaControl->TurnOffLastThread();
+	////m_StopLiveCapturing = true;
+	////if (m_XimeaControl->IsCameraInitialized()) m_XimeaControl->StopAcquisition();	
+
+	//{
+	//	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
+	//		? wxString("0") 
+	//		: m_CamExposure->GetValue();
+	//	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
+	//	wxThread::This()->Sleep(exposure_time);
+	//}
+	////m_StopLiveCapturing = false;
+	//StartLiveCapturing();
 }
 
 void cMain::OnStartStopLiveCapturingMenu(wxCommandEvent& evt)
@@ -2295,8 +2305,9 @@ void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
 	}
 	else
 	{	
-		m_XimeaControl->StopAcquisition();
+		//m_XimeaControl->StopAcquisition();
 		m_XimeaControl->TurnOffLastThread();
+
 		{
 			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
 				? wxString("0") 
@@ -2375,8 +2386,9 @@ wxThread::ExitCode LiveCapturing::Entry()
 	};	
 	
 	wxThreadEvent evt(wxEVT_THREAD, MainFrameVariables::ID_THREAD_LIVE_CAPTURING);
-	evt.SetInt(0);
-	wxQueueEvent(m_MainFrame, evt.Clone());
+
+	//evt.SetInt(0);
+	//wxQueueEvent(m_MainFrame, evt.Clone());
 
 	m_ThreadID = m_XimeaControl->AppendThread();
 	auto text_id = "ID: " + wxString::Format(wxT("%i"), m_ThreadID);
@@ -2399,8 +2411,9 @@ wxThread::ExitCode LiveCapturing::Entry()
 
 	if (m_CamPreviewWindow->GetImageSize() != m_ImageSize)
 		m_CamPreviewWindow->SetImageSize(m_ImageSize);
-	auto image_ptr = m_CamPreviewWindow->GetImagePtr();
-	auto short_data_ptr = m_CamPreviewWindow->GetDataPtr();
+	//auto image_ptr = m_CamPreviewWindow->GetImagePtr();
+	//auto short_data_ptr = m_CamPreviewWindow->GetDataPtr();
+
 
 	m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(false);
 
@@ -2417,10 +2430,12 @@ wxThread::ExitCode LiveCapturing::Entry()
 				return (wxThread::ExitCode)0;
 			}
 
-			if (CaptureImage(short_data_ptr, image_ptr) && m_XimeaControl->GetThreadState(m_ThreadID))
+			auto dataPtr = std::make_unique<unsigned short[]>(m_ImageSize.GetWidth() * m_ImageSize.GetHeight());
+			if (CaptureImage(dataPtr.get()))
 			{
-				m_CamPreviewWindow->SetCameraCapturedImage();
+				//m_CamPreviewWindow->SetCameraCapturedImage();
 				evt.SetInt(0);
+				evt.SetPayload(dataPtr.release());
 				wxQueueEvent(m_MainFrame, evt.Clone());
 			}
 			else
@@ -2442,49 +2457,41 @@ wxThread::ExitCode LiveCapturing::Entry()
 
 auto LiveCapturing::CaptureImage
 (
-	unsigned short* short_data_ptr, 
-	wxImage* image_ptr
+	unsigned short* dataPtr
 ) -> bool
 {
-	unsigned short* data_ptr{};
-	wxLogDebug("1");
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
-	wxLogDebug("2");
-	data_ptr = m_XimeaControl->GetImage();
-	wxLogDebug("3");
-	if (!data_ptr) return false;
+	if (!dataPtr) return false;
 
-	wxLogDebug("4");
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
-#ifdef USE_MULTITHREAD
-	UpdatePixelsMultithread(data_ptr, image_ptr);
-#else
-	unsigned short current_value{};
-	unsigned char red{}, green{}, blue{};
-	for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
-	{
-		for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
-		{
-			current_value = data_ptr[y * m_ImageSize.GetWidth() + x];
-			//short_data_ptr[y * m_ImageSize.GetWidth() + x] = current_value;
-			/* Matlab implementation of JetColormap */
-			/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
-			m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
-			image_ptr->SetRGB(x, y, red, green, blue);
-		}
-	}
-#endif
-	wxLogDebug("5");
-	if (!short_data_ptr) return false;
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
-	wxLogDebug("6");
+	auto imgPtr = m_XimeaControl->GetImage();
+	if (!imgPtr) return false;
+
 	memcpy
 	(
-		short_data_ptr, 
-		data_ptr, 
+		dataPtr, 
+		imgPtr, 
 		sizeof(unsigned short) * m_ImageSize.GetWidth() * m_ImageSize.GetHeight()
 	);
-	if (!short_data_ptr) return false;
+
+	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
+
+#ifdef USE_MULTITHREAD
+	//UpdatePixelsMultithread(data_ptr, image_ptr);
+#else
+	//unsigned short current_value{};
+	//unsigned char red{}, green{}, blue{};
+	//for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
+	//{
+	//	for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
+	//	{
+	//		current_value = data_ptr[y * m_ImageSize.GetWidth() + x];
+	//		//short_data_ptr[y * m_ImageSize.GetWidth() + x] = current_value;
+	//		/* Matlab implementation of JetColormap */
+	//		/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
+	//		m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
+	//		image_ptr->SetRGB(x, y, red, green, blue);
+	//	}
+	//}
+#endif
 
 	return true;
 }
@@ -2623,6 +2630,8 @@ wxThread::ExitCode WorkerThread::Entry()
 		m_MainFrame->WorkerThreadFinished(true);
 	};
 
+	wxThreadEvent evt(wxEVT_THREAD, MainFrameVariables::ID_THREAD_LIVE_CAPTURING);
+
 	m_MainFrame->WorkerThreadFinished(false);
 	m_Settings->SetCurrentProgress(0, m_FirstAxis->step_number);
 
@@ -2633,8 +2642,10 @@ wxThread::ExitCode WorkerThread::Entry()
 	auto cur_mins = str_time.substr(3, 2);
 	auto cur_secs = str_time.substr(6, 2);
 
-	auto cam_preview_data_ptr = m_CameraPreview->GetDataPtr();
-	auto cam_preview_image_ptr = m_CameraPreview->GetImagePtr();
+	auto dataSize = m_XimeaControl->GetImageWidth() * m_XimeaControl->GetImageHeight();
+	auto dataPtr = std::make_unique<unsigned short[]>(dataSize);
+	//auto cam_preview_data_ptr = m_CameraPreview->GetDataPtr();
+	//auto cam_preview_image_ptr = m_CameraPreview->GetImagePtr();
 
 	if (!m_XimeaControl->IsCameraConnected())
 	{
@@ -2680,9 +2691,8 @@ wxThread::ExitCode WorkerThread::Entry()
 		/* Take Capture */
 		if (CaptureAndSaveImage
 		(
-			m_XimeaControl, 
-			cam_preview_data_ptr, 
-			cam_preview_image_ptr, 
+			m_XimeaControl,
+			dataPtr.get(),
 			i + 1,
 			first_axis_position,
 			second_axis_position,
@@ -2690,11 +2700,15 @@ wxThread::ExitCode WorkerThread::Entry()
 			cur_mins,
 			cur_secs
 		))
+		{
 			/* Update image on CameraPreview Panel */
-			m_CameraPreview->SetCameraCapturedImage();
+			evt.SetInt(0);
+			evt.SetPayload(dataPtr.release());
+			wxQueueEvent(m_MainFrame, evt.Clone());
+		}
 		else
 		{
-			raise_exception_msg("XIMEA");
+			//raise_exception_msg("XIMEA");
 			exit_thread(m_XimeaControl);
 			return (wxThread::ExitCode)0;
 		}
@@ -2736,8 +2750,7 @@ wxThread::ExitCode WorkerThread::Entry()
 auto WorkerThread::CaptureAndSaveImage
 (
 	const auto& camera_pointer,
-	unsigned short* short_data_ptr, 
-	wxImage* image_ptr,
+	unsigned short* dataPtr, 
 	const int& image_number,
 	const float& first_stage_position,
 	const float& second_stage_position,
@@ -2754,6 +2767,27 @@ auto WorkerThread::CaptureAndSaveImage
 
 	/* Save Image */
 	{
+		std::string fileName{};
+		{
+			std::string first_axis_position_str = std::format("{:.3f}", first_stage_position);
+			std::replace(first_axis_position_str.begin(), first_axis_position_str.end(), '.', '_');
+
+			std::string second_axis_position_str = std::format("{:.3f}", second_stage_position);
+			std::replace(second_axis_position_str.begin(), second_axis_position_str.end(), '.', '_');
+
+			fileName = std::string(m_ImagePath.mb_str()) + std::string("\\") +
+				std::string("img_");
+			fileName += image_number < 10 ? std::string("0") : std::string("");
+			fileName += std::to_string(image_number) + std::string("_") +
+				hours + std::string("H_") +
+				minutes + std::string("M_") +
+				seconds + std::string("S_") +
+				std::to_string(m_ExposureTimeUS) + std::string("us")
+				+ std::string("_1A_") + first_axis_position_str
+				+ std::string("_2A_") + second_axis_position_str
+				+ std::string(".tif");
+		}
+
 		cv::Mat cv_img
 		(
 			cv::Size(image_size.GetWidth(), image_size.GetHeight()),
@@ -2761,44 +2795,27 @@ auto WorkerThread::CaptureAndSaveImage
 			data_ptr, 
 			cv::Mat::AUTO_STEP
 		);
-		std::string first_axis_position_str = std::format("{:.3f}", first_stage_position);
-		std::replace(first_axis_position_str.begin(), first_axis_position_str.end(), '.', '_');
 
-		std::string second_axis_position_str = std::format("{:.3f}", second_stage_position);
-		std::replace(second_axis_position_str.begin(), second_axis_position_str.end(), '.', '_');
-		
-		std::string file_name = std::string(m_ImagePath.mb_str()) + std::string("\\") +
-			std::string("img_");
-		file_name += image_number < 10 ? std::string("0") : std::string("");
-		file_name += std::to_string(image_number) + std::string("_") + 
-			hours + std::string("H_") + 
-			minutes + std::string("M_") + 
-			seconds + std::string("S_") + 
-			std::to_string(m_ExposureTimeUS) + std::string("us") 
-			+ std::string("_1A_") + first_axis_position_str 
-			+ std::string("_2A_") + second_axis_position_str 
-			+ std::string(".tif");
-
-		if (!cv::imwrite(file_name, cv_img)) return false;
+		if (!cv::imwrite(fileName, cv_img)) return false;
 	}
 
 	/* Update Values in CamPreview Panel */
-	{
-		unsigned short current_value{};
-		unsigned char red{}, green{}, blue{};
-		for (auto y{ 0 }; y < image_size.GetHeight(); ++y)
-		{
-			for (auto x{ 0 }; x < image_size.GetWidth(); ++x)
-			{
-				current_value = data_ptr[y * image_size.GetWidth() + x];
-				short_data_ptr[y * image_size.GetWidth() + x] = current_value;
-				/* Matlab implementation of JetColormap */
-				/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
-				m_CameraPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
-				image_ptr->SetRGB(x, y, red, green, blue);
-			}
-		}
-	}
+	//{
+	//	unsigned short current_value{};
+	//	unsigned char red{}, green{}, blue{};
+	//	for (auto y{ 0 }; y < image_size.GetHeight(); ++y)
+	//	{
+	//		for (auto x{ 0 }; x < image_size.GetWidth(); ++x)
+	//		{
+	//			current_value = data_ptr[y * image_size.GetWidth() + x];
+	//			short_data_ptr[y * image_size.GetWidth() + x] = current_value;
+	//			/* Matlab implementation of JetColormap */
+	//			/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
+	//			m_CameraPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
+	//			image_ptr->SetRGB(x, y, red, green, blue);
+	//		}
+	//	}
+	//}
 	return true;
 }
 /* ___ End Worker Thread ___ */

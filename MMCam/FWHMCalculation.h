@@ -16,7 +16,7 @@ static auto CalculateSumHorizontally
 	unsigned int* const results
 ) -> void
 {
-	if (!dataPtr) return;
+	if (!dataPtr || !results) return;
 	if (!imageWidth || !imageHeight) return;
 
 	auto calculateSum = []
@@ -70,25 +70,28 @@ static auto CalculateSumHorizontally
 static auto CalculateSumVertically
 (
 	unsigned short* const dataPtr, 
-	const wxSize& imageSize, 
+	const int& imageWidth, 
+	const int& imageHeight, 
 	unsigned int* const results
 ) -> void
 {
-	if (!dataPtr) return;
-	if (!imageSize.GetWidth() || !imageSize.GetHeight()) return;
+	if (!dataPtr || !results) return;
+	if (!imageWidth || !imageHeight) return;
 
 	auto calculateSum = []
 	(
 		const unsigned short* dataPtr,
-		const wxSize& imgSize,
+		const int& imgWidth,
+		const int& imgHeight,
 		int col_index,
 		unsigned int* retValue
 	)
 		{
-			unsigned long long result{};
-			for (auto i{ 0 }; i < imgSize.GetHeight(); ++i)
+			unsigned int result{};
+			for (auto i{ 0 }; i < imgHeight; ++i)
 			{
-				result += static_cast<unsigned int>(dataPtr[i * imgSize.GetWidth() + col_index]);
+				auto position = i * imgWidth + col_index;
+				result += dataPtr[position];
 			}
 			*retValue = result;
 		};
@@ -96,8 +99,8 @@ static auto CalculateSumVertically
 	
 #ifdef _DEBUG
 	// Calculation on the single core
-	for (auto i = 0; i < imageSize.GetWidth(); ++i)
-		calculateSum(dataPtr, imageSize, i, &results[i]);
+	for (auto i = 0; i < imageWidth; ++i)
+		calculateSum(dataPtr, imageWidth, imageHeight, i, &results[i]);
 #else
 	auto dataSize = imageSize.GetWidth();
 	auto max_threads = std::min(static_cast<int>(std::thread::hardware_concurrency()), dataSize);
