@@ -588,6 +588,7 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 		/* FWHM */
 		DrawFWHMValues(gc);
 		DrawSpotCroppedWindow(gc);
+		DrawSumLines(gc);
 
 		delete gc;
 	}
@@ -761,6 +762,51 @@ auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 		rectangleSize.GetWidth(), 
 		rectangleSize.GetHeight()
 	);
+}
+
+auto cCamPreview::DrawSumLines(wxGraphicsContext* gc_) -> void
+{
+	if (!m_DisplayFWHM) return;
+
+	DrawHorizontalSumLine(gc_);
+	DrawVerticalSumLine(gc_);
+}
+
+auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
+{
+	if (!m_HorizontalSumArray) return;
+
+	auto minValue = *std::min_element(m_HorizontalSumArray.get(), &m_HorizontalSumArray[m_ImageSize.GetWidth() - 1]);
+
+	auto penColour = wxColour("red");
+	auto penSize = 5;
+	auto penStyle = wxPENSTYLE_SOLID;
+	gc_->SetPen(wxPen(penColour, penSize, penStyle));
+
+	auto start_draw = wxRealPoint
+	(
+		m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage + m_Zoom / m_ZoomOnOriginalSizeImage / 2,
+		m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage + m_ImageOnCanvasSize.GetHeight()
+	);
+
+	wxDouble offset_x{ 4.0 }, max_height{ (wxDouble)m_ImageOnCanvasSize.GetHeight() / 4 };
+	wxDouble current_x{}, current_y{}, start_x{ start_draw.x }, start_y{}, current_length{ m_Zoom / m_ZoomOnOriginalSizeImage };
+	auto max_value = m_HorizonalBestPosSum.second - minValue;
+
+	for (auto i = 0; i < m_ImageSize.GetWidth() - 1; ++i)
+	{
+		start_y = start_draw.y - (m_HorizontalSumArray[i] - minValue) / (double)max_value * max_height;
+		current_y = start_draw.y - (m_HorizontalSumArray[i - 1] - minValue) / (double)max_value * max_height;
+		//start_x = image_start_draw.x + offset_x + m_MinMaxRowsData[i].first / (double)max_value * max_height;
+		//current_length = (m_MinMaxRowsData[i].second - m_MinMaxRowsData[i].first) / (double)max_value * max_height;
+		gc_->StrokeLine(start_x, start_y, start_x + current_length, current_y);
+		start_x += i * m_Zoom / m_ZoomOnOriginalSizeImage;
+	}
+
+}
+
+auto cCamPreview::DrawVerticalSumLine(wxGraphicsContext* gc_) -> void
+{
 }
 
 void cCamPreview::OnSize(wxSizeEvent& evt)

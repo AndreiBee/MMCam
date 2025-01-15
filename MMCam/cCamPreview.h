@@ -134,6 +134,9 @@ private:
 	void DrawCameraCapturedImage(wxGraphicsContext* gc_);
 	auto DrawFWHMValues(wxGraphicsContext* gc_) -> void;
 	auto DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void;
+	auto DrawSumLines(wxGraphicsContext* gc_) -> void;
+	auto DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void;
+	auto DrawVerticalSumLine(wxGraphicsContext* gc_) -> void;
 	void OnSize(wxSizeEvent& evt);
 	void ChangeSizeOfImageInDependenceOnCanvasSize();
 	auto UpdateCrossHairOnSize() -> void;

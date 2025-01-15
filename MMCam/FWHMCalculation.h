@@ -31,7 +31,7 @@ static auto CalculateSumHorizontally
 			results[row_index] = result;
 		};
 
-#ifdef _DEBUG
+#ifdef ONE_THREAD_CALCULATION
 	//for (auto i = 0; i < imageSize.GetHeight(); ++i)
 	//{
 	//	const unsigned short* chunk_start = dataPtr + i * chunk_size;
@@ -39,7 +39,7 @@ static auto CalculateSumHorizontally
 	//	const unsigned short* chunk_end = (i == num_threads - 1) ? dataPtr + imageSize.GetWidth() * imageSize.GetHeight() : chunk_start + chunk_size;
 	//}
 
-//#else
+#else
 	auto dataSize = imageHeight;
 
 	int num_threads = dataSize;
@@ -97,12 +97,12 @@ static auto CalculateSumVertically
 		};
 
 	
-#ifdef _DEBUG
+#ifdef ONE_THREAD_CALCULATION
 	// Calculation on the single core
 	for (auto i = 0; i < imageWidth; ++i)
 		calculateSum(dataPtr, imageWidth, imageHeight, i, &results[i]);
 #else
-	auto dataSize = imageSize.GetWidth();
+	auto dataSize = imageWidth;
 	auto max_threads = std::min(static_cast<int>(std::thread::hardware_concurrency()), dataSize);
 
 	int num_threads = dataSize;
@@ -114,7 +114,7 @@ static auto CalculateSumVertically
 		threads.emplace_back([&, t]() {
 			for (auto i = t; i < dataSize; i += max_threads)
 			{
-				calculateSum(dataPtr, imageSize, i, &results[i]);
+				calculateSum(dataPtr, imageWidth, imageHeight, i, &results[i]);
 			}
 			});
 		//auto data_start = &dataPtr[i];
