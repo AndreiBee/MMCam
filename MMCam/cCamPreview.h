@@ -15,6 +15,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "FWHMCalculation.h"
+
 #include "cPreviewTools.h"
 #include "XimeaControl.h"
 
@@ -169,9 +171,9 @@ private:
 	bool m_DisplayPixelValues{};
 
 	bool m_DisplayFWHM{};
-	std::unique_ptr<unsigned long long[]> m_HorizontalSumArray{}, m_VerticalSumArray{};
+	std::unique_ptr<unsigned int[]> m_HorizontalSumArray{}, m_VerticalSumArray{};
 	double m_HorizontalFWHM{}, m_VerticalFWHM{};
-	std::pair<int, unsigned long long> m_HorizonalBestPosSum{}, m_VerticalBestPosSum{};
+	std::pair<int, unsigned int> m_HorizonalBestPosSum{}, m_VerticalBestPosSum{};
 	double m_PixelSizeUM{}, m_CropSizeMM{};
 	int m_ROIWindowWidth{};
 

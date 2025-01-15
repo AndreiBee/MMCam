@@ -87,6 +87,8 @@ auto cCamPreview::SetImageSize(const wxSize& img_size) -> void
 {
 	m_Image = std::make_shared<wxImage>();
 	m_ImageData = std::make_shared<unsigned short[]>(img_size.GetWidth() * img_size.GetHeight());
+	 m_HorizontalSumArray = std::make_unique<unsigned int[]>(m_ImageSize.GetHeight());
+	 m_VerticalSumArray = std::make_unique<unsigned int[]>(m_ImageSize.GetWidth());
 	m_Image->Create(img_size);
 	m_ImageSize = img_size;
 }
@@ -155,13 +157,11 @@ void cCamPreview::SetCameraCapturedImage()
 	if (m_DisplayFWHM)
 	{
 		// Horizontal
-		if (!m_HorizontalSumArray) m_HorizontalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetHeight());
-		ToolsVariables::CalculateSumVertically(m_ImageData.get(), m_ImageSize, m_HorizontalSumArray.get());
-		m_HorizontalFWHM = ToolsVariables::CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetHeight(), &m_HorizonalBestPosSum.first, &m_HorizonalBestPosSum.second);
+		//CalculateSumVertically(m_ImageData.get(), m_ImageSize, m_HorizontalSumArray.get());
+		m_HorizontalFWHM = CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetHeight(), &m_HorizonalBestPosSum.first, &m_HorizonalBestPosSum.second);
 		// Vertical
-		if (!m_VerticalSumArray) m_VerticalSumArray = std::make_unique<unsigned long long[]>(m_ImageSize.GetWidth());
-		ToolsVariables::CalculateSumHorizontally(m_ImageData.get(), m_ImageSize, m_VerticalSumArray.get());
-		m_VerticalFWHM = ToolsVariables::CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetWidth(), &m_VerticalBestPosSum.first, &m_VerticalBestPosSum.second);
+		//ToolsVariables::CalculateSumHorizontally(m_ImageData.get(), m_ImageSize, m_VerticalSumArray.get());
+		//m_VerticalFWHM = ToolsVariables::CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetWidth(), &m_VerticalBestPosSum.first, &m_VerticalBestPosSum.second);
 	}
 
 	m_IsImageSet = true;
@@ -544,21 +544,27 @@ void cCamPreview::PaintEvent(wxPaintEvent& evt)
 void cCamPreview::Render(wxBufferedPaintDC& dc)
 {
 	dc.Clear();
-	auto gc = wxGraphicsContext::Create(dc);
-	if (!gc) return;
 
-	DrawCameraCapturedImage(gc);
-	delete gc;
+	{
+		auto gc = wxGraphicsContext::Create(dc);
+		if (!gc) return;
 
-	if (m_IsImageSet)
+		DrawCameraCapturedImage(gc);
+		delete gc;
+	}
+
+	if (!m_IsImageSet) return;
+
 	{
 		/* CrossHair */
 		auto gc = wxGraphicsContext::Create(dc);
 		if (!gc) return;
-
 		DrawCrossHair(gc);
-		DrawFWHMValues(gc);
-		DrawSpotCroppedWindow(gc);
+
+		/* FWHM */
+		//DrawFWHMValues(gc);
+		//DrawSpotCroppedWindow(gc);
+
 		delete gc;
 	}
 }

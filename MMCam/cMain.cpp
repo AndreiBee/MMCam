@@ -152,8 +152,7 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, wxT("Start Live\tL"));
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, wxT("Dark Mode"));
-	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying"));
-	m_MenuBar->menu_edit->Check(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying\tF"));
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
 	// Append Edit Menu to the Menu Bar
@@ -1340,7 +1339,10 @@ auto cMain::OnEnableDarkMode(wxCommandEvent& evt) -> void
 
 auto cMain::OnEnableFWHMDisplaying(wxCommandEvent& evt) -> void
 {
-	m_CamPreview->ActivateFWHMDisplaying(evt.IsChecked());
+	m_CamPreview->ActivateFWHMDisplaying
+	(
+		m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING)
+	);
 }
 
 void cMain::CreateProgressBar()
@@ -1498,12 +1500,18 @@ auto cMain::InitializeSelectedCamera() -> void
 
 	// Successful initialization of the camera
 	// Enabling controls
-	m_CamExposure->Enable();
-	m_StartStopLiveCapturingTglBtn->Enable();
-	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
-	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
-	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
-	m_VerticalToolBar->tool_bar->Enable();
+	{
+		m_CamExposure->Enable();
+		m_StartStopLiveCapturingTglBtn->Enable();
+		m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
+		m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
+		m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+		m_VerticalToolBar->tool_bar->Enable();
+	}
+
+	//m_MenuBar->menu_edit->Check(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+	//wxCommandEvent art_fwhm_displaying(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING);
+	//ProcessEvent(art_fwhm_displaying);
 
 	m_StartStopLiveCapturingTglBtn->SetValue(true);
 	wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
