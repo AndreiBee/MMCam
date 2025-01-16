@@ -2753,21 +2753,9 @@ wxThread::ExitCode WorkerThread::Entry()
 	return (wxThread::ExitCode)0;
 }
 
-auto WorkerThread::CaptureAndSaveImage
-(
-	const auto& camera_pointer,
-	unsigned short* dataPtr, 
-	const int& image_number,
-	const float& first_stage_position,
-	const float& second_stage_position,
-	const std::string& hours,
-	const std::string& minutes,
-	const std::string& seconds
-) -> bool
+auto WorkerThread::CaptureImage(unsigned short* const dataPtr, const wxSize& imageSize) -> bool
 {
-	auto imageSize = wxSize{ (int)camera_pointer->GetImageWidth(), (int)camera_pointer->GetImageHeight() };
-
-	auto imgPtr = camera_pointer->GetImage();
+	auto imgPtr = m_XimeaControl->GetImage();
 	if (!imgPtr) return false;
 
 	memcpy
@@ -2777,59 +2765,56 @@ auto WorkerThread::CaptureAndSaveImage
 		sizeof(unsigned short) * imageSize.GetWidth() * imageSize.GetHeight()
 	);
 
+	return true;
+}
 
-	/* Save Image */
-	{
-		std::string fileName{};
-		{
-			std::string first_axis_position_str = std::format("{:.3f}", first_stage_position);
-			std::replace(first_axis_position_str.begin(), first_axis_position_str.end(), '.', '_');
+auto WorkerThread::SaveImage
+(
+	unsigned short* dataPtr, 
+	const int& imgWidth,
+	const int& imgHeight,
+	const std::string& fileName
+) -> bool
+{
+	cv::Mat cv_img
+	(
+		cv::Size(imgWidth, imgHeight),
+		CV_16U, 
+		dataPtr, 
+		cv::Mat::AUTO_STEP
+	);
 
-			std::string second_axis_position_str = std::format("{:.3f}", second_stage_position);
-			std::replace(second_axis_position_str.begin(), second_axis_position_str.end(), '.', '_');
+	if (!cv::imwrite(fileName, cv_img)) return false;
 
-			fileName = std::string(m_ImagePath.mb_str()) + std::string("\\") +
-				std::string("img_");
-			fileName += image_number < 10 ? std::string("0") : std::string("");
-			fileName += std::to_string(image_number) + std::string("_") +
-				hours + std::string("H_") +
-				minutes + std::string("M_") +
-				seconds + std::string("S_") +
-				std::to_string(m_ExposureTimeUS) + std::string("us")
-				+ std::string("_1A_") + first_axis_position_str
-				+ std::string("_2A_") + second_axis_position_str
-				+ std::string(".tif");
-		}
+	return true;
+}
 
-		cv::Mat cv_img
-		(
-			cv::Size(imageSize.GetWidth(), imageSize.GetHeight()),
-			CV_16U, 
-			dataPtr, 
-			cv::Mat::AUTO_STEP
-		);
+auto WorkerThread::CalculateFWHM
+(
+	unsigned short* dataPtr, 
+	const int& imgWidth,
+	const int& imgHeight,
+	const int& imgNumber
+) -> bool
+{
+	auto horizontalSumArray = std::make_unique<unsigned int[]>(imgWidth);
+	auto verticalSumArray = std::make_unique<unsigned int[]>(imgHeight);
 
-		if (!cv::imwrite(fileName, cv_img)) return false;
-	}
-
-	auto horizontalSumArray = std::make_unique<unsigned int[]>(imageSize.GetWidth());
-	auto verticalSumArray = std::make_unique<unsigned int[]>(imageSize.GetHeight());
-
-	CalculateSumVertically(dataPtr, imageSize.GetWidth(), imageSize.GetHeight(), horizontalSumArray.get());
-	m_HorizontalFWHMData[image_number - 1] = CalculateFWHM
+	FWHM::CalculateSumVertically(dataPtr, imgWidth, imgHeight, horizontalSumArray.get());
+	m_HorizontalFWHMData[imgNumber - 1] = FWHM::CalculateFWHM
 		(
 			horizontalSumArray.get(), 
-			imageSize.GetWidth()
+			imgWidth
 		);
-	m_HorizontalFWHMData[image_number - 1] *= m_PixelSizeUM;
+	m_HorizontalFWHMData[imgNumber - 1] *= m_PixelSizeUM;
 
-	CalculateSumHorizontally(dataPtr, imageSize.GetWidth(), imageSize.GetHeight(), verticalSumArray.get());
-	m_VerticalFWHMData[image_number - 1] = CalculateFWHM
+	FWHM::CalculateSumHorizontally(dataPtr, imgWidth, imgHeight, verticalSumArray.get());
+	m_VerticalFWHMData[imgNumber - 1] = FWHM::CalculateFWHM
 		(
 			verticalSumArray.get(), 
-			imageSize.GetHeight()
+			imgHeight
 		);
-	m_VerticalFWHMData[image_number - 1] *= m_PixelSizeUM;
+	m_VerticalFWHMData[imgNumber - 1] *= m_PixelSizeUM;
 
 	return true;
 }

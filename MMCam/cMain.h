@@ -798,19 +798,27 @@ public:
 	virtual void* Entry();
 
 private:
-	auto CaptureAndSaveImage
+	auto CaptureImage
 	(
-		const auto& camera_pointer, 
-		unsigned short* dataPtr, 
-		const int& image_number,
-		const float& first_stage_position,
-		const float& second_stage_position,
-		const std::string& hours,
-		const std::string& minutes,
-		const std::string& seconds
+		unsigned short* const dataPtr, 
+		const wxSize& imageSize
 	) -> bool;
 
-	auto SaveImageOnDisk(const int& image_number) -> bool;
+	auto SaveImage
+	(
+		unsigned short* dataPtr, 
+		const int& imgWidth,
+		const int& imgHeight,
+		const std::string& fileName
+	) -> bool;
+
+	auto CalculateFWHM
+	(
+		unsigned short* dataPtr, 
+		const int& imgWidth,
+		const int& imgHeight,
+		const int& imgNumber
+	) -> bool;
 
 	wxBitmap CreateGraph
 	(
@@ -824,6 +832,41 @@ private:
 		const wxString& leftYAxisLabel,
 		const wxString& timestamp
 	);
+
+	auto PrepareFileName
+	(
+		const int& imageNumber,
+		const float& firstStagePosition,
+		const float& secondStagePosition,
+		const std::string& hours,
+		const std::string& minutes,
+		const std::string& seconds
+	) -> std::string
+	{
+		std::string fileName{};
+		{
+			std::string first_axis_position_str = std::format("{:.3f}", firstStagePosition);
+			std::replace(first_axis_position_str.begin(), first_axis_position_str.end(), '.', '_');
+
+			std::string second_axis_position_str = std::format("{:.3f}", secondStagePosition);
+			std::replace(second_axis_position_str.begin(), second_axis_position_str.end(), '.', '_');
+
+			fileName = std::string(m_ImagePath.mb_str()) + std::string("\\") +
+				std::string("img_");
+			fileName += image_number < 10 ? std::string("0") : std::string("");
+			fileName += std::to_string(imageNumber) + std::string("_") +
+				hours + std::string("H_") +
+				minutes + std::string("M_") +
+				seconds + std::string("S_") +
+				std::to_string(m_ExposureTimeUS) + std::string("us")
+				+ std::string("_1A_") + first_axis_position_str;
+			fileName += secondStagePosition != 0.f ? std::string("_2A_") + second_axis_position_str : "";
+
+			fileName += std::string(".tif");
+		}
+
+		return fileName;
+	};
 
 	auto AxisNameToString(const int axis) -> std::string
 	{

@@ -159,14 +159,14 @@ void cCamPreview::UpdateImageParameters()
 	if (m_DisplayFWHM)
 	{
 		// Horizontal
-		CalculateSumVertically
+		FWHM::CalculateSumVertically
 		(
 			m_ImageData.get(), 
 			m_ImageSize.GetWidth(), 
 			m_ImageSize.GetHeight(), 
 			m_HorizontalSumArray.get()
 		);
-		m_HorizontalFWHM_PX = CalculateFWHM
+		m_HorizontalFWHM_PX = FWHM::CalculateFWHM
 		(
 			m_HorizontalSumArray.get(), 
 			m_ImageSize.GetWidth(), 
@@ -177,14 +177,14 @@ void cCamPreview::UpdateImageParameters()
 		);
 
 		// Vertical
-		CalculateSumHorizontally
+		FWHM::CalculateSumHorizontally
 		(
 			m_ImageData.get(), 
 			m_ImageSize.GetWidth(), 
 			m_ImageSize.GetHeight(), 
 			m_VerticalSumArray.get()
 		);
-		m_VerticalFWHM_PX = CalculateFWHM
+		m_VerticalFWHM_PX = FWHM::CalculateFWHM
 		(
 			m_VerticalSumArray.get(), 
 			m_ImageSize.GetHeight(), 
