@@ -842,6 +842,8 @@ auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 auto cCamPreview::DrawSumLines(wxGraphicsContext* gc_) -> void
 {
 	if (!m_DisplayFWHM) return;
+	if (m_HorizontalFWHM_PX == -1.0 || m_VerticalFWHM_PX == -1.0) return;
+	if (!m_HorizonalBestPosSum.second || !m_VerticalBestPosSum.second) return;
 
 	DrawHorizontalSumLine(gc_);
 	DrawVerticalSumLine(gc_);
@@ -851,8 +853,6 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 {
 	if (!m_HorizontalSumArray) return;
 
-	auto minValue = *std::min_element(m_HorizontalSumArray.get(), &m_HorizontalSumArray[m_ImageSize.GetWidth() - 1]);
-
 	auto penColour = wxColour("red");
 	auto penSize = 2;
 	auto penStyle = wxPENSTYLE_SOLID;
@@ -860,28 +860,53 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 
 	auto start_draw = wxRealPoint
 	(
-		m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage + m_Zoom / m_ZoomOnOriginalSizeImage / 2,
-		m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage + m_ImageOnCanvasSize.GetHeight()
+		(m_StartDrawPos.x + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage,
+		(m_StartDrawPos.y + m_ImageSize.GetHeight()) * m_Zoom / m_ZoomOnOriginalSizeImage 
 	);
 
-	wxDouble offset_x{ 4.0 }, max_height{ (wxDouble)m_ImageOnCanvasSize.GetHeight() / 4 };
+	wxDouble offset_x{ m_Zoom / m_ZoomOnOriginalSizeImage }, max_height{ (wxDouble)m_ImageOnCanvasSize.GetHeight() / 4 };
 	wxDouble current_x{}, current_y{}, start_x{ start_draw.x }, start_y{}, current_length{ m_Zoom / m_ZoomOnOriginalSizeImage };
-	auto max_value = m_HorizonalBestPosSum.second - minValue;
+	auto max_value = m_HorizonalBestPosSum.second - m_HorizontalWorstPosSum.second;
+	auto multiplicator = (double)max_height / max_value;
 
 	for (auto i = 0; i < m_ImageSize.GetWidth() - 1; ++i)
 	{
-		start_y = start_draw.y - (m_HorizontalSumArray[i] - minValue) / (double)max_value * max_height;
-		current_y = start_draw.y - (m_HorizontalSumArray[i + 1] - minValue) / (double)max_value * max_height;
-		//start_x = image_start_draw.x + offset_x + m_MinMaxRowsData[i].first / (double)max_value * max_height;
-		//current_length = (m_MinMaxRowsData[i].second - m_MinMaxRowsData[i].first) / (double)max_value * max_height;
+		start_y = start_draw.y - std::floor((m_HorizontalSumArray[i] - m_HorizontalWorstPosSum.second) * multiplicator);
+		current_y = start_draw.y - std::floor((m_HorizontalSumArray[i + 1] - m_HorizontalWorstPosSum.second) * multiplicator);
 		gc_->StrokeLine(start_x, start_y, start_x + current_length, current_y);
-		start_x += m_Zoom / m_ZoomOnOriginalSizeImage;
+		start_x += offset_x;
 	}
 
 }
 
 auto cCamPreview::DrawVerticalSumLine(wxGraphicsContext* gc_) -> void
 {
+	if (!m_VerticalSumArray) return;
+
+	auto penColour = wxColour("yellow");
+	auto penSize = 2;
+	auto penStyle = wxPENSTYLE_SOLID;
+	gc_->SetPen(wxPen(penColour, penSize, penStyle));
+
+	auto start_draw = wxRealPoint
+	(
+		(m_StartDrawPos.x + m_ImageSize.GetWidth() - 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage,
+		(m_StartDrawPos.y + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage 
+	);
+
+	wxDouble offset_y{ m_Zoom / m_ZoomOnOriginalSizeImage }, max_height{ (wxDouble)m_ImageOnCanvasSize.GetWidth() / 4 };
+	wxDouble current_x{}, current_y{}, start_x{}, start_y{ start_draw.y }, current_length{ m_Zoom / m_ZoomOnOriginalSizeImage };
+	auto max_value = m_VerticalBestPosSum.second - m_VerticalWorstPosSum.second;
+	auto multiplicator = (double)max_height / max_value;
+
+	for (auto i = 0; i < m_ImageSize.GetHeight() - 1; ++i)
+	{
+		start_x = start_draw.x - std::floor((m_VerticalSumArray[i] - m_VerticalWorstPosSum.second) * multiplicator);
+		current_x = start_draw.x - std::floor((m_VerticalSumArray[i + 1] - m_VerticalWorstPosSum.second) * multiplicator);
+		gc_->StrokeLine(start_x, start_y, current_x, start_y + current_length);
+		start_y += offset_y;
+	}
+
 }
 
 void cCamPreview::OnSize(wxSizeEvent& evt)

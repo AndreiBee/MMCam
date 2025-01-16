@@ -975,7 +975,11 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 				(
 					right_side_panel, 
 					MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TE_CTL, 
+#ifdef _DEBUG
+					wxT("200"), 
+#else
 					wxT("10"), 
+#endif // _DEBUG
 					wxDefaultPosition, 
 					exposure_size, 
 					wxTE_CENTRE | wxTE_PROCESS_ENTER, 
