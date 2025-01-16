@@ -2658,6 +2658,8 @@ wxThread::ExitCode WorkerThread::Entry()
 	}
 
 	m_XimeaControl->SetExposureTime(m_ExposureTimeUS);
+	m_HorizontalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
+	m_VerticalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
 
 	float first_axis_rounded_go_to{};
 	float first_axis_position{}, second_axis_position{};
@@ -2763,11 +2765,18 @@ auto WorkerThread::CaptureAndSaveImage
 	const std::string& seconds
 ) -> bool
 {
-	auto image_size = wxSize{ (int)camera_pointer->GetImageWidth(), (int)camera_pointer->GetImageHeight() };
-	unsigned short* data_ptr{};
-	data_ptr = camera_pointer->GetImage();
-	//if (camera_pointer->WasAcquisitionStopped()) return false;
-	if (!data_ptr) return false;
+	auto imageSize = wxSize{ (int)camera_pointer->GetImageWidth(), (int)camera_pointer->GetImageHeight() };
+
+	auto imgPtr = camera_pointer->GetImage();
+	if (!imgPtr) return false;
+
+	memcpy
+	(
+		dataPtr, 
+		imgPtr, 
+		sizeof(unsigned short) * imageSize.GetWidth() * imageSize.GetHeight()
+	);
+
 
 	/* Save Image */
 	{
@@ -2794,33 +2803,398 @@ auto WorkerThread::CaptureAndSaveImage
 
 		cv::Mat cv_img
 		(
-			cv::Size(image_size.GetWidth(), image_size.GetHeight()),
+			cv::Size(imageSize.GetWidth(), imageSize.GetHeight()),
 			CV_16U, 
-			data_ptr, 
+			dataPtr, 
 			cv::Mat::AUTO_STEP
 		);
 
 		if (!cv::imwrite(fileName, cv_img)) return false;
 	}
 
-	/* Update Values in CamPreview Panel */
-	//{
-	//	unsigned short current_value{};
-	//	unsigned char red{}, green{}, blue{};
-	//	for (auto y{ 0 }; y < image_size.GetHeight(); ++y)
-	//	{
-	//		for (auto x{ 0 }; x < image_size.GetWidth(); ++x)
-	//		{
-	//			current_value = data_ptr[y * image_size.GetWidth() + x];
-	//			short_data_ptr[y * image_size.GetWidth() + x] = current_value;
-	//			/* Matlab implementation of JetColormap */
-	//			/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
-	//			m_CameraPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
-	//			image_ptr->SetRGB(x, y, red, green, blue);
-	//		}
-	//	}
-	//}
+	auto horizontalSumArray = std::make_unique<unsigned int[]>(imageSize.GetWidth());
+	auto verticalSumArray = std::make_unique<unsigned int[]>(imageSize.GetHeight());
+
+	CalculateSumVertically(dataPtr, imageSize.GetWidth(), imageSize.GetHeight(), horizontalSumArray.get());
+	m_HorizontalFWHMData[image_number - 1] = CalculateFWHM
+		(
+			horizontalSumArray.get(), 
+			imageSize.GetWidth()
+		);
+	m_HorizontalFWHMData[image_number - 1] *= m_PixelSizeUM;
+
+	CalculateSumHorizontally(dataPtr, imageSize.GetWidth(), imageSize.GetHeight(), verticalSumArray.get());
+	m_VerticalFWHMData[image_number - 1] = CalculateFWHM
+		(
+			verticalSumArray.get(), 
+			imageSize.GetHeight()
+		);
+	m_VerticalFWHMData[image_number - 1] *= m_PixelSizeUM;
+
 	return true;
+}
+
+wxBitmap WorkerThread::CreateGraph
+(
+	const double* const horizontalFWHMData,
+	const double* const verticalFWHMData,
+	const float* const positionsData,
+	unsigned int dataSize,
+	int width,
+	int height,
+	const wxString& xAxisLabel,
+	const wxString& leftYAxisLabel,
+	const wxString& timestamp
+)
+{
+	wxBitmap bitmap(width, height);
+	wxMemoryDC dc(bitmap);
+
+	// Clear the bitmap
+	dc.SetBackground(*wxWHITE_BRUSH);
+	//dc.SetBackground(*wxBLACK_BRUSH);
+	dc.Clear();
+
+	if (dataSize <= 1 || !horizontalFWHMData || !verticalFWHMData)
+	{
+		dc.SelectObject(wxNullBitmap);
+		return bitmap;
+	}
+
+	wxFont font = wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+	wxFont axisFont = wxFont(164, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+	dc.SetFont(font);
+	wxColour fwhmColour = wxColour(34, 177, 76);
+	//wxColour sumColour = wxColour(255, 128, 64);
+	wxColour horizontalAxisColour = wxColour(0, 0, 0);
+	wxColour cellColour = wxColour(90, 90, 90, 80);
+	wxColour gaussianCurveColour = wxColour(181, 230, 29, 100);
+	wxColour highlightingBestMeasurementColour = wxColour(255, 0, 0, 230);
+	wxColour axisColour = wxColour(255, 0, 0, 64);
+
+	auto graphRect = wxRect
+	(
+		100,
+		20,
+		width - 100 - 100,
+		height - 80 - 20
+	);
+
+	wxString currTextValue{};
+	// Draw Axis Name
+	{
+		// Draw text to a temporary wxImage
+		currTextValue = wxString(AxisNameToString(m_FirstAxis->axis_number));
+		dc.SetFont(axisFont);
+		wxSize textSize = dc.GetTextExtent(currTextValue);
+		wxBitmap tempBitmap(textSize.GetWidth(), textSize.GetHeight());
+		wxMemoryDC tempDC;
+		tempDC.SelectObject(tempBitmap);
+
+		// Clear temporary DC
+		tempDC.SetBackground(wxBrush(*wxWHITE));
+		tempDC.Clear();
+
+		// Set color and draw text onto the temporary DC
+		tempDC.SetTextForeground(axisColour);
+		tempDC.SetFont(axisFont);
+		tempDC.DrawText(currTextValue, 0, 0);
+
+		// Copy temporary bitmap to the main bitmap with alpha blending
+		wxImage tempImage = tempBitmap.ConvertToImage();
+		tempImage.InitAlpha(); // Ensure alpha channel is initialized
+		// Set the alpha channel for the text color
+		auto alpha = 16;
+		for (int y = 0; y < tempImage.GetHeight(); ++y) {
+			for (int x = 0; x < tempImage.GetWidth(); ++x) {
+				tempImage.SetAlpha(x, y, alpha);
+			}
+		}
+		wxBitmap finalBitmap = wxBitmap(tempImage);
+
+		dc.DrawBitmap(finalBitmap,
+			graphRect.GetLeft() + graphRect.GetWidth() / 2 - textSize.GetWidth() / 2,
+			graphRect.GetBottom() - graphRect.GetHeight() / 2 - textSize.GetHeight() / 2
+		); // Draw final bitmap on memory DC
+	}
+
+	dc.SetFont(font);
+	wxDouble widthText{}, heightText{};
+	// Draw the axes
+	// X - Axis
+	{
+		auto verticalLineHeight = 4;
+		auto horizontalStep = (wxDouble)graphRect.GetWidth() / (dataSize - 1);
+
+		// Draw Cell
+		// Vertical Lines
+		{
+			dc.SetPen(wxPen(cellColour, 1, wxPENSTYLE_LONG_DASH));
+			dc.SetTextForeground(cellColour);
+			for (auto i{ 0 }; i < dataSize; ++i)
+			{
+
+				currTextValue = wxString::Format(wxT("%.3f"), positionsData[i]);
+				auto textSize = dc.GetTextExtent(currTextValue);
+
+				if (dataSize < 80 || i == 0 || (i + 1) % 10 == 0)
+					dc.DrawRotatedText
+					(
+						currTextValue,
+						i == dataSize - 1 ? graphRect.GetRight() - textSize.GetHeight() + 12
+						: graphRect.GetLeft() + i * horizontalStep + textSize.GetHeight() + 2,
+						graphRect.GetBottom() - textSize.GetWidth() - 15,
+						270
+					);
+
+				if (!i || i == dataSize - 1) continue;
+
+				dc.DrawLine
+				(
+					graphRect.GetLeft() + i * horizontalStep,
+					graphRect.GetTop(),
+					graphRect.GetLeft() + i * horizontalStep,
+					graphRect.GetBottom()
+				);
+			}
+		}
+
+		dc.SetPen(wxPen(horizontalAxisColour));
+		dc.DrawLine
+		(
+			graphRect.GetLeft(),
+			graphRect.GetBottom(),
+			graphRect.GetRight(),
+			graphRect.GetBottom()
+		); // X-axis
+
+		dc.SetTextForeground(horizontalAxisColour);
+
+		// Draw vertical lines
+		for (auto i{ 0 }; i < dataSize; ++i)
+		{
+			currTextValue = wxString::Format(wxT("%i"), i + 1);
+			auto textSize = dc.GetTextExtent(currTextValue);
+
+			dc.DrawLine
+			(
+				i == dataSize - 1 ? graphRect.GetRight() : graphRect.GetLeft() + i * horizontalStep,
+				graphRect.GetBottom(),
+				i == dataSize - 1 ? graphRect.GetRight() : graphRect.GetLeft() + i * horizontalStep,
+				graphRect.GetBottom() + verticalLineHeight
+			);
+
+			if (dataSize < 80 || i == 0 || (i + 1) % 10 == 0)
+				dc.DrawText
+				(
+					currTextValue,
+					i == dataSize - 1 ? graphRect.GetRight() - textSize.GetWidth() / 2 : graphRect.GetLeft() + i * horizontalStep - textSize.GetWidth() / 2,
+					graphRect.GetBottom() + verticalLineHeight + 4
+				);
+		}
+
+	}
+
+	dc.SetPen(wxPen(fwhmColour));
+	dc.DrawLine(graphRect.GetLeft(), graphRect.GetBottom(), graphRect.GetLeft(), graphRect.GetTop()); // Left Y-axis
+
+	//dc.SetPen(wxPen(sumColour));
+	//dc.DrawLine(graphRect.GetRight(), graphRect.GetBottom(), graphRect.GetRight(), graphRect.GetTop()); // Right Y-axis
+
+	// Label the axes
+	{
+		dc.SetFont(font);
+		dc.SetTextForeground(horizontalAxisColour);
+		dc.DrawText
+		(
+			xAxisLabel,
+			(width / 2) - (dc.GetTextExtent(xAxisLabel).GetWidth() / 2),
+			height - 40
+		);
+
+		dc.SetTextForeground(fwhmColour);
+		dc.DrawRotatedText
+		(
+			leftYAxisLabel,
+			10,
+			(height / 2) + (dc.GetTextExtent(leftYAxisLabel).GetWidth() / 2),
+			90
+		);
+	}
+
+
+
+	// Draw the data curves
+	double minGlobalValue{}, maxGlobalValue{};
+	auto minmaxHorizontalValues = std::minmax_element(horizontalFWHMData, horizontalFWHMData + dataSize);
+	auto minmaxVerticalValues = std::minmax_element(verticalFWHMData, verticalFWHMData + dataSize);
+
+	minGlobalValue = *std::min(minmaxHorizontalValues.first, minmaxVerticalValues.first);
+	maxGlobalValue = *std::max(minmaxHorizontalValues.second, minmaxVerticalValues.second);
+
+	// Scaling minmaxGlobalValues
+	minGlobalValue = std::floor(minGlobalValue * 10.0) / 10.0;
+	maxGlobalValue = std::ceil(maxGlobalValue * 10.0) / 10.0;
+	
+	// Draw the Left Axis Ruler
+	{
+		auto verticalAxisHorizontalLinesCount = 10;
+		auto verticalStep = graphRect.GetHeight() / verticalAxisHorizontalLinesCount;
+		auto widthHorizontalLine = 8;
+
+		// Draw Cell
+		// Horizontal Lines
+		{
+			dc.SetPen(wxPen(cellColour, 1, wxPENSTYLE_LONG_DASH));
+			for (auto i{ 0 }; i <= verticalAxisHorizontalLinesCount; ++i)
+			{
+				if (!i) continue;
+
+				dc.DrawLine
+				(
+					graphRect.GetLeft(),
+					graphRect.GetBottom() - i * verticalStep,
+					graphRect.GetRight(),
+					graphRect.GetBottom() - i * verticalStep
+				);
+			}
+		}
+
+		dc.SetPen(wxPen(fwhmColour));
+		dc.SetTextForeground(fwhmColour);
+
+		for (auto i{ 0 }; i <= verticalAxisHorizontalLinesCount; ++i)
+		{
+			currTextValue = wxString::Format(wxT("%.2f"), (maxGlobalValue - minGlobalValue) / verticalAxisHorizontalLinesCount * i + minGlobalValue);
+			auto textSize = dc.GetTextExtent(currTextValue);
+			dc.DrawText
+			(
+				currTextValue,
+				graphRect.GetLeft() - textSize.GetWidth() - widthHorizontalLine / 2 - 2,
+				graphRect.GetBottom() - textSize.GetHeight() / 2 - verticalStep * i
+			);
+
+			if (!i) continue;
+
+			dc.DrawLine
+			(
+				graphRect.GetLeft() - widthHorizontalLine / 2,
+				graphRect.GetBottom() - i * verticalStep,
+				graphRect.GetLeft() + widthHorizontalLine / 2,
+				graphRect.GetBottom() - i * verticalStep
+			); // Left Y-axis
+		}
+	}
+
+#ifdef DRAW_NORMALDISTRIBUTION
+	// Calculation the Normal Distribution from sumData and Draw them
+	{
+		// Calculate mean
+		double mean = std::accumulate(sumData, sumData + dataSize, 0.0) / dataSize;
+		// Calculate standard deviation
+		double sum_squared_diff = 0.0;
+		for (auto i{ 0 }; i < dataSize; ++i)
+		{
+			auto value = sumData[i];
+			sum_squared_diff += (value - mean) * (value - mean);
+		}
+		double stddev = std::sqrt(sum_squared_diff / dataSize);
+
+		auto pdfArray = std::make_unique<double[]>(dataSize);
+		// Calculating the normal distribution for a value
+		for (auto i{ 0 }; i < dataSize; ++i)
+		{
+			auto x = (double)sumData[i];
+			// Probability Density Function
+			double pdf = (1.0 / (stddev * std::sqrt(2 * M_PI))) * std::exp(-0.5 * std::pow((x - mean) / stddev, 2));
+			pdfArray[i] = pdf;
+		}
+
+		// Draw Gaussian curve
+		dc.SetPen(wxPen(gaussianCurveColour, 2));
+		for (auto i{ 1 }; i < dataSize; ++i)
+		{
+			int x1 = graphRect.GetLeft() + (i - 1) * graphRect.GetWidth() / (dataSize - 1);
+			//int x1 = 50 + (i - 1) * (width - 100) / (dataSize - 1);
+			int y1 = graphRect.GetBottom() - (pdfArray[i - 1] - minSumValue) * graphRect.GetHeight() / (maxSumValue - minSumValue);
+			//int y1 = height - 50 - sumData[i - 1] * (height - 60) / maxSumValue;
+			int x2 = graphRect.GetLeft() + i * graphRect.GetWidth() / (dataSize - 1);
+			//int x2 = 50 + i * (width - 100) / (dataSize - 1);
+			int y2 = graphRect.GetBottom() - (pdfArray[i] - minSumValue) * graphRect.GetHeight() / (maxSumValue - minSumValue);
+			//int y2 = height - 50 - sumData[i] * (height - 60) / maxSumValue;
+			dc.DrawLine(x1, y1, x2, y2);
+		}
+	}
+#endif // DRAW_NORMALDISTRIBUTION
+
+
+	// Draw the actual data
+	for (auto i = 1; i < dataSize; ++i)
+	{
+		// Draw horizontal curve
+		dc.SetPen(wxPen(fwhmColour, 3));
+		auto x1 = graphRect.GetLeft() + (i - 1) * graphRect.GetWidth() / (dataSize - 1);
+		auto y1 = graphRect.GetBottom() - (horizontalFWHMData[i - 1] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
+		auto x2 = graphRect.GetLeft() + i * graphRect.GetWidth() / (dataSize - 1);
+		auto y2 = graphRect.GetBottom() - (horizontalFWHMData[i] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
+		dc.DrawLine(x1, y1, x2, y2);
+
+		// Highlighting the best Sum value
+		//if (m_MaxSumDuringCapturing == sumData[i])
+		//{
+		//	dc.SetPen(wxPen(highlightingBestMeasurementColour, 2));
+		//	dc.DrawCircle(wxPoint(x2, y2), 5);
+		//}
+
+		// Draw countData curve
+		//dc.SetPen(wxPen(countColour, 3));
+		//y1 = graphRect.GetBottom() - (countData[i - 1] - minCountValue) * graphRect.GetHeight() / (maxCountValue - minCountValue);
+		//y2 = graphRect.GetBottom() - (countData[i] - minCountValue) * graphRect.GetHeight() / (maxCountValue - minCountValue);
+		//dc.DrawLine(x1, y1, x2, y2);
+
+		//// Highlighting the best value
+		//if (m_MaxElementDuringCapturing == countData[i])
+		//{
+		//	dc.SetPen(wxPen(highlightingBestMeasurementColour, 2));
+		//	dc.DrawCircle(wxPoint(x2, y2), 5);
+		//}
+	}
+
+	// Placing an Exposure value
+	auto exposureFinishX = 0;
+	{
+		dc.SetTextForeground(wxColour(0, 0, 0));
+		auto exposureStr = wxString::Format(wxT("%i"), (int)m_ExposureTimeUS);
+		exposureStr += " [us]";
+		auto textSize = dc.GetTextExtent(exposureStr);
+		auto startExposureTextX = 5;
+		exposureFinishX = startExposureTextX + textSize.GetWidth();
+
+		dc.DrawText
+		(
+			exposureStr,
+			startExposureTextX,
+			height - textSize.GetHeight() - 5
+		);
+	}
+
+	// Placing a time stamp
+	{
+		dc.SetTextForeground(wxColour(255, 0, 0));
+
+		auto textSize = dc.GetTextExtent(timestamp);
+		dc.DrawText
+		(
+			timestamp,
+			exposureFinishX + 15,
+			height - textSize.GetHeight() - 5
+		);
+	}
+
+
+	// Release the device context
+	dc.SelectObject(wxNullBitmap);
+	return bitmap;
 }
 /* ___ End Worker Thread ___ */
 

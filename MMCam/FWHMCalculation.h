@@ -139,10 +139,10 @@ static auto CalculateFWHM
 (
 	const unsigned int* const array, 
 	size_t size, 
-	int* bestPos, 
-	unsigned int* bestSum,
-	int* worstPos,
-	unsigned int* worstSum
+	int* bestPos = nullptr, 
+	unsigned int* bestSum = nullptr,
+	int* worstPos = nullptr,
+	unsigned int* worstSum = nullptr
 ) -> double
 {
 
@@ -153,22 +153,29 @@ static auto CalculateFWHM
 	auto minElementIter = minmaxElementIter.first;
 	auto maxElementIter = minmaxElementIter.second;
 	// Best Position and Sum
-	*bestPos = static_cast<int>(std::distance(array, maxElementIter));
-	*bestSum = *maxElementIter;
+	auto bestPosition = static_cast<int>(std::distance(array, maxElementIter));
+	if (bestPos) *bestPos = bestPosition;
+
+	auto maxSum = *maxElementIter;
+	if (bestSum) *bestSum = maxSum;
+
 	// Worst Position and Sum
-	*worstPos = static_cast<int>(std::distance(array, minElementIter));
-	*worstSum = *minElementIter;
+	auto minPos = static_cast<int>(std::distance(array, minElementIter));
+	if (worstPos) *worstPos = minPos;
+
+	auto minSum = *maxElementIter;
+	if (worstSum) *worstSum = minSum;
 
 	// Step 2: Calculate the half-maximum
-	double halfMax = static_cast<double>(*bestSum - *worstSum) / 2.0 + *worstSum;
+	double halfMax = static_cast<double>(maxSum - minSum) / 2.0 + minSum;
 
-	if (*bestPos < 0 || *bestPos > size - 1) return -1.0;
+	if (bestPosition < 0 || bestPosition > size - 1) return -1.0;
 
 	// Step 3: Find indices where array crosses the half-maximum
 	int leftIndex = -1, rightIndex = -1;
 
 	// Looking for the left index
-	for (auto i = *bestPos; i >= 0; --i)
+	for (auto i = bestPosition; i >= 0; --i)
 	{
 		if (leftIndex == -1 && array[i] < halfMax) 
 		{
@@ -178,7 +185,7 @@ static auto CalculateFWHM
 	}
 
 	// Looking for the right index
-	for (auto i = *bestPos; i < size; ++i)
+	for (auto i = bestPosition; i < size; ++i)
 	{
 		if (leftIndex != -1 && array[i] < halfMax) 
 		{

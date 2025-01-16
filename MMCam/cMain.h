@@ -812,6 +812,32 @@ private:
 
 	auto SaveImageOnDisk(const int& image_number) -> bool;
 
+	wxBitmap CreateGraph
+	(
+		const double* const horizontalFWHMData,
+		const double* const verticalFWHMData,
+		const float* const positionsData,
+		unsigned int dataSize,
+		int width,
+		int height,
+		const wxString& xAxisLabel,
+		const wxString& leftYAxisLabel,
+		const wxString& timestamp
+	);
+
+	auto AxisNameToString(const int axis) -> std::string
+	{
+		switch (axis) {
+		case SettingsVariables::DETECTOR_X:   return "DETECTOR X";
+		case SettingsVariables::DETECTOR_Y:   return "DETECTOR Y";
+		case SettingsVariables::DETECTOR_Z:   return "DETECTOR Z";
+		case SettingsVariables::OPTICS_X:   return "OPTICS X";
+		case SettingsVariables::OPTICS_Y:   return "OPTICS Y";
+		case SettingsVariables::OPTICS_Z:   return "OPTICS Z";
+		default:           return "Unknown";
+		}
+	};
+
 private:
 	cMain* m_MainFrame{};
 	cSettings* m_Settings{};
@@ -820,6 +846,9 @@ private:
 	wxString m_ImagePath{};
 	unsigned long m_ExposureTimeUS{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
+	// FWHM
+	std::unique_ptr<double[]> m_HorizontalFWHMData{}, m_VerticalFWHMData{};
+	double m_PixelSizeUM{};
 };
 /* ___ End Worker Thread ___ */
 
