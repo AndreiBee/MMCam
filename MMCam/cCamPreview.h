@@ -103,13 +103,13 @@ public:
 	{ 
 		m_PixelSizeUM = pixel_sizeUM > 0.0 ? pixel_sizeUM : 1.0;
 		if (m_CropSizeMM != 0.0)
-			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / m_PixelSizeUM));
+			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / (m_PixelSizeUM / 1000.0)));
 	};
 	auto SetCropSizeMM(const double crop_sizeMM) 
 	{ 
 		m_CropSizeMM = crop_sizeMM > 0.0 ? crop_sizeMM : 0.0; 
 		if (m_PixelSizeUM != 0.0)
-			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / m_PixelSizeUM));
+			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / (m_PixelSizeUM / 1000.0)));
 	};
 
 
@@ -193,8 +193,9 @@ private:
 
 	bool m_DisplayFWHM{};
 	std::unique_ptr<unsigned int[]> m_HorizontalSumArray{}, m_VerticalSumArray{};
-	double m_HorizontalFWHM{}, m_VerticalFWHM{};
-	std::pair<int, unsigned int> m_HorizonalBestPosSum{}, m_VerticalBestPosSum{};
+	double m_HorizontalFWHM_PX{}, m_VerticalFWHM_PX{};
+	std::pair<int, unsigned int> m_HorizontalWorstPosSum{}, m_HorizonalBestPosSum{};
+	std::pair<int, unsigned int> m_VerticalWorstPosSum{}, m_VerticalBestPosSum{};
 	double m_PixelSizeUM{}, m_CropSizeMM{};
 	int m_ROIWindowWidth{};
 

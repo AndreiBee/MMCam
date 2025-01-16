@@ -140,19 +140,27 @@ static auto CalculateFWHM
 	const unsigned int* const array, 
 	size_t size, 
 	int* bestPos, 
-	unsigned int* bestSum
+	unsigned int* bestSum,
+	int* worstPos,
+	unsigned int* worstSum
 ) -> double
 {
 
 	if (!size) return -1.0;
 
 	// Step 1: Find the maximum value
-	auto maxElementIter = std::max_element(array, &array[size - 1]);
+	auto minmaxElementIter = std::minmax_element(array, &array[size - 1]);
+	auto minElementIter = minmaxElementIter.first;
+	auto maxElementIter = minmaxElementIter.second;
+	// Best Position and Sum
 	*bestPos = static_cast<int>(std::distance(array, maxElementIter));
 	*bestSum = *maxElementIter;
+	// Worst Position and Sum
+	*worstPos = static_cast<int>(std::distance(array, minElementIter));
+	*worstSum = *minElementIter;
 
 	// Step 2: Calculate the half-maximum
-	double halfMax = static_cast<double>(*bestSum) / 2.0;
+	double halfMax = static_cast<double>(*bestSum - *worstSum) / 2.0 + *worstSum;
 
 	if (*bestPos < 0 || *bestPos > size - 1) return -1.0;
 
@@ -174,7 +182,7 @@ static auto CalculateFWHM
 	{
 		if (leftIndex != -1 && array[i] < halfMax) 
 		{
-			leftIndex = static_cast<int>(i - 1);
+			rightIndex = static_cast<int>(i - 1);
 			break;
 		}
 	}

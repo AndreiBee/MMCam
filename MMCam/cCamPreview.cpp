@@ -159,11 +159,40 @@ void cCamPreview::UpdateImageParameters()
 	if (m_DisplayFWHM)
 	{
 		// Horizontal
-		CalculateSumVertically(m_ImageData.get(), m_ImageSize.GetWidth(), m_ImageSize.GetHeight(), m_HorizontalSumArray.get());
-		m_HorizontalFWHM = CalculateFWHM(m_HorizontalSumArray.get(), m_ImageSize.GetWidth(), &m_HorizonalBestPosSum.first, &m_HorizonalBestPosSum.second);
+		CalculateSumVertically
+		(
+			m_ImageData.get(), 
+			m_ImageSize.GetWidth(), 
+			m_ImageSize.GetHeight(), 
+			m_HorizontalSumArray.get()
+		);
+		m_HorizontalFWHM_PX = CalculateFWHM
+		(
+			m_HorizontalSumArray.get(), 
+			m_ImageSize.GetWidth(), 
+			&m_HorizonalBestPosSum.first, 
+			&m_HorizonalBestPosSum.second,
+			&m_HorizontalWorstPosSum.first,
+			&m_HorizontalWorstPosSum.second
+		);
+
 		// Vertical
-		CalculateSumHorizontally(m_ImageData.get(), m_ImageSize.GetWidth(), m_ImageSize.GetHeight(), m_VerticalSumArray.get());
-		m_VerticalFWHM = CalculateFWHM(m_VerticalSumArray.get(), m_ImageSize.GetHeight(), &m_VerticalBestPosSum.first, &m_VerticalBestPosSum.second);
+		CalculateSumHorizontally
+		(
+			m_ImageData.get(), 
+			m_ImageSize.GetWidth(), 
+			m_ImageSize.GetHeight(), 
+			m_VerticalSumArray.get()
+		);
+		m_VerticalFWHM_PX = CalculateFWHM
+		(
+			m_VerticalSumArray.get(), 
+			m_ImageSize.GetHeight(), 
+			&m_VerticalBestPosSum.first, 
+			&m_VerticalBestPosSum.second,
+			&m_VerticalWorstPosSum.first,
+			&m_VerticalWorstPosSum.second
+		);
 	}
 
 	m_IsImageSet = true;
@@ -585,10 +614,10 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 		if (!gc) return;
 		DrawCrossHair(gc);
 
-		/* FWHM */
-		DrawFWHMValues(gc);
 		DrawSpotCroppedWindow(gc);
 		DrawSumLines(gc);
+		/* FWHM */
+		DrawFWHMValues(gc);
 
 		delete gc;
 	}
@@ -705,20 +734,39 @@ auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
 
 	// Horizontal FWHM
 	{
-		curr_value = "FWHM: ";
 
-		curr_value += wxString::Format(wxT("%.2f"), m_HorizontalFWHM);
+		if (m_HorizontalFWHM_PX != -1.0)
+		{
+			// um
+			curr_value = "FWHM [um]: ";
+			curr_value += wxString::Format(wxT("%.2f"), m_HorizontalFWHM_PX * m_PixelSizeUM);
+		}
+
+		// px
+		curr_value += " FWHM [px]: ";
+		curr_value += wxString::Format(wxT("%i"), (int)m_HorizontalFWHM_PX);
+
 		gc_->GetTextExtent(curr_value, &widthText, &heightText);
 		drawPoint.x = m_CanvasSize.GetWidth() / 2 - widthText / 2;
 		drawPoint.y = m_CanvasSize.GetHeight() - offsetY - heightText;
 		gc_->DrawText(curr_value, drawPoint.x, drawPoint.y);
 	}
 
+	curr_value = wxEmptyString;
+
 	// Vertical FWHM
 	{
-		curr_value = "FWHM: ";
+		if (m_VerticalFWHM_PX != -1.0)
+		{
+			// um
+			curr_value = "FWHM [um]: ";
+			curr_value += wxString::Format(wxT("%.2f"), m_VerticalFWHM_PX * m_PixelSizeUM);
+		}
 
-		curr_value += wxString::Format(wxT("%.2f"), m_VerticalFWHM);
+		// px
+		curr_value += " FWHM [px]: ";
+		curr_value += wxString::Format(wxT("%i"), (int)m_VerticalFWHM_PX);
+
 		gc_->GetTextExtent(curr_value, &widthText, &heightText);
 		drawPoint.x = m_CanvasSize.GetWidth() - offsetX - heightText;
 		drawPoint.y = m_CanvasSize.GetHeight() / 2 + widthText / 2;
@@ -734,11 +782,12 @@ auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
 auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 {
 	if (!m_Image.IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
-	if (m_HorizontalFWHM == -1.0 || m_VerticalFWHM == -1.0) return;
+	if (m_HorizontalFWHM_PX == -1.0 || m_VerticalFWHM_PX == -1.0) return;
+	if (!m_HorizonalBestPosSum.second || !m_VerticalBestPosSum.second) return;
 	
 	if (m_ROIWindowWidth <= 0) return;
 
-	auto penColour = wxColour("black");
+	auto penColour = wxColour("red");
 	auto penSize = 2;
 	auto penStyle = wxPENSTYLE_DOT_DASH;
 	gc_->SetPen(wxPen(penColour, penSize, penStyle));
@@ -762,6 +811,32 @@ auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 		rectangleSize.GetWidth(), 
 		rectangleSize.GetHeight()
 	);
+
+	// Draw Cross Section (The Best Value Position)
+	auto crossLineLengthPX{ 50.0 * m_Zoom / m_ZoomOnOriginalSizeImage };
+	auto cross_center_start_draw = wxRealPoint
+	(
+		(m_StartDrawPos.x + m_HorizonalBestPosSum.first + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage,
+		(m_StartDrawPos.y + m_VerticalBestPosSum.first + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage
+	);
+
+	// Stroke Horizontal Line
+	gc_->StrokeLine
+	(
+		cross_center_start_draw.x - crossLineLengthPX / 2.0, 
+		cross_center_start_draw.y,
+		cross_center_start_draw.x + crossLineLengthPX / 2.0,
+		cross_center_start_draw.y
+	);
+
+	// Stroke Vertical Line
+	gc_->StrokeLine
+	(
+		cross_center_start_draw.x, 
+		cross_center_start_draw.y - crossLineLengthPX / 2.0,
+		cross_center_start_draw.x,
+		cross_center_start_draw.y + crossLineLengthPX / 2.0
+	);
 }
 
 auto cCamPreview::DrawSumLines(wxGraphicsContext* gc_) -> void
@@ -779,7 +854,7 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 	auto minValue = *std::min_element(m_HorizontalSumArray.get(), &m_HorizontalSumArray[m_ImageSize.GetWidth() - 1]);
 
 	auto penColour = wxColour("red");
-	auto penSize = 5;
+	auto penSize = 2;
 	auto penStyle = wxPENSTYLE_SOLID;
 	gc_->SetPen(wxPen(penColour, penSize, penStyle));
 
@@ -796,11 +871,11 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 	for (auto i = 0; i < m_ImageSize.GetWidth() - 1; ++i)
 	{
 		start_y = start_draw.y - (m_HorizontalSumArray[i] - minValue) / (double)max_value * max_height;
-		current_y = start_draw.y - (m_HorizontalSumArray[i - 1] - minValue) / (double)max_value * max_height;
+		current_y = start_draw.y - (m_HorizontalSumArray[i + 1] - minValue) / (double)max_value * max_height;
 		//start_x = image_start_draw.x + offset_x + m_MinMaxRowsData[i].first / (double)max_value * max_height;
 		//current_length = (m_MinMaxRowsData[i].second - m_MinMaxRowsData[i].first) / (double)max_value * max_height;
 		gc_->StrokeLine(start_x, start_y, start_x + current_length, current_y);
-		start_x += i * m_Zoom / m_ZoomOnOriginalSizeImage;
+		start_x += m_Zoom / m_ZoomOnOriginalSizeImage;
 	}
 
 }
