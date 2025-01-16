@@ -15,6 +15,7 @@
 .venv
 *.txt
 !FWHM/requirements.txt
+dbg_fld/
 *.raw
 *.tif
 *.xlsx

@@ -76,6 +76,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_THREAD(MainFrameVariables::ID_THREAD_LIVE_CAPTURING, cMain::LiveCapturingThread)
 	/* Progress */
 	EVT_THREAD(MainFrameVariables::ID_THREAD_PROGRESS_CAPTURING, cMain::UpdateProgress)
+
 wxEND_EVENT_TABLE()
 
 cMain::cMain(const wxString& title_) 
@@ -97,15 +98,27 @@ cMain::cMain(const wxString& title_)
 	CenterOnScreen();
 	Show();
 
+
+	// Enable Dark Mode
 	{
 		m_MenuBar->menu_edit->Check(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, true);
-		wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE);
-		ProcessEvent(art_evt);
+		wxCommandEvent artEvt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE);
+		ProcessEvent(artEvt);
 	}
+
+	// Open Settings Menu
 	{
-		wxCommandEvent art_evt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS);
-		ProcessEvent(art_evt);
+		wxCommandEvent artEvt(wxEVT_MENU, MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS);
+		ProcessEvent(artEvt);
 	}
+
+#ifdef _DEBUG
+	// Press Set Out Dir Button
+	{
+		wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN);
+		ProcessEvent(artEvt);
+	}
+#endif // _DEBUG
 	{
 		//m_StartStopLiveCapturingTglBtn->SetValue(true);
 		//wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
@@ -1458,15 +1471,22 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 
 void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 {
+	wxString outDirPath{};
+#ifdef _DEBUG
+	outDirPath = "D:\\Projects\\RIGAKU\\MMCam\\MMCam\\src\\dbg_fld";
+#else
 	wxDirDialog save_dialog(NULL, "Choose save directory", "",
 		wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
 	if (save_dialog.ShowModal() == wxID_CANCEL)
 		return;
+	outDirPath = save_dialog.GetPath();
+#endif // _DEBUG
+
 
 	if (!m_XimeaControl || !m_XimeaControl->IsCameraConnected()) return;
 
-	m_OutDirTextCtrl->SetValue(save_dialog.GetPath());
+	m_OutDirTextCtrl->SetValue(outDirPath);
 	m_FirstStage->EnableAllControls();
 	//m_SecondStage->EnableAllControls();
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
@@ -1581,7 +1601,7 @@ void cMain::OnExit(wxCloseEvent& evt)
 	// since the default event handler does call Destroy(), too
 }
 
-void cMain::UpdateStagePositions()
+auto cMain::UpdateStagePositions() -> void
 {
 	// Detector
 	{
@@ -1698,11 +1718,10 @@ auto cMain::LiveCapturingFinishedCapturingAndDrawing(bool is_finished) -> void
 
 auto cMain::WorkerThreadFinished(bool is_finished) -> void
 {
-	if (is_finished)
-	{
-		wxCommandEvent live_capturing_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
-		ProcessEvent(live_capturing_evt);
-	}
+	if (!is_finished) return;
+
+	wxCommandEvent live_capturing_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+	ProcessEvent(live_capturing_evt);
 }
 
 void cMain::UnCheckAllTools()
@@ -1836,16 +1855,20 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 	//m_StopLiveCapturing = true;		
 	if (m_StartStopLiveCapturingTglBtn->GetValue())
 	{
-		if (!m_XimeaControl->IsCameraConnected()) return;
-		m_XimeaControl->StopAcquisition();
-		m_XimeaControl->TurnOffLastThread();
-		{
-			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty()
-				? wxString("0")
-				: m_CamExposure->GetValue();
-			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-			wxThread::This()->Sleep(exposure_time);
-		}
+		m_StartStopLiveCapturingTglBtn->SetValue(false);
+		wxCommandEvent untoggleLiveCapturingBtn(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+		ProcessEvent(untoggleLiveCapturingBtn);
+
+		//if (!m_XimeaControl->IsCameraConnected()) return;
+		////m_XimeaControl->StopAcquisition();
+		//m_XimeaControl->TurnOffLastThread();
+		//{
+		//	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty()
+		//		? wxString("0")
+		//		: m_CamExposure->GetValue();
+		//	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
+		//	wxThread::This()->Sleep(exposure_time);
+		//}
 	}
 
 	//if (m_XimeaControl->IsCameraConnected()) m_XimeaControl->StopAcquisition();
@@ -1929,7 +1952,8 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 			out_dir,
 			exposure_time,
 			first_axis.release(), 
-			second_axis.release()
+			second_axis.release(),
+			m_Settings->GetPixelSizeUM()
 		);
 		ProgressThread* progress_thread = new ProgressThread(m_Settings.get(), this);
 
@@ -2588,7 +2612,8 @@ WorkerThread::WorkerThread
 	const wxString& path, 
 	const unsigned long& exp_time_us,
 	MainFrameVariables::AxisMeasurement* first_axis, 
-	MainFrameVariables::AxisMeasurement* second_axis
+	MainFrameVariables::AxisMeasurement* second_axis,
+	const double pixelSizeUM
 ) 
 	: 
 	m_MainFrame(main_frame),
@@ -2598,7 +2623,8 @@ WorkerThread::WorkerThread
 	m_ImagePath(path), 
 	m_ExposureTimeUS(exp_time_us),
 	m_FirstAxis(first_axis), 
-	m_SecondAxis(second_axis)
+	m_SecondAxis(second_axis),
+	m_PixelSizeUM(pixelSizeUM)
 {}
 
 WorkerThread::~WorkerThread()
@@ -2631,7 +2657,7 @@ wxThread::ExitCode WorkerThread::Entry()
 	{
 		m_Settings->SetCurrentProgress(m_FirstAxis->step_number, m_FirstAxis->step_number);
 		cam_control = nullptr;
-		m_MainFrame->WorkerThreadFinished(true);
+		//m_MainFrame->WorkerThreadFinished(true);
 	};
 
 	wxThreadEvent evt(wxEVT_THREAD, MainFrameVariables::ID_THREAD_LIVE_CAPTURING);
@@ -2646,8 +2672,12 @@ wxThread::ExitCode WorkerThread::Entry()
 	auto cur_mins = str_time.substr(3, 2);
 	auto cur_secs = str_time.substr(6, 2);
 
+	auto graphFileName = m_ImagePath + wxString("\\") + wxString("ximea_measurement_result_") + cur_hours + wxString("H_") + cur_mins + wxString("M_") + cur_secs + wxString("S");
+
+	auto measurementGraphFilePath = graphFileName + wxString(".bmp");
+	//m_MeasurementGraphTxtFilePath = graphFileName + wxString(".txt");
+
 	auto dataSize = m_XimeaControl->GetImageWidth() * m_XimeaControl->GetImageHeight();
-	auto dataPtr = std::make_unique<unsigned short[]>(dataSize);
 	//auto cam_preview_data_ptr = m_CameraPreview->GetDataPtr();
 	//auto cam_preview_image_ptr = m_CameraPreview->GetImagePtr();
 
@@ -2660,6 +2690,7 @@ wxThread::ExitCode WorkerThread::Entry()
 	m_XimeaControl->SetExposureTime(m_ExposureTimeUS);
 	m_HorizontalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
 	m_VerticalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
+	m_FirstAxisPositionsData = std::make_unique<float[]>(m_FirstAxis->step_number);
 
 	float first_axis_rounded_go_to{};
 	float first_axis_position{}, second_axis_position{};
@@ -2667,45 +2698,50 @@ wxThread::ExitCode WorkerThread::Entry()
 	{
 		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
 		/* Here we need to round values, for the correct positioning of motors */
-		first_axis_rounded_go_to = (int)((m_FirstAxis->start + i * m_FirstAxis->step) * 1000.f + .5f) / 1000.f;
-		switch (m_FirstAxis->axis_number)
-		{
-		/* Detector */
-		case 0:
-			first_axis_position = m_Settings->GoToAbsPos(SettingsVariables::DETECTOR_X, first_axis_rounded_go_to);
-			break;
-		case 1:
-			first_axis_position = m_Settings->GoToAbsPos(SettingsVariables::DETECTOR_Y, first_axis_rounded_go_to);
-			break;
-		case 2:
-			first_axis_position = m_Settings->GoToAbsPos(SettingsVariables::DETECTOR_Z, first_axis_rounded_go_to);
-			break;
-		/* Optics */
-		case 3:
-			first_axis_position = m_Settings->GoToAbsPos(SettingsVariables::OPTICS_X, first_axis_rounded_go_to);
-			break;
-		case 4:
-			first_axis_position = m_Settings->GoToAbsPos(SettingsVariables::OPTICS_Y, first_axis_rounded_go_to);
-			break;
-		case 5:
-			first_axis_position = m_Settings->GoToAbsPos(SettingsVariables::OPTICS_Z, first_axis_rounded_go_to);
-			break;
-		default:
-			break;
-		}
+		auto correctedStart = static_cast<int>(m_FirstAxis->start * 1000.f + .5f);
+		auto correctedStep = static_cast<int>(m_FirstAxis->step * 1000.f + .5f);
+		auto correctedPos = static_cast<float>(correctedStart + i * correctedStep);
+		first_axis_rounded_go_to = correctedPos / 1000.f;
 
-		/* Take Capture */
-		if (CaptureAndSaveImage
+		first_axis_position = MoveFirstStage(first_axis_rounded_go_to);
+		m_FirstAxisPositionsData[i] = first_axis_rounded_go_to;
+
+		auto fileName = PrepareFileName
 		(
-			m_XimeaControl,
+			i + 1, 
+			first_axis_rounded_go_to, 
+			second_axis_position, 
+			cur_hours, cur_mins, cur_secs
+		);
+
+		auto dataPtr = std::make_unique<unsigned short[]>(dataSize);
+
+		/* Capture Image */
+		if (
+			CaptureImage
+			(
 			dataPtr.get(),
-			i + 1,
-			first_axis_position,
-			second_axis_position,
-			cur_hours,
-			cur_mins,
-			cur_secs
-		))
+			wxSize
+			(
+				m_XimeaControl->GetImageWidth(), 
+				m_XimeaControl->GetImageHeight()
+			)
+			) 
+			&& SaveImage
+			(
+				dataPtr.get(), 
+				m_XimeaControl->GetImageWidth(), 
+				m_XimeaControl->GetImageHeight(), 
+				fileName
+			) 
+			&& CalculateFWHM
+			(
+				dataPtr.get(), 
+				m_XimeaControl->GetImageWidth(), 
+				m_XimeaControl->GetImageHeight(),
+				i
+			)
+			)
 		{
 			/* Update image on CameraPreview Panel */
 			evt.SetInt(0);
@@ -2749,8 +2785,90 @@ wxThread::ExitCode WorkerThread::Entry()
 	}
 #endif // FALSE
 
+	// Go to the best captured position
+#ifndef _DEBUG
+	if (m_HorizontalFWHMData && m_VerticalFWHMData)
+	{
+#endif // !_DEBUG
+		//auto message = wxString(
+		//	"The maximum sum value was: " + wxString::Format(wxT("%ld"), m_MaxSumDuringCapturing) + '\n'
+		//	+ "at position: " + wxString::Format(wxT("%.3f"), m_BestFirstAxisPosition) + '\n'
+		//	+ "measurement number: " + wxString::Format(wxT("%i"), (int)m_BestMeasurementNumber + 1)
+		//);
+		//message += "\nDo you want to move stage to the best position?";
+
+		wxDateTime nowDateTime = wxDateTime::Now();
+		// Format the date and time
+		wxString timestamp = nowDateTime.Format(wxT("%d-%m-%Y, %H:%M:%S"));
+
+		auto bmpSize = wxSize(1920, 1080);
+
+		auto bmp = CreateGraph
+		(
+			m_HorizontalFWHMData.get(),
+			m_VerticalFWHMData.get(),
+			m_FirstAxisPositionsData.get(),
+			m_FirstAxis->step_number,
+			bmpSize.GetWidth(), bmpSize.GetHeight(),
+			"Measurement Number",
+			"FWHM",
+			timestamp
+		);
+
+		SaveGraph(bmp, measurementGraphFilePath);
+
+		// Open the image with the default application
+		if (!wxLaunchDefaultApplication(measurementGraphFilePath))
+			wxLogError("Could not open file '%s' with the default application.", measurementGraphFilePath);
+
+		m_MainFrame->UpdateStagePositions();
+
+		//if (wxMessageBox
+		//(
+		//	message,
+		//	"Move stage?",
+		//	wxICON_QUESTION | wxYES_NO
+		//) == wxYES)
+		//{
+		//	MoveFirstStage(m_BestFirstAxisPosition);
+		//}
+#ifndef _DEBUG
+	}
+#endif // !_DEBUG
 	exit_thread(m_XimeaControl);
 	return (wxThread::ExitCode)0;
+}
+
+auto WorkerThread::MoveFirstStage(const float position) -> float
+{
+	float firstAxisPos{};
+	switch (m_FirstAxis->axis_number)
+	{
+		/* Detector */
+	case 0:
+		firstAxisPos = m_Settings->GoToAbsPos(SettingsVariables::DETECTOR_X, position);
+		break;
+	case 1:
+		firstAxisPos = m_Settings->GoToAbsPos(SettingsVariables::DETECTOR_Y, position);
+		break;
+	case 2:
+		firstAxisPos = m_Settings->GoToAbsPos(SettingsVariables::DETECTOR_Z, position);
+		break;
+		/* Optics */
+	case 3:
+		firstAxisPos = m_Settings->GoToAbsPos(SettingsVariables::OPTICS_X, position);
+		break;
+	case 4:
+		firstAxisPos = m_Settings->GoToAbsPos(SettingsVariables::OPTICS_Y, position);
+		break;
+	case 5:
+		firstAxisPos = m_Settings->GoToAbsPos(SettingsVariables::OPTICS_Z, position);
+		break;
+	default:
+		break;
+	}
+
+	return firstAxisPos;
 }
 
 auto WorkerThread::CaptureImage(unsigned short* const dataPtr, const wxSize& imageSize) -> bool
@@ -2794,27 +2912,29 @@ auto WorkerThread::CalculateFWHM
 	unsigned short* dataPtr, 
 	const int& imgWidth,
 	const int& imgHeight,
-	const int& imgNumber
+	const int& stepNumber
 ) -> bool
 {
 	auto horizontalSumArray = std::make_unique<unsigned int[]>(imgWidth);
 	auto verticalSumArray = std::make_unique<unsigned int[]>(imgHeight);
 
 	FWHM::CalculateSumVertically(dataPtr, imgWidth, imgHeight, horizontalSumArray.get());
-	m_HorizontalFWHMData[imgNumber - 1] = FWHM::CalculateFWHM
+	m_HorizontalFWHMData[stepNumber] = FWHM::CalculateFWHM
 		(
 			horizontalSumArray.get(), 
 			imgWidth
 		);
-	m_HorizontalFWHMData[imgNumber - 1] *= m_PixelSizeUM;
+	m_HorizontalFWHMData[stepNumber] = -1.0 ? 0.0 : m_HorizontalFWHMData[stepNumber];
+	m_HorizontalFWHMData[stepNumber] *= m_PixelSizeUM;
 
 	FWHM::CalculateSumHorizontally(dataPtr, imgWidth, imgHeight, verticalSumArray.get());
-	m_VerticalFWHMData[imgNumber - 1] = FWHM::CalculateFWHM
+	m_VerticalFWHMData[stepNumber] = FWHM::CalculateFWHM
 		(
 			verticalSumArray.get(), 
 			imgHeight
 		);
-	m_VerticalFWHMData[imgNumber - 1] *= m_PixelSizeUM;
+	m_VerticalFWHMData[stepNumber] = -1.0 ? 0.0 : m_VerticalFWHMData[stepNumber];
+	m_VerticalFWHMData[stepNumber] *= m_PixelSizeUM;
 
 	return true;
 }
@@ -2849,13 +2969,14 @@ wxBitmap WorkerThread::CreateGraph
 	wxFont font = wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	wxFont axisFont = wxFont(164, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
 	dc.SetFont(font);
-	wxColour fwhmColour = wxColour(34, 177, 76);
+
+	wxColour leftAxisColour = wxColour(163, 73, 164);
 	//wxColour sumColour = wxColour(255, 128, 64);
 	wxColour horizontalAxisColour = wxColour(0, 0, 0);
 	wxColour cellColour = wxColour(90, 90, 90, 80);
-	wxColour gaussianCurveColour = wxColour(181, 230, 29, 100);
-	wxColour highlightingBestMeasurementColour = wxColour(255, 0, 0, 230);
-	wxColour axisColour = wxColour(255, 0, 0, 64);
+	//wxColour gaussianCurveColour = wxColour(181, 230, 29, 100);
+	//wxColour highlightingBestMeasurementColour = wxColour(255, 0, 0, 230);
+	wxColour axisColour = wxColour(0, 162, 232, 64);
 
 	auto graphRect = wxRect
 	(
@@ -2980,7 +3101,7 @@ wxBitmap WorkerThread::CreateGraph
 
 	}
 
-	dc.SetPen(wxPen(fwhmColour));
+	dc.SetPen(wxPen(leftAxisColour));
 	dc.DrawLine(graphRect.GetLeft(), graphRect.GetBottom(), graphRect.GetLeft(), graphRect.GetTop()); // Left Y-axis
 
 	//dc.SetPen(wxPen(sumColour));
@@ -2997,7 +3118,7 @@ wxBitmap WorkerThread::CreateGraph
 			height - 40
 		);
 
-		dc.SetTextForeground(fwhmColour);
+		dc.SetTextForeground(leftAxisColour);
 		dc.DrawRotatedText
 		(
 			leftYAxisLabel,
@@ -3045,8 +3166,8 @@ wxBitmap WorkerThread::CreateGraph
 			}
 		}
 
-		dc.SetPen(wxPen(fwhmColour));
-		dc.SetTextForeground(fwhmColour);
+		dc.SetPen(wxPen(leftAxisColour));
+		dc.SetTextForeground(leftAxisColour);
 
 		for (auto i{ 0 }; i <= verticalAxisHorizontalLinesCount; ++i)
 		{
@@ -3112,12 +3233,19 @@ wxBitmap WorkerThread::CreateGraph
 	}
 #endif // DRAW_NORMALDISTRIBUTION
 
+	// Checking if data are all zeroes
+	auto horDataSum = std::accumulate(horizontalFWHMData, &horizontalFWHMData[dataSize - 1], 0.0);
+	if (horDataSum == 0.0)
+	{
+		dc.SelectObject(wxNullBitmap);
+		return bitmap;
+	}
 
 	// Draw the actual data
 	for (auto i = 1; i < dataSize; ++i)
 	{
 		// Draw horizontal curve
-		dc.SetPen(wxPen(fwhmColour, 3));
+		dc.SetPen(wxPen(leftAxisColour, 3));
 		auto x1 = graphRect.GetLeft() + (i - 1) * graphRect.GetWidth() / (dataSize - 1);
 		auto y1 = graphRect.GetBottom() - (horizontalFWHMData[i - 1] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
 		auto x2 = graphRect.GetLeft() + i * graphRect.GetWidth() / (dataSize - 1);
@@ -3149,7 +3277,7 @@ wxBitmap WorkerThread::CreateGraph
 	auto exposureFinishX = 0;
 	{
 		dc.SetTextForeground(wxColour(0, 0, 0));
-		auto exposureStr = wxString::Format(wxT("%i"), (int)m_ExposureTimeUS);
+		auto exposureStr = wxString::Format(wxT("%i"), (int)m_ExposureTimeUS / 1000);
 		exposureStr += " [us]";
 		auto textSize = dc.GetTextExtent(exposureStr);
 		auto startExposureTextX = 5;
@@ -3180,6 +3308,17 @@ wxBitmap WorkerThread::CreateGraph
 	// Release the device context
 	dc.SelectObject(wxNullBitmap);
 	return bitmap;
+}
+auto WorkerThread::SaveGraph
+(
+	const wxBitmap& bitmap, 
+	const wxString filePath
+) -> void
+{
+	if (!bitmap.IsOk()) return;
+
+	// Save the bitmap as a BMP file
+	if (!bitmap.SaveFile(filePath, wxBITMAP_TYPE_BMP)) return;
 }
 /* ___ End Worker Thread ___ */
 

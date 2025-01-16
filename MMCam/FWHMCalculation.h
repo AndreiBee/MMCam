@@ -165,7 +165,7 @@ namespace FWHM
 		auto minPos = static_cast<int>(std::distance(array, minElementIter));
 		if (worstPos) *worstPos = minPos;
 
-		auto minSum = *maxElementIter;
+		auto minSum = *minElementIter;
 		if (worstSum) *worstSum = minSum;
 
 		// Step 2: Calculate the half-maximum

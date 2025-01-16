@@ -226,6 +226,7 @@ public:
 	//auto StopLiveCapturing() -> bool;
 	auto LiveCapturingFinishedCapturingAndDrawing(bool is_finished) -> void;
 	auto WorkerThreadFinished(bool is_finished) -> void;
+	auto UpdateStagePositions() -> void;
 private:
 	void CreateMainFrame();
 	void InitComponents();
@@ -255,7 +256,6 @@ private:
 
 	void OnOpenSettings(wxCommandEvent& evt);
 	auto InitializeSelectedCamera() -> void;
-	void UpdateStagePositions();
 	void EnableUsedAndDisableNonUsedMotors();
 
 	void OnCrossHairButton(wxCommandEvent& evt);
@@ -791,13 +791,16 @@ public:
 		const wxString& path, 
 		const unsigned long& exp_time_us,
 		MainFrameVariables::AxisMeasurement* first_axis, 
-		MainFrameVariables::AxisMeasurement* second_axis
+		MainFrameVariables::AxisMeasurement* second_axis,
+		const double pixelSizeUM
 	);
 	~WorkerThread();
 
 	virtual void* Entry();
 
 private:
+	auto MoveFirstStage(const float position) -> float;
+
 	auto CaptureImage
 	(
 		unsigned short* const dataPtr, 
@@ -817,7 +820,7 @@ private:
 		unsigned short* dataPtr, 
 		const int& imgWidth,
 		const int& imgHeight,
-		const int& imgNumber
+		const int& stepNumber
 	) -> bool;
 
 	wxBitmap CreateGraph
@@ -832,6 +835,12 @@ private:
 		const wxString& leftYAxisLabel,
 		const wxString& timestamp
 	);
+
+	auto SaveGraph
+	(
+		const wxBitmap& bitmap, 
+		const wxString filePath
+	) -> void;
 
 	auto PrepareFileName
 	(
@@ -853,7 +862,7 @@ private:
 
 			fileName = std::string(m_ImagePath.mb_str()) + std::string("\\") +
 				std::string("img_");
-			fileName += image_number < 10 ? std::string("0") : std::string("");
+			fileName += imageNumber < 10 ? std::string("0") : std::string("");
 			fileName += std::to_string(imageNumber) + std::string("_") +
 				hours + std::string("H_") +
 				minutes + std::string("M_") +
@@ -889,8 +898,10 @@ private:
 	wxString m_ImagePath{};
 	unsigned long m_ExposureTimeUS{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
+
 	// FWHM
 	std::unique_ptr<double[]> m_HorizontalFWHMData{}, m_VerticalFWHMData{};
+	std::unique_ptr<float[]> m_FirstAxisPositionsData{};
 	double m_PixelSizeUM{};
 };
 /* ___ End Worker Thread ___ */
