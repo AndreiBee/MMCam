@@ -853,7 +853,7 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 {
 	if (!m_HorizontalSumArray) return;
 
-	auto penColour = wxColour("red");
+	auto penColour = wxColour(163, 73, 164);
 	auto penSize = 2;
 	auto penStyle = wxPENSTYLE_SOLID;
 	gc_->SetPen(wxPen(penColour, penSize, penStyle));
@@ -883,7 +883,7 @@ auto cCamPreview::DrawVerticalSumLine(wxGraphicsContext* gc_) -> void
 {
 	if (!m_VerticalSumArray) return;
 
-	auto penColour = wxColour("yellow");
+	auto penColour = wxColour(255, 127, 39);
 	auto penSize = 2;
 	auto penStyle = wxPENSTYLE_SOLID;
 	gc_->SetPen(wxPen(penColour, penSize, penStyle));

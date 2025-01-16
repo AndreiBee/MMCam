@@ -2924,7 +2924,7 @@ auto WorkerThread::CalculateFWHM
 			horizontalSumArray.get(), 
 			imgWidth
 		);
-	m_HorizontalFWHMData[stepNumber] = -1.0 ? 0.0 : m_HorizontalFWHMData[stepNumber];
+	m_HorizontalFWHMData[stepNumber] = m_HorizontalFWHMData[stepNumber] == - 1.0 ? 0.0 : m_HorizontalFWHMData[stepNumber];
 	m_HorizontalFWHMData[stepNumber] *= m_PixelSizeUM;
 
 	FWHM::CalculateSumHorizontally(dataPtr, imgWidth, imgHeight, verticalSumArray.get());
@@ -2933,7 +2933,7 @@ auto WorkerThread::CalculateFWHM
 			verticalSumArray.get(), 
 			imgHeight
 		);
-	m_VerticalFWHMData[stepNumber] = -1.0 ? 0.0 : m_VerticalFWHMData[stepNumber];
+	m_VerticalFWHMData[stepNumber] = m_VerticalFWHMData[stepNumber] == - 1.0 ? 0.0 : m_VerticalFWHMData[stepNumber];
 	m_VerticalFWHMData[stepNumber] *= m_PixelSizeUM;
 
 	return true;
@@ -2971,7 +2971,7 @@ wxBitmap WorkerThread::CreateGraph
 	dc.SetFont(font);
 
 	wxColour leftAxisColour = wxColour(163, 73, 164);
-	//wxColour sumColour = wxColour(255, 128, 64);
+	wxColour rightAxisColour = wxColour(255, 127, 39);
 	wxColour horizontalAxisColour = wxColour(0, 0, 0);
 	wxColour cellColour = wxColour(90, 90, 90, 80);
 	//wxColour gaussianCurveColour = wxColour(181, 230, 29, 100);
@@ -3037,7 +3037,7 @@ wxBitmap WorkerThread::CreateGraph
 		{
 			dc.SetPen(wxPen(cellColour, 1, wxPENSTYLE_LONG_DASH));
 			dc.SetTextForeground(cellColour);
-			for (auto i{ 0 }; i < dataSize; ++i)
+			for (auto i{ 0 }; i <= dataSize; ++i)
 			{
 
 				currTextValue = wxString::Format(wxT("%.3f"), positionsData[i]);
@@ -3053,7 +3053,7 @@ wxBitmap WorkerThread::CreateGraph
 						270
 					);
 
-				if (!i || i == dataSize - 1) continue;
+				if (!i) continue;
 
 				dc.DrawLine
 				(
@@ -3077,7 +3077,7 @@ wxBitmap WorkerThread::CreateGraph
 		dc.SetTextForeground(horizontalAxisColour);
 
 		// Draw vertical lines
-		for (auto i{ 0 }; i < dataSize; ++i)
+		for (auto i{ 0 }; i <= dataSize; ++i)
 		{
 			currTextValue = wxString::Format(wxT("%i"), i + 1);
 			auto textSize = dc.GetTextExtent(currTextValue);
@@ -3134,13 +3134,13 @@ wxBitmap WorkerThread::CreateGraph
 	double minGlobalValue{}, maxGlobalValue{};
 	auto minmaxHorizontalValues = std::minmax_element(horizontalFWHMData, horizontalFWHMData + dataSize);
 	auto minmaxVerticalValues = std::minmax_element(verticalFWHMData, verticalFWHMData + dataSize);
-
-	minGlobalValue = *std::min(minmaxHorizontalValues.first, minmaxVerticalValues.first);
-	maxGlobalValue = *std::max(minmaxHorizontalValues.second, minmaxVerticalValues.second);
+	
+	minGlobalValue = std::min(*minmaxHorizontalValues.first, *minmaxVerticalValues.first);
+	maxGlobalValue = std::max(*minmaxHorizontalValues.second, *minmaxVerticalValues.second);
 
 	// Scaling minmaxGlobalValues
-	minGlobalValue = std::floor(minGlobalValue * 10.0) / 10.0;
-	maxGlobalValue = std::ceil(maxGlobalValue * 10.0) / 10.0;
+	minGlobalValue = std::floor((minGlobalValue - 0.1 * (maxGlobalValue - minGlobalValue)) * 10.0) / 10.0;
+	maxGlobalValue = std::ceil((maxGlobalValue + 0.1 * (maxGlobalValue - minGlobalValue)) * 10.0) / 10.0;
 	
 	// Draw the Left Axis Ruler
 	{
@@ -3241,15 +3241,16 @@ wxBitmap WorkerThread::CreateGraph
 		return bitmap;
 	}
 
+	auto curveSize = 4;
 	// Draw the actual data
-	for (auto i = 1; i < dataSize; ++i)
+	for (auto i = 0; i < dataSize - 1; ++i)
 	{
-		// Draw horizontal curve
-		dc.SetPen(wxPen(leftAxisColour, 3));
-		auto x1 = graphRect.GetLeft() + (i - 1) * graphRect.GetWidth() / (dataSize - 1);
-		auto y1 = graphRect.GetBottom() - (horizontalFWHMData[i - 1] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
-		auto x2 = graphRect.GetLeft() + i * graphRect.GetWidth() / (dataSize - 1);
-		auto y2 = graphRect.GetBottom() - (horizontalFWHMData[i] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
+		// Draw horizontal data curve
+		dc.SetPen(wxPen(leftAxisColour, curveSize));
+		auto x1 = graphRect.GetLeft() + i * graphRect.GetWidth() / (dataSize - 1);
+		auto y1 = graphRect.GetBottom() - (horizontalFWHMData[i] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
+		auto x2 = graphRect.GetLeft() + (i + 1) * graphRect.GetWidth() / (dataSize - 1);
+		auto y2 = graphRect.GetBottom() - (horizontalFWHMData[i + 1] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
 		dc.DrawLine(x1, y1, x2, y2);
 
 		// Highlighting the best Sum value
@@ -3259,11 +3260,11 @@ wxBitmap WorkerThread::CreateGraph
 		//	dc.DrawCircle(wxPoint(x2, y2), 5);
 		//}
 
-		// Draw countData curve
-		//dc.SetPen(wxPen(countColour, 3));
-		//y1 = graphRect.GetBottom() - (countData[i - 1] - minCountValue) * graphRect.GetHeight() / (maxCountValue - minCountValue);
-		//y2 = graphRect.GetBottom() - (countData[i] - minCountValue) * graphRect.GetHeight() / (maxCountValue - minCountValue);
-		//dc.DrawLine(x1, y1, x2, y2);
+		// Draw vertical data curve
+		dc.SetPen(wxPen(rightAxisColour, curveSize));
+		y1 = graphRect.GetBottom() - (verticalFWHMData[i] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
+		y2 = graphRect.GetBottom() - (verticalFWHMData[i + 1] - minGlobalValue) * graphRect.GetHeight() / (maxGlobalValue - minGlobalValue);
+		dc.DrawLine(x1, y1, x2, y2);
 
 		//// Highlighting the best value
 		//if (m_MaxElementDuringCapturing == countData[i])
