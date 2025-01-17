@@ -2810,8 +2810,8 @@ wxThread::ExitCode WorkerThread::Entry()
 			m_FirstAxisPositionsData.get(),
 			m_FirstAxis->step_number,
 			bmpSize.GetWidth(), bmpSize.GetHeight(),
-			"Measurement Number",
-			"FWHM",
+			"Measurement Number [-]",
+			"FWHM [um]",
 			timestamp
 		);
 
