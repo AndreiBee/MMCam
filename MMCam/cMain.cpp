@@ -3274,6 +3274,37 @@ wxBitmap WorkerThread::CreateGraph
 		//}
 	}
 
+	// Placing a Legend
+	{
+		// Horizontal 
+		dc.SetTextForeground(leftAxisColour);
+		currTextValue = wxString("Horizontal");
+		widthText = dc.GetTextExtent(currTextValue).GetWidth();
+		heightText = dc.GetTextExtent(currTextValue).GetHeight();
+
+		auto finishDrawTextY = graphRect.GetBottom() + 5;
+		dc.DrawText
+		(
+			currTextValue,
+			graphRect.GetRight() - widthText - 5,
+			finishDrawTextY
+		);
+		finishDrawTextY += heightText;
+
+		// Vertical 
+		dc.SetTextForeground(rightAxisColour);
+		currTextValue = wxString("Vertical");
+		widthText = dc.GetTextExtent(currTextValue).GetWidth();
+		heightText = dc.GetTextExtent(currTextValue).GetHeight();
+
+		dc.DrawText
+		(
+			currTextValue,
+			graphRect.GetRight() - widthText - 5,
+			finishDrawTextY + 5
+		);
+	}
+
 	// Placing an Exposure value
 	auto exposureFinishX = 0;
 	{
