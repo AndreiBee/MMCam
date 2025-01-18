@@ -144,7 +144,8 @@ namespace FWHM
 		int* bestPos = nullptr,
 		unsigned int* bestSum = nullptr,
 		int* worstPos = nullptr,
-		unsigned int* worstSum = nullptr
+		unsigned int* worstSum = nullptr,
+		int* fwhmMiddlePosPX = nullptr
 	) -> double
 	{
 
@@ -211,6 +212,8 @@ namespace FWHM
 
 		// Handle edge cases where the full width is not well-defined
 		if (leftIndex == -1 || rightIndex == -1 || rightIndex <= leftIndex) return -1.0;
+
+		if (fwhmMiddlePosPX) *fwhmMiddlePosPX = leftIndex + (rightIndex - leftIndex) / 2;
 
 		// Step 4: Compute FWHM
 		return static_cast<double>(rightIndex - leftIndex);

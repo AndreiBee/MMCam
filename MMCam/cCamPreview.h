@@ -191,11 +191,13 @@ private:
 
 	bool m_DisplayPixelValues{};
 
+	// FWHM
 	bool m_DisplayFWHM{};
 	std::unique_ptr<unsigned int[]> m_HorizontalSumArray{}, m_VerticalSumArray{};
-	double m_HorizontalFWHM_PX{}, m_VerticalFWHM_PX{};
+	double m_HorizontalFWHM_PX{ -1.0 }, m_VerticalFWHM_PX{ -1.0 };
 	std::pair<int, unsigned int> m_HorizontalWorstPosSum{}, m_HorizonalBestPosSum{};
 	std::pair<int, unsigned int> m_VerticalWorstPosSum{}, m_VerticalBestPosSum{};
+	int m_HorizontalMiddleFWHMPosPixel{}, m_VerticalMiddleFWHMPosPixel{};
 	double m_PixelSizeUM{}, m_CropSizeMM{};
 	int m_ROIWindowWidth{};
 

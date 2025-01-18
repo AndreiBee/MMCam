@@ -173,7 +173,8 @@ void cCamPreview::UpdateImageParameters()
 			&m_HorizonalBestPosSum.first, 
 			&m_HorizonalBestPosSum.second,
 			&m_HorizontalWorstPosSum.first,
-			&m_HorizontalWorstPosSum.second
+			&m_HorizontalWorstPosSum.second,
+			&m_HorizontalMiddleFWHMPosPixel
 		);
 
 		// Vertical
@@ -191,7 +192,8 @@ void cCamPreview::UpdateImageParameters()
 			&m_VerticalBestPosSum.first, 
 			&m_VerticalBestPosSum.second,
 			&m_VerticalWorstPosSum.first,
-			&m_VerticalWorstPosSum.second
+			&m_VerticalWorstPosSum.second,
+			&m_VerticalMiddleFWHMPosPixel
 		);
 	}
 
@@ -794,8 +796,8 @@ auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 
 	auto rectangle_start_draw = wxRealPoint
 	(
-		m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage + (m_HorizonalBestPosSum.first - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage,
-		m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage + (m_VerticalBestPosSum.first - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage
+		m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage + (m_HorizontalMiddleFWHMPosPixel - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage,
+		m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage + (m_VerticalMiddleFWHMPosPixel - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage
 	);
 
 	auto rectangleSize = wxSize
@@ -816,8 +818,8 @@ auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 	auto crossLineLengthPX{ 50.0 * m_Zoom / m_ZoomOnOriginalSizeImage };
 	auto cross_center_start_draw = wxRealPoint
 	(
-		(m_StartDrawPos.x + m_HorizonalBestPosSum.first + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage,
-		(m_StartDrawPos.y + m_VerticalBestPosSum.first + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage
+		(m_StartDrawPos.x + m_HorizontalMiddleFWHMPosPixel + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage,
+		(m_StartDrawPos.y + m_VerticalMiddleFWHMPosPixel + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage
 	);
 
 	// Stroke Horizontal Line
