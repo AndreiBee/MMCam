@@ -796,8 +796,8 @@ auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 
 	auto rectangle_start_draw = wxRealPoint
 	(
-		m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage + (m_HorizontalMiddleFWHMPosPixel - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage,
-		m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage + (m_VerticalMiddleFWHMPosPixel - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage
+		(m_StartDrawPos.x + m_HorizontalMiddleFWHMPosPixel - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage,
+		(m_StartDrawPos.y + m_VerticalMiddleFWHMPosPixel - m_ROIWindowWidth / 2) * m_Zoom / m_ZoomOnOriginalSizeImage
 	);
 
 	auto rectangleSize = wxSize
