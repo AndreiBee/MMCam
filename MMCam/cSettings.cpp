@@ -25,6 +25,18 @@ void cSettings::ProvideProgressInfo(wxString* msg, int* prgrs)
 	*prgrs = 100.f * (float)(m_Progress->current_capture + 1) / (float)m_Progress->whole_captures_num;
 }
 
+auto cSettings::ProvideProgressMessage() const -> wxString
+{
+	auto msg = "Capturing " + wxString::Format(wxT("%i"), m_Progress->current_capture + 1) + " of " + wxString::Format(wxT("%i"), m_Progress->whole_captures_num) + " images";
+	return msg;
+}
+
+auto cSettings::ProvideProgressValue() const -> int
+{
+	auto prgrs = 100.f * (float)(m_Progress->current_capture + 1) / (float)m_Progress->whole_captures_num;
+	return (int)prgrs;
+}
+
 void cSettings::ResetCapturing()
 {
 	m_Progress->is_finished = false;

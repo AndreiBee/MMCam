@@ -163,6 +163,8 @@ public:
 	/* Progress Getter */
 	bool IsCapturingFinished() const;
 	void ProvideProgressInfo(wxString* msg, int* prgrs);
+	auto ProvideProgressMessage() const -> wxString;
+	auto ProvideProgressValue() const -> int;
 
 	/* Progress Setter */
 	void ResetCapturing();

@@ -222,6 +222,7 @@ auto cCamPreview::SetCameraCapturedImage
 	UpdateWXImage();
 
 	UpdateImageParameters();
+	LOG("Image was updated: " + wxString(__FUNCSIG__))
 }
 
 void cCamPreview::CaptureAndSaveDataFromCamera

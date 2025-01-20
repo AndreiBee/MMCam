@@ -14,16 +14,16 @@
 *.userprefs
 .venv
 *.txt
-!FWHM/requirements.txt
 dbg_fld/
 *.raw
 *.tif
 *.xlsx
 *.pdf
-*.png
 !main_app_window.png
 *.mat
 *.json
+ReportTemplate.*
+!ReportTemplate.tex
 
 # Mono auto generated files
 mono_crash.*

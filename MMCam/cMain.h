@@ -846,12 +846,12 @@ private:
 
 	auto PrepareFileName
 	(
-		const int& imageNumber,
-		const float& firstStagePosition,
-		const float& secondStagePosition,
-		const std::string& hours,
-		const std::string& minutes,
-		const std::string& seconds
+		const int imageNumber,
+		const float firstStagePosition,
+		const float secondStagePosition,
+		const std::string hours,
+		const std::string minutes,
+		const std::string seconds
 	) -> std::string
 	{
 		std::string fileName{};

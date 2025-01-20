@@ -245,7 +245,7 @@ void cMain::InitDefaultStateWidgets()
 		//m_OutDirTextCtrl->Disable();
 		//m_OutDirBtn->Disable();
 
-		float default_start{ 0.0f }, default_step{ 1.0f }, default_finish{ 24.0f };
+		float default_start{ 0.0f }, default_step{ 0.1f }, default_finish{ 24.0f };
 
 		/* First Stage */
 		{
@@ -1789,7 +1789,7 @@ void cMain::OnFirstStageChoice(wxCommandEvent& evt)
 	);
 	/* Set Finish To Current position of motor + Step */
 	if (!m_FirstStage->step->GetValue().ToDouble(&step_stage_value)) return;
-	finish_stage_value = start_stage_value + step_stage_value;
+	finish_stage_value = start_stage_value + 1.0;
 	m_FirstStage->finish->SetValue
 	(
 		wxString::Format
@@ -1882,8 +1882,8 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 		m_ProgressBar->UpdateProgressWithMessage("", 0);
 		m_ProgressBar->UpdateElapsedTime(0);
 		m_ProgressBar->UpdateEstimatedTime(0, 0);
-		if (m_AppProgressIndicator) m_AppProgressIndicator->~wxAppProgressIndicator();
-		UpdateAllAxisGlobalPositions();
+		//if (m_AppProgressIndicator) m_AppProgressIndicator->~wxAppProgressIndicator();
+		//UpdateAllAxisGlobalPositions();
 
 		EnableControlsAfterCapturing();
 		m_StartStopMeasurementTglBtn->SetLabel("Start Capturing");
@@ -1950,7 +1950,7 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 		m_Settings->ResetCapturing();
 		m_ProgressBar->Show();
 
-		m_AppProgressIndicator = std::make_unique<wxAppProgressIndicator>(this, 100);
+		//m_AppProgressIndicator = std::make_unique<wxAppProgressIndicator>(this, 100);
 
 		//this->Disable();
 		//m_StartMeasurement->Disable();
@@ -2081,6 +2081,7 @@ auto cMain::LiveCapturingThread(wxThreadEvent& evt) -> void
 	if (curr_code == 0)
 	{
 		auto imgPtr = evt.GetPayload<unsigned short*>();
+		if (!imgPtr) return;
 		LOG("Set camera captured image");
 		m_CamPreview->SetCameraCapturedImage
 		(
@@ -2103,22 +2104,32 @@ void cMain::UpdateProgress(wxThreadEvent& evt)
 	wxString msg = evt.GetString();
 	unsigned long long elapsed_seconds{};
 
-	if (progress != -1)
+	if (progress >= 0)
 	{
 		auto current_time = std::chrono::steady_clock::now();
 		elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(current_time - m_StartCalculationTime).count();
 		m_ProgressBar->UpdateProgressWithMessage(msg, progress);
-		m_AppProgressIndicator->SetValue(progress);
+		LOGI("Progress: ", progress);
+		//m_AppProgressIndicator->SetValue(progress <= 100 ? progress : 100);
 		m_ProgressBar->UpdateElapsedTime(elapsed_seconds);
 		m_ProgressBar->UpdateEstimatedTime(progress, elapsed_seconds);
 	}
-	else
+	// Finished
+	else if (progress == -1)
 	{
 		m_StartStopMeasurementTglBtn->SetValue(false);
 		wxCommandEvent art_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT);
 		ProcessEvent(art_evt);
+	}
+	// Interrupted
+	else if (progress == -2)
+	{
+		//m_StartStopMeasurementTglBtn->SetValue(false);
+		//wxCommandEvent art_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT);
+		//ProcessEvent(art_evt);
 		//this->Enable();
 	}
+
 }
 
 auto cMain::CreateMetadataFile() -> void
@@ -2335,8 +2346,8 @@ auto cMain::EnableControlsAfterCapturing() -> void
 	m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
 	if (m_MenuBar->submenu_intensity_profile->IsChecked(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR))
 	{
-		m_CrossHairPosXTxtCtrl->Disable();
-		m_CrossHairPosYTxtCtrl->Disable();
+		m_CrossHairPosXTxtCtrl->Enable();
+		m_CrossHairPosYTxtCtrl->Enable();
 	}
 	m_SetCrossHairPosTglBtn->Enable();
 
@@ -2350,7 +2361,6 @@ auto cMain::EnableControlsAfterCapturing() -> void
 
 	m_OutDirBtn->Enable();
 	m_FirstStage->EnableAllControls();
-
 }
 
 auto cMain::DisableControlsBeforeCapturing() -> void
@@ -2428,7 +2438,7 @@ void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
 			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
 			wxThread::This()->Sleep(exposure_time);
 		}
-		m_XimeaControl->ClearAllThreads();
+		//m_XimeaControl->ClearAllThreads();
 
 		m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Start Live (L)"));
 		if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))
@@ -2738,10 +2748,10 @@ wxThread::ExitCode WorkerThread::Entry()
 			title,
 			wxICON_ERROR);
 	};
-	auto exit_thread = [&](XimeaControl* cam_control)
+	auto exit_thread = [&]()
 	{
-		m_Settings->SetCurrentProgress(m_FirstAxis->step_number, m_FirstAxis->step_number);
-		cam_control = nullptr;
+		m_Settings->SetCurrentProgress(1, 1);
+		//cam_control = nullptr;
 		//m_MainFrame->WorkerThreadFinished(true);
 	};
 
@@ -2768,7 +2778,7 @@ wxThread::ExitCode WorkerThread::Entry()
 
 	if (!m_XimeaControl->IsCameraConnected())
 	{
-		exit_thread(m_XimeaControl);
+		exit_thread();
 		return (wxThread::ExitCode)0;
 	}
 
@@ -2783,9 +2793,9 @@ wxThread::ExitCode WorkerThread::Entry()
 	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
 	{
-		if (!m_MainFrame || !m_XimeaControl->GetThreadState(m_ThreadID))
+		if (!m_XimeaControl->GetThreadState(m_ThreadID))
 		{
-			exit_thread(m_XimeaControl);
+			exit_thread();
 			return (wxThread::ExitCode)0;
 		}
 
@@ -2836,7 +2846,6 @@ wxThread::ExitCode WorkerThread::Entry()
 			)
 			)
 		{
-			/* Update image on CameraPreview Panel */
 			evt.SetInt(0);
 			evt.SetPayload(dataPtr.release());
 			wxQueueEvent(m_MainFrame, evt.Clone());
@@ -2844,12 +2853,12 @@ wxThread::ExitCode WorkerThread::Entry()
 		else
 		{
 			//raise_exception_msg("XIMEA");
-			exit_thread(m_XimeaControl);
+			exit_thread();
 			return (wxThread::ExitCode)0;
 		}
 
 		/* Update Current Progress */
-		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
+		//m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
 	}
 
 #ifdef ENABLE_SECOND_AXIS
@@ -2928,7 +2937,7 @@ wxThread::ExitCode WorkerThread::Entry()
 #ifndef _DEBUG
 	}
 #endif // !_DEBUG
-	exit_thread(m_XimeaControl);
+	exit_thread();
 	return (wxThread::ExitCode)0;
 }
 
@@ -2966,15 +2975,20 @@ auto WorkerThread::MoveFirstStage(const float position) -> float
 
 auto WorkerThread::CaptureImage(unsigned short* const dataPtr, const wxSize& imageSize) -> bool
 {
+	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
 	auto imgPtr = m_XimeaControl->GetImage();
 	if (!imgPtr) return false;
 
+	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
+
+	LOG("MEMCPY Start");
 	memcpy
 	(
 		dataPtr, 
 		imgPtr, 
 		sizeof(unsigned short) * imageSize.GetWidth() * imageSize.GetHeight()
 	);
+	LOG("MEMCPY Finish");
 
 	return true;
 }
@@ -2987,6 +3001,7 @@ auto WorkerThread::SaveImage
 	const std::string& fileName
 ) -> bool
 {
+	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
 	cv::Mat cv_img
 	(
 		cv::Size(imgWidth, imgHeight),
@@ -3008,6 +3023,7 @@ auto WorkerThread::CalculateFWHM
 	const int& stepNumber
 ) -> bool
 {
+	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
 	auto horizontalSumArray = std::make_unique<unsigned int[]>(imgWidth);
 	auto verticalSumArray = std::make_unique<unsigned int[]>(imgHeight);
 
@@ -3472,19 +3488,18 @@ wxThread::ExitCode ProgressThread::Entry()
 {
 	m_Progress = 0;
 	m_ProgressMsg = "";
+	wxThreadEvent evt(wxEVT_THREAD, MainFrameVariables::ID_THREAD_PROGRESS_CAPTURING);
 	while (!m_Settings->IsCapturingFinished())
 	{
-		wxThreadEvent calc_event(wxEVT_THREAD, MainFrameVariables::ID_THREAD_PROGRESS_CAPTURING);
-		m_Settings->ProvideProgressInfo(&m_ProgressMsg, &m_Progress);
+		//m_Settings->ProvideProgressInfo(&m_ProgressMsg, &m_Progress);
 
-		calc_event.SetInt(m_Progress);
-		calc_event.SetString(m_ProgressMsg);
+		evt.SetInt(m_Settings->ProvideProgressValue());
+		evt.SetString(m_Settings->ProvideProgressMessage());
 
-		wxQueueEvent(m_Frame, calc_event.Clone());
+		wxQueueEvent(m_Frame, evt.Clone());
 
 		wxThread::This()->Sleep(100);
 	}
-	wxThreadEvent evt(wxEVT_THREAD, MainFrameVariables::ID_THREAD_PROGRESS_CAPTURING);
 	evt.SetInt(-1);
 	wxQueueEvent(m_Frame, evt.Clone());
 
@@ -3566,7 +3581,7 @@ void ProgressPanel::SetSize(const wxSize& new_size)
 
 void ProgressPanel::SetProgress(const int& progress)
 {
-	m_Progress = progress <= 100 ? progress : 100;
+	m_Progress = progress <= 100 && progress >= 0 ? progress : 100;
 }
 
 void ProgressPanel::SetElapsedTime(const int& elapsed_time)
