@@ -164,6 +164,7 @@ auto XimeaControl::AppendThread() -> int
 
 auto XimeaControl::GetThreadState(int id) -> bool
 {
+	if (!m_Threads.size()) return false;
 	if (id >= m_Threads.size() || id < 0) return false;
 	else
 		return m_Threads[id];

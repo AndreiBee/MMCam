@@ -650,7 +650,9 @@ private:
 	/* Changed Exposure value */
 	void ExposureValueChanged(wxCommandEvent& evt);
 	/* Start Capturing */
-	void OnStartCapturingButton(wxCommandEvent& evt);
+	void OnStartStopCapturingTglButton(wxCommandEvent& evt);
+	auto EnableControlsAfterCapturing() -> void;
+	auto DisableControlsBeforeCapturing() -> void;
 	void OnStartStopLiveCapturingMenu(wxCommandEvent& evt);
 	void OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt);
 
@@ -695,7 +697,7 @@ private:
 	std::unique_ptr<wxTextCtrl> m_OutDirTextCtrl{};
 	std::unique_ptr<wxButton> m_OutDirBtn{};
 	std::unique_ptr<MainFrameVariables::MeasurementStage> m_FirstStage{};
-	std::unique_ptr<wxButton> m_StartMeasurement{};
+	std::unique_ptr<wxToggleButton> m_StartStopMeasurementTglBtn{};
 
 	/* Progress */
 	bool m_Cancelled{}, m_DataCalculatedInThisApp{};
@@ -898,6 +900,7 @@ private:
 	wxString m_ImagePath{};
 	unsigned long m_ExposureTimeUS{};
 	MainFrameVariables::AxisMeasurement* m_FirstAxis{}, * m_SecondAxis{};
+	int m_ThreadID{ -1 };
 
 	// FWHM
 	std::unique_ptr<double[]> m_HorizontalFWHMData{}, m_VerticalFWHMData{};

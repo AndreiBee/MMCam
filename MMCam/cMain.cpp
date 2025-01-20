@@ -68,7 +68,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	/* Second Stage */
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, cMain::OnSecondStageChoice)
 	/* Start Capturing */
-	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT, cMain::OnStartCapturingButton)
+	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT, cMain::OnStartStopCapturingTglButton)
 	/* Start\Stop Live Capturing */
 	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingTglBtn)
 
@@ -262,7 +262,7 @@ void cMain::InitDefaultStateWidgets()
 			//m_SecondStage->DisableAllControls();
 		}
 		/* Start Capturing */
-		m_StartMeasurement->Disable();
+		m_StartStopMeasurementTglBtn->Disable();
 	}
 }
 
@@ -1318,7 +1318,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 		wxSizer* const horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
 		wxSizer* const capturing_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Capturing");
-		m_StartMeasurement = std::make_unique<wxButton>
+		m_StartStopMeasurementTglBtn = std::make_unique<wxToggleButton>
 			(
 				right_side_panel,
 				MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT,
@@ -1326,7 +1326,7 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			);
 		horizontal_sizer->AddStretchSpacer();
 		horizontal_sizer->Add(capturing_sizer);
-		capturing_sizer->Add(m_StartMeasurement.get());
+		capturing_sizer->Add(m_StartStopMeasurementTglBtn.get());
 		mmt_static_box_sizer->AddStretchSpacer();
 		mmt_static_box_sizer->Add(horizontal_sizer, 0, wxEXPAND);
 	}
@@ -1442,23 +1442,37 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 			//ximea_control->InitializeCameraBySN(curr_cam.ToStdString());
 			m_XimeaControl->SetExposureTime(exposure_time);
 			//ximea_control->SetExposureTime(exposure_time);
-			auto image_size = wxSize{ (int)m_XimeaControl->GetImageWidth(), (int)m_XimeaControl->GetImageHeight() };
-			unsigned short* data_ptr{};
-			data_ptr = m_XimeaControl->GetImage();
-			if (!data_ptr)
+			auto imageSize = wxSize{ (int)m_XimeaControl->GetImageWidth(), (int)m_XimeaControl->GetImageHeight() };
+
+			auto dataPtr = std::make_unique<unsigned short[]>(imageSize.GetWidth() * imageSize.GetHeight());
+
+			auto imgPtr = m_XimeaControl->GetImage();
+			if (!imgPtr)
 			{
 				raise_exception_msg();
 				return;
 			}
 
+			memcpy
+			(
+				dataPtr.get(),
+				imgPtr, 
+				sizeof(unsigned short) * imageSize.GetWidth() * imageSize.GetHeight()
+			);
+
 			cv::Mat cv_img
 			(
-				cv::Size(image_size.GetWidth(), image_size.GetHeight()),
+				cv::Size(imageSize.GetWidth(), imageSize.GetHeight()),
 				CV_16U,
-				data_ptr,
+				imgPtr,
 				cv::Mat::AUTO_STEP
 			);
 			cv::imwrite(file_name, cv_img);
+
+			m_CamPreview->SetCameraCapturedImage
+			(
+				dataPtr.get()
+			);
 		}
 	}
 	/* Only if user has already started Live Capturing, continue Live Capturing */
@@ -1491,7 +1505,7 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 	//m_SecondStage->EnableAllControls();
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
 	m_SingleShotBtn->Enable();
-	m_StartMeasurement->Enable();
+	m_StartStopMeasurementTglBtn->Enable();
 }
 
 void cMain::OnOpenSettings(wxCommandEvent& evt)
@@ -1837,7 +1851,7 @@ void cMain::OnSecondStageChoice(wxCommandEvent& evt)
 	//);
 }
 
-void cMain::OnStartCapturingButton(wxCommandEvent& evt)
+void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 {
 	constexpr auto raise_exception_msg = [](wxString axis) 
 	{
@@ -1852,33 +1866,39 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 			wxICON_ERROR);
 	};
 
-	//m_StopLiveCapturing = true;		
+	if (!m_StartStopMeasurementTglBtn->GetValue())
+	{
+		m_XimeaControl->TurnOffLastThread();
+		{
+			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
+				? wxString("0") 
+				: m_CamExposure->GetValue();
+			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
+			wxThread::This()->Sleep(exposure_time);
+		}
+		//m_XimeaControl->ClearAllThreads();
+
+		m_ProgressBar->Hide();
+		m_ProgressBar->UpdateProgressWithMessage("", 0);
+		m_ProgressBar->UpdateElapsedTime(0);
+		m_ProgressBar->UpdateEstimatedTime(0, 0);
+		if (m_AppProgressIndicator) m_AppProgressIndicator->~wxAppProgressIndicator();
+		UpdateAllAxisGlobalPositions();
+
+		EnableControlsAfterCapturing();
+		m_StartStopMeasurementTglBtn->SetLabel("Start Capturing");
+		return;
+	}
+
 	if (m_StartStopLiveCapturingTglBtn->GetValue())
 	{
 		m_StartStopLiveCapturingTglBtn->SetValue(false);
 		wxCommandEvent untoggleLiveCapturingBtn(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
 		ProcessEvent(untoggleLiveCapturingBtn);
-
-		//if (!m_XimeaControl->IsCameraConnected()) return;
-		////m_XimeaControl->StopAcquisition();
-		//m_XimeaControl->TurnOffLastThread();
-		//{
-		//	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty()
-		//		? wxString("0")
-		//		: m_CamExposure->GetValue();
-		//	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-		//	wxThread::This()->Sleep(exposure_time);
-		//}
 	}
 
-	//if (m_XimeaControl->IsCameraConnected()) m_XimeaControl->StopAcquisition();
-	//{
-	//	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-	//		? wxString("0") 
-	//		: m_CamExposure->GetValue();
-	//	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
-	//	wxThread::This()->Sleep(exposure_time / 1000);
-	//}
+	DisableControlsBeforeCapturing();
+	m_StartStopMeasurementTglBtn->SetLabel("Stop Capturing");
 
 	auto first_axis = std::make_unique<MainFrameVariables::AxisMeasurement>();
 	auto second_axis = std::make_unique<MainFrameVariables::AxisMeasurement>();
@@ -2094,13 +2114,10 @@ void cMain::UpdateProgress(wxThreadEvent& evt)
 	}
 	else
 	{
-		m_ProgressBar->Hide();
-		m_ProgressBar->UpdateProgressWithMessage("", 0);
-		m_ProgressBar->UpdateElapsedTime(0);
-		m_ProgressBar->UpdateEstimatedTime(0, 0);
-		m_AppProgressIndicator->~wxAppProgressIndicator();
-		UpdateAllAxisGlobalPositions();
-		this->Enable();
+		m_StartStopMeasurementTglBtn->SetValue(false);
+		wxCommandEvent art_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT);
+		ProcessEvent(art_evt);
+		//this->Enable();
 	}
 }
 
@@ -2298,6 +2315,72 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 	//}
 	////m_StopLiveCapturing = false;
 	//StartLiveCapturing();
+}
+
+auto cMain::EnableControlsAfterCapturing() -> void
+{
+	EnableUsedAndDisableNonUsedMotors();
+	//for (auto i = 0; i < 3; ++i)
+	//{
+	//	m_Detector[i].EnableAllControls();
+	//	m_Optics[i].EnableAllControls();
+	//}
+
+	m_CamExposure->Enable();
+	if (m_OutDirTextCtrl->GetValue() != "Save directory...")
+		m_SingleShotBtn->Enable();
+	m_StartStopLiveCapturingTglBtn->Enable();
+
+	m_VerticalToolBar->tool_bar->EnableTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
+	m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
+	if (m_MenuBar->submenu_intensity_profile->IsChecked(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR))
+	{
+		m_CrossHairPosXTxtCtrl->Disable();
+		m_CrossHairPosYTxtCtrl->Disable();
+	}
+	m_SetCrossHairPosTglBtn->Enable();
+
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, true);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, true);
+
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, true);
+
+	m_OutDirBtn->Enable();
+	m_FirstStage->EnableAllControls();
+
+}
+
+auto cMain::DisableControlsBeforeCapturing() -> void
+{
+	for (auto i = 0; i < 3; ++i)
+	{
+		m_Detector[i].DisableAllControls();
+		m_Optics[i].DisableAllControls();
+	}
+
+	m_CamExposure->Disable();
+	m_SingleShotBtn->Disable();
+	m_StartStopLiveCapturingTglBtn->Disable();
+
+	m_VerticalToolBar->tool_bar->EnableTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
+	m_CrossHairPosXTxtCtrl->Disable();
+	m_CrossHairPosYTxtCtrl->Disable();
+	m_SetCrossHairPosTglBtn->Disable();
+
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, false);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, false);
+	m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
+
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, false);
+
+	m_OutDirBtn->Disable();
+	m_FirstStage->DisableAllControls();
 }
 
 void cMain::OnStartStopLiveCapturingMenu(wxCommandEvent& evt)
@@ -2689,6 +2772,8 @@ wxThread::ExitCode WorkerThread::Entry()
 		return (wxThread::ExitCode)0;
 	}
 
+	m_ThreadID = m_XimeaControl->AppendThread();
+
 	m_XimeaControl->SetExposureTime(m_ExposureTimeUS);
 	m_HorizontalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
 	m_VerticalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
@@ -2698,6 +2783,12 @@ wxThread::ExitCode WorkerThread::Entry()
 	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
 	{
+		if (!m_MainFrame || !m_XimeaControl->GetThreadState(m_ThreadID))
+		{
+			exit_thread(m_XimeaControl);
+			return (wxThread::ExitCode)0;
+		}
+
 		m_Settings->SetCurrentProgress(i, m_FirstAxis->step_number);
 		/* Here we need to round values, for the correct positioning of motors */
 		auto correctedStart = static_cast<int>(m_FirstAxis->start * 1000.f + .5f);
