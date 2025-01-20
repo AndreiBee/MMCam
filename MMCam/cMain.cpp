@@ -68,7 +68,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	/* Second Stage */
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, cMain::OnSecondStageChoice)
 	/* Start Capturing */
-	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT, cMain::OnStartStopCapturingTglButton)
+	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, cMain::OnStartStopCapturingTglButton)
 	/* Start\Stop Live Capturing */
 	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingTglBtn)
 
@@ -1313,15 +1313,31 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 		mmt_static_box_sizer->Add(directions_static_box_sizer, 0, wxEXPAND);
 	}
 
-	/* Start Capturing */
+
 	{
 		wxSizer* const horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);
 
+		/* Report Generation */
+		wxSizer* const report_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Report");
+		m_GenerateReportBtn = std::make_unique<wxButton>
+			(
+				right_side_panel,
+				MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN,
+				wxT("Generate")					
+			);
+		report_sizer->Add(m_GenerateReportBtn.get());
+		horizontal_sizer->Add(report_sizer);
+#ifndef _DEBUG
+		m_GenerateReportBtn->Disable();
+#endif // !_DEBUG
+
+
+		/* Start/Stop Capturing */
 		wxSizer* const capturing_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Capturing");
 		m_StartStopMeasurementTglBtn = std::make_unique<wxToggleButton>
 			(
 				right_side_panel,
-				MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT,
+				MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT,
 				wxT("Start Capturing")					
 			);
 		horizontal_sizer->AddStretchSpacer();
@@ -2118,7 +2134,7 @@ void cMain::UpdateProgress(wxThreadEvent& evt)
 	else if (progress == -1)
 	{
 		m_StartStopMeasurementTglBtn->SetValue(false);
-		wxCommandEvent art_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_MEASUREMENT);
+		wxCommandEvent art_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT);
 		ProcessEvent(art_evt);
 	}
 	// Interrupted

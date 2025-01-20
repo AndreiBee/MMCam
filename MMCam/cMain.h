@@ -103,7 +103,8 @@ namespace MainFrameVariables
 		ID_RIGHT_MT_SECOND_STAGE_START,
 		ID_RIGHT_MT_SECOND_STAGE_STEP,
 		ID_RIGHT_MT_SECOND_STAGE_FINISH,
-		ID_RIGHT_MT_START_MEASUREMENT,
+		ID_RIGHT_MY_GENERATE_REPORT_BTN,
+		ID_RIGHT_MT_START_STOP_MEASUREMENT,
 		/* Live Capturing */
 		ID_THREAD_LIVE_CAPTURING,
 		/* Progress */
@@ -698,6 +699,9 @@ private:
 	std::unique_ptr<wxButton> m_OutDirBtn{};
 	std::unique_ptr<MainFrameVariables::MeasurementStage> m_FirstStage{};
 	std::unique_ptr<wxToggleButton> m_StartStopMeasurementTglBtn{};
+
+	/* Report Generation */
+	std::unique_ptr<wxButton> m_GenerateReportBtn{};
 
 	/* Progress */
 	bool m_Cancelled{}, m_DataCalculatedInThisApp{};
