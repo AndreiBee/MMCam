@@ -23,50 +23,48 @@ namespace FWHM
 
 		auto calculateSum = []
 		(
-			const unsigned short* start,
-			const unsigned short* end,
-			int row_index,
-			unsigned int* results
+			const unsigned short* start, 
+			const unsigned short* end, 
+			int startRow, int rows, 
+			unsigned int* results, 
+			int imageWidth
 			)
 			{
-				auto result = std::accumulate(start, end, 0);
-				results[row_index] = result;
+				for (auto i = 0; i < rows; ++i)
+				{
+					const unsigned short* row_start = start + i * imageWidth;
+					const unsigned short* row_end = row_start + imageWidth;
+					results[startRow + i] = std::accumulate(row_start, row_end, 0u);
+				}
 			};
 
-#ifdef ONE_THREAD_CALCULATION
-		//for (auto i = 0; i < imageSize.GetHeight(); ++i)
-		//{
-		//	const unsigned short* chunk_start = dataPtr + i * chunk_size;
+		int num_threads = std::max(1u, std::thread::hardware_concurrency());
+		int rows_per_thread = imageHeight / num_threads;
+		int remaining_rows = imageHeight % num_threads;
 
-		//	const unsigned short* chunk_end = (i == num_threads - 1) ? dataPtr + imageSize.GetWidth() * imageSize.GetHeight() : chunk_start + chunk_size;
-		//}
-
-#else
-		auto dataSize = imageHeight;
-
-		int num_threads = dataSize;
 		std::vector<std::thread> threads;
 		threads.reserve(num_threads);
-		// Split the data into chunks and process each chunk in a separate thread
-		int chunk_size = imageWidth;
 
-		for (auto i = 0; i < num_threads; ++i)
+		for (auto t = 0; t < num_threads; ++t)
 		{
-			auto chunk_start = dataPtr + i * chunk_size;
-			auto chunk_end = (i == num_threads - 1) ? dataPtr + imageWidth * imageHeight : chunk_start + chunk_size;
+			int start_row = t * rows_per_thread;
+			int rows_to_process = t < num_threads - 1 ? rows_per_thread : rows_per_thread + remaining_rows;
+
+			const unsigned short* chunk_start = dataPtr + start_row * imageWidth;
 			threads.emplace_back
 			(
-				calculateSum,
-				chunk_start,
-				chunk_end,
-				i,
-				results
+				calculateSum, 
+				chunk_start, 
+				chunk_start + rows_to_process * imageWidth, 
+				start_row, 
+				rows_to_process, 
+				results, 
+				imageWidth
 			);
 		}
 
 		for (auto& t : threads)
 			t.join();
-#endif // _DEBUG
 	};
 
 	static auto CalculateSumVertically

@@ -1921,8 +1921,10 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 		m_StartCalculationTime = std::chrono::steady_clock::now();
 		wxPoint start_point_progress_bar
 		{ 
-			this->GetPosition().x + this->GetSize().x - m_ProgressBar->GetSize().x, 
-			this->GetPosition().y + this->GetSize().y - m_ProgressBar->GetSize().y 
+			GetPosition().x, 
+			GetPosition().y
+			//this->GetPosition().x + this->GetSize().x - m_ProgressBar->GetSize().x, 
+			//this->GetPosition().y + this->GetSize().y - m_ProgressBar->GetSize().y 
 		};
 		m_ProgressBar->SetPosition(start_point_progress_bar);
 		m_Settings->ResetCapturing();
@@ -1930,7 +1932,7 @@ void cMain::OnStartCapturingButton(wxCommandEvent& evt)
 
 		m_AppProgressIndicator = std::make_unique<wxAppProgressIndicator>(this, 100);
 
-		this->Disable();
+		//this->Disable();
 		//m_StartMeasurement->Disable();
 	}
 
@@ -3282,7 +3284,7 @@ wxBitmap WorkerThread::CreateGraph
 		widthText = dc.GetTextExtent(currTextValue).GetWidth();
 		heightText = dc.GetTextExtent(currTextValue).GetHeight();
 
-		auto finishDrawTextY = graphRect.GetBottom() + 5;
+		auto finishDrawTextY = graphRect.GetBottom() + (dc.GetSize().GetHeight() - graphRect.GetBottom()) / 3;
 		dc.DrawText
 		(
 			currTextValue,
@@ -3336,6 +3338,20 @@ wxBitmap WorkerThread::CreateGraph
 		);
 	}
 
+	// Placing an application name
+	{
+		dc.SetTextForeground(wxColour(0, 0, 0));
+		currTextValue = wxString("MMCam");
+
+		widthText = dc.GetTextExtent(currTextValue).GetWidth();
+		heightText = dc.GetTextExtent(currTextValue).GetHeight();
+		dc.DrawText
+		(
+			currTextValue,
+			dc.GetSize().GetWidth() - widthText - 5,
+			graphRect.GetTop() / 2 - heightText / 2
+		);
+	}
 
 	// Release the device context
 	dc.SelectObject(wxNullBitmap);
