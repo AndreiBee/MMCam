@@ -2367,13 +2367,85 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	);
 
 	auto retCode = dialog.ShowModal();
+	wxString outDirName{}, outFileName{};;
+	wxString outDirWithFileName{};
 
-	if (retCode == wxID_CANCEL)
+	if (retCode == wxID_CANCEL) return;
+
+#ifdef _DEBUG
+	outDirName = wxString("D:\\Projects\\RIGAKU\\MMCam\\MMCam\\src\\dbg_fld");
+	outFileName = wxString("Test.pdf");
+	outDirWithFileName = outDirName;
+	outDirWithFileName += outFileName;
+#else
+	wxFileDialog save_dialog
+	(
+		NULL,
+		"Set output file name",
+		"",
+		outFileName,
+		"PDF files (*.pdf)|*.pdf",
+		wxFD_SAVE | wxFD_OVERWRITE_PROMPT
+	);
+
+	if (save_dialog.ShowModal() == wxID_CANCEL)
+		return;
+	outDirWithFileName = save_dialog.GetPath();
+	wxFileName fileName(outDirWithFileName);
+	outDirName = fileName.GetPath();
+#endif // _DEBUG
+
+	// Create outputImages folder
+	wxDateTime nowDateTime = wxDateTime::Now();
+	wxString timestamp = nowDateTime.Format(wxT("%d_%m_%Y_%H_%M_%S"));
+	auto outTempDirName = wxString("ReportGeneration_" + timestamp + "\\");
+
+	// Format the date and time
+	auto tempFolderPath = outDirName + "\\" + outTempDirName;
+	wxFileName tempFolder(tempFolderPath);
+
+	// Check if the folder exists
+	if (!tempFolder.DirExists()) 
 	{
+		// Try to create the folder
+		if (!wxFileName::Mkdir(tempFolderPath, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL)) 
+			return;
 	}
-	else if (retCode == wxID_OK)
-	{
-	}
+
+	auto blackImagePath = dialog.GetBlackImagePath();
+	auto whiteImagePath = dialog.GetWhiteImagePath();
+	auto imagesForCalculationPath = dialog.GetImagesForCalculationPaths();
+
+	cv::Mat whiteImage = cv::imread(whiteImagePath.ToStdString(), cv::IMREAD_GRAYSCALE);
+	cv::Mat blackImage = cv::imread(blackImagePath.ToStdString(), cv::IMREAD_GRAYSCALE);
+
+	if (whiteImage.size() != blackImage.size() 
+		|| whiteImage.type() != blackImage.type()) return;
+
+	cv::Mat numerator, denominator, correctedImage;
+	//cv::Mat epsilon = cv::Mat::zeros(denominator.size(), denominator.type());
+	//cv::add(epsilon, cv::Scalar(1e-6), epsilon);
+
+	cv::subtract(whiteImage, blackImage, denominator, cv::noArray(), CV_32F);
+	cv::add(denominator, cv::Scalar(1e-6), denominator);
+	//denominator += epsilon;
+
+    for (const auto& filePath : imagesForCalculationPath)
+    {
+		cv::Mat rawImage = cv::imread(filePath.ToStdString(), cv::IMREAD_GRAYSCALE);
+		if (rawImage.size() != blackImage.size() || rawImage.type() != blackImage.type()) continue;
+
+		cv::subtract(rawImage, blackImage, numerator, cv::noArray(), CV_32F);
+
+		cv::divide(numerator, denominator, correctedImage);
+		correctedImage.convertTo(correctedImage, rawImage.type());
+
+        wxFileName file(filePath);
+        auto correctedFileName = wxString("ffc_") + file.GetFullName();
+		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
+		cv::imwrite(correctedFileNameWithPath.ToStdString(), correctedImage);
+    }
+
 }
 
 auto cMain::EnableControlsAfterCapturing() -> void

@@ -648,8 +648,9 @@ auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -
     );
 
     if (dlg.ShowModal() != wxID_OK) return;
-    file_path = std::string(dlg.GetPath().mbc_str());
+    dlg.GetPaths(filePaths);
 #endif // _DEBUG
+    m_ImagesForCalculationPathsArray = filePaths;
 
     wxString fileNames{};
     int i{};

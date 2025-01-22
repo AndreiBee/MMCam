@@ -77,7 +77,9 @@ public:
         else
             return cv::Mat();
     };
-
+    auto GetBlackImagePath() const -> wxString { return m_BlackImagePath; };
+    auto GetWhiteImagePath() const -> wxString { return m_WhiteImagePath; };
+    auto GetImagesForCalculationPaths() const -> wxArrayString { return m_ImagesForCalculationPathsArray; };
 
 private:
     wxPanel* CreateSettingsPage(wxWindow* parent);
@@ -120,6 +122,7 @@ protected:
 
     cv::Mat m_BlackImageMat{}, m_WhiteImageMat{};
     wxString m_BlackImagePath{}, m_WhiteImagePath{};
+    wxArrayString m_ImagesForCalculationPathsArray{};
 
     wxImageList* m_imageList;
 
