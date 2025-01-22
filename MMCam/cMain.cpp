@@ -67,6 +67,8 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_FIRST_STAGE_CHOICE, cMain::OnFirstStageChoice)
 	/* Second Stage */
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_MT_SECOND_STAGE_CHOICE, cMain::OnSecondStageChoice)
+	/* Generate Report */
+	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN, cMain::OnGenerateReportBtn)
 	/* Start Capturing */
 	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, cMain::OnStartStopCapturingTglButton)
 	/* Start\Stop Live Capturing */
@@ -116,6 +118,11 @@ cMain::cMain(const wxString& title_)
 	// Press Set Out Dir Button
 	{
 		wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN);
+		ProcessEvent(artEvt);
+	}
+	// Press Generate Button
+	{
+		wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN);
 		ProcessEvent(artEvt);
 	}
 #endif // _DEBUG
@@ -1527,7 +1534,10 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 void cMain::OnOpenSettings(wxCommandEvent& evt)
 {
 	m_CamPreview->SetFocus();
+#ifndef _DEBUG
 	m_Settings->ShowModal();
+#endif // !_DEBUG
+
 	if (!m_Settings->IsActive())
 	{
 		m_CamPreview->SetPixelSizeUM(m_Settings->GetPixelSizeUM());
@@ -2342,6 +2352,28 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 	//}
 	////m_StopLiveCapturing = false;
 	//StartLiveCapturing();
+}
+
+auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
+{
+	auto inputParameters = GenerateReportVariables::InputParameters();
+	inputParameters.pixelSizeUM = m_Settings->GetPixelSizeUM();
+	inputParameters.widthROIMM = m_Settings->GetCropSizeMM();
+
+	cGenerateReportDialog dialog
+	(
+		this,
+		inputParameters
+	);
+
+	auto retCode = dialog.ShowModal();
+
+	if (retCode == wxID_CANCEL)
+	{
+	}
+	else if (retCode == wxID_OK)
+	{
+	}
 }
 
 auto cMain::EnableControlsAfterCapturing() -> void

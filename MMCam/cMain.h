@@ -17,11 +17,12 @@
 
 #include "cCamPreview.h"
 #include "cSettings.h"
+#include "cGenerateReportDialog.h"
 
 #include "src/img/logo.xpm"
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 12
+#define MINOR_VERSION 13
 
 namespace MainFrameVariables
 {
@@ -650,6 +651,8 @@ private:
 	void OnSecondStageChoice(wxCommandEvent& evt);
 	/* Changed Exposure value */
 	void ExposureValueChanged(wxCommandEvent& evt);
+	/* Generate Report */
+	auto OnGenerateReportBtn(wxCommandEvent& evt) -> void;
 	/* Start Capturing */
 	void OnStartStopCapturingTglButton(wxCommandEvent& evt);
 	auto EnableControlsAfterCapturing() -> void;

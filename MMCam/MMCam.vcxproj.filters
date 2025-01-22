@@ -93,6 +93,9 @@
     <ClInclude Include="FWHMCalculation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cGenerateReportDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cApp.cpp">
@@ -151,6 +154,9 @@
     </ClCompile>
     <ClCompile Include="..\MaterialDesign\wxSimpleIconsArt.cpp">
       <Filter>Source Files\MaterialDesign</Filter>
+    </ClCompile>
+    <ClCompile Include="cGenerateReportDialog.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
