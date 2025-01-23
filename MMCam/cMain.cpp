@@ -2426,7 +2426,12 @@ auto cMain::ApplyFFCOnData
 
 auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap
 {
-	auto outImageSize = wxSize(1.2 * imgWidth, 1.2 * imgWidth);
+	auto scaleFactor = 2500 / imgWidth;
+	scaleFactor = scaleFactor < 1 ? 1 : scaleFactor;
+	wxImage colormapImage(scaleFactor * imgWidth, scaleFactor * imgWidth);
+
+	auto outImageSize = wxSize(1.2 * colormapImage.GetWidth(), 1.2 * colormapImage.GetHeight());
+
 	wxBitmap bitmap(outImageSize.GetWidth(), outImageSize.GetHeight());
 	wxMemoryDC dc(bitmap);
 
@@ -2434,26 +2439,37 @@ auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth
 	dc.SetBackground(*wxWHITE_BRUSH);
 	dc.Clear();
 
-
-	wxImage colormapImage(imgWidth, imgWidth);
 	{
 		unsigned short current_value{};
 		unsigned char red{}, green{}, blue{};
 		unsigned long long position_in_data_pointer{};
 
-		for (auto y{ 0 }; y < imgWidth; ++y)
+		for (auto y{ 0 }; y < colormapImage.GetHeight(); y += scaleFactor)
 		{
-			for (auto x{ 0 }; x < imgWidth; ++x)
+			for (auto x{ 0 }; x < colormapImage.GetWidth(); x += scaleFactor)
 			{
 				current_value = inData[position_in_data_pointer];
 				m_CamPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
-				colormapImage.SetRGB(x, y, red, green, blue);
+				for (auto yInside{ y }; yInside < y + scaleFactor; ++yInside)
+				{
+					for (auto xInside{ x }; xInside < x + scaleFactor; ++xInside)
+					{
+						colormapImage.SetRGB(xInside, yInside, red, green, blue);
+					}
+				}
 				++position_in_data_pointer;
 			}
 		}
 	}
 	wxBitmap imageBitmap(colormapImage);
-	dc.DrawBitmap(imageBitmap, 0.1 * imgWidth, 0.1 * imgWidth, true);
+	//wxBitmap imageBitmap(colormapImage.Scale(imgWidth * 4, imgWidth * 4, wxIMAGE_QUALITY_HIGH));
+	dc.DrawBitmap
+	(
+		imageBitmap, 
+		(outImageSize.GetWidth() - colormapImage.GetWidth()) / 2, 
+		(outImageSize.GetHeight() - colormapImage.GetHeight()) / 2,
+		true
+	);
 
 	dc.SelectObject(wxNullBitmap);
 	return bitmap;
