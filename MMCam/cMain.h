@@ -675,6 +675,27 @@ private:
 
 	auto CreateMetadataFile() -> void;
 
+	auto FindSpotCenterCoordinates(const cv::Mat& signal, int* bestX, int* bestY) -> void;
+
+	auto CropDataIntoArray
+	(
+		const cv::Mat& inData, 
+		const int startX, 
+		const int startY, 
+		const int windowWidth,
+		unsigned short* const outData
+	) -> void;
+
+	auto ApplyFFCOnData
+	(
+		unsigned short* const inRawData, 
+		unsigned short* const inBlackData, 
+		unsigned short* const inWhiteData, 
+		const int imgWidth
+	) -> void;
+
+	auto CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap;
+
 private:
 	/* Settings Menu */
 	std::unique_ptr<cSettings> m_Settings{};

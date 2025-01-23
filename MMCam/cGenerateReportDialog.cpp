@@ -624,18 +624,18 @@ auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -
 	wxArrayString filePaths{};
 #ifdef _DEBUG
 	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_01_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_02_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_03_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_04_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_05_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_06_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_07_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_08_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_09_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_10_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_11_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_12_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
-	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_13_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_02_11H_15M_09S_8000us_1A_11_305_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_03_11H_15M_09S_8000us_1A_11_330_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_04_11H_15M_09S_8000us_1A_11_355_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_05_11H_15M_09S_8000us_1A_11_380_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_06_11H_15M_09S_8000us_1A_11_405_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_07_11H_15M_09S_8000us_1A_11_430_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_08_11H_15M_09S_8000us_1A_11_455_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_09_11H_15M_09S_8000us_1A_11_480_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_10_11H_15M_09S_8000us_1A_11_505_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_11_11H_15M_09S_8000us_1A_11_530_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_12_11H_15M_09S_8000us_1A_11_555_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_13_11H_15M_09S_8000us_1A_11_580_2A_0_000.tif");
 #else
     wxFileDialog dlg
     (

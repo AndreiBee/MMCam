@@ -2303,6 +2303,162 @@ auto cMain::CreateMetadataFile() -> void
 	}
 }
 
+auto cMain::FindSpotCenterCoordinates
+(
+	const cv::Mat& signal, 
+	int* bestX, 
+	int* bestY
+) -> void
+{
+	auto findCenterFWHM = []
+	(
+		const cv::Mat& data1D, 
+		const int maxI, 
+		const double hMax, 
+		int* left, 
+		int* right
+		) 
+		{
+			auto leftFWHM = -1, rightFWHM = -1;
+			// Looking for the left FWHM value
+			for (int i = maxI; i >= 0; --i) 
+			{
+				auto value = data1D.at<float>(i);
+				if (leftFWHM == -1 && value < hMax)
+				{
+					leftFWHM = i + 1;
+					break;
+				}
+			}
+
+			// Looking for the right FWHM value
+			for (int i = maxI; i < data1D.total(); ++i) 
+			{
+				auto value = data1D.at<float>(i);
+				if (leftFWHM != -1 && value < hMax)
+				{
+					rightFWHM = i - 1;
+					break;
+				}
+			}
+
+			*left = leftFWHM;
+			*right = rightFWHM;
+		};
+
+	// Rows
+	{
+		double minVal{}, maxVal{};
+		cv::Point maxPoint{};
+		// 1D array for row sums
+		cv::Mat rowSums;
+		cv::reduce(signal, rowSums, 1, cv::REDUCE_SUM, CV_32F); // Reduce along columns (dim=1)
+		cv::minMaxLoc(rowSums, &minVal, &maxVal, nullptr, &maxPoint);
+
+		auto halfMax = (maxVal - minVal) / 2.0 + minVal;
+		int maxIndex = maxPoint.y; // x is used for 1D row data
+
+		auto leftFWHM = -1, rightFWHM = -1;
+
+		auto rowSumsType = rowSums.type();
+		findCenterFWHM(rowSums, maxIndex, halfMax, &leftFWHM, &rightFWHM);
+
+		*bestY = (rightFWHM - leftFWHM) / 2 + leftFWHM;
+	}
+
+	// Columns
+	{
+		double minVal{}, maxVal{};
+		cv::Point maxPoint{};
+		// 1D array for column sums
+		cv::Mat colSums;
+		cv::reduce(signal, colSums, 0, cv::REDUCE_SUM, CV_32F); // Reduce along rows (dim=0)
+		cv::minMaxLoc(colSums, &minVal, &maxVal, nullptr, &maxPoint);
+
+		auto halfMax = (maxVal - minVal) / 2.0 + minVal;
+		int maxIndex = maxPoint.x; // x is used for 1D row data
+
+		auto leftFWHM = -1, rightFWHM = -1;
+
+		findCenterFWHM(colSums, maxIndex, halfMax, &leftFWHM, &rightFWHM);
+
+		*bestX = (rightFWHM - leftFWHM) / 2 + leftFWHM;
+	}
+
+}
+
+auto cMain::CropDataIntoArray
+(
+	const cv::Mat& inData, 
+	const int startX, 
+	const int startY, 
+	const int windowWidth, 
+	unsigned short* const outData
+) -> void
+{
+	for (auto y = startY; y < startY + windowWidth; ++y)
+	{
+		for (auto x = startX; x < startX + windowWidth; ++x)
+		{
+			outData[(y - startY) * windowWidth + (x - startX)] = inData.at<unsigned short>(y * inData.cols + x);
+		}
+	}
+}
+
+auto cMain::ApplyFFCOnData
+(
+	unsigned short* const inRawData, 
+	unsigned short* const inBlackData, 
+	unsigned short* const inWhiteData, 
+	const int imgWidth
+) -> void
+{
+	for (auto i{ 0 }; i < imgWidth * imgWidth; ++i)
+	{
+		double numerator = (double)inRawData[i] - (double)inBlackData[i];
+		//double denominator = std::max(1.0, (double)inWhiteData[i] - (double)inBlackData[i]);
+		//auto outValue = std::max(0.0, numerator / denominator);
+		auto outValue = std::max(0.0, numerator);
+		outValue = std::min(outValue, (double)USHRT_MAX);
+		inRawData[i] = static_cast<unsigned short>(outValue);
+	}
+}
+
+auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap
+{
+	auto outImageSize = wxSize(1.2 * imgWidth, 1.2 * imgWidth);
+	wxBitmap bitmap(outImageSize.GetWidth(), outImageSize.GetHeight());
+	wxMemoryDC dc(bitmap);
+
+	// Clear the bitmap
+	dc.SetBackground(*wxWHITE_BRUSH);
+	dc.Clear();
+
+
+	wxImage colormapImage(imgWidth, imgWidth);
+	{
+		unsigned short current_value{};
+		unsigned char red{}, green{}, blue{};
+		unsigned long long position_in_data_pointer{};
+
+		for (auto y{ 0 }; y < imgWidth; ++y)
+		{
+			for (auto x{ 0 }; x < imgWidth; ++x)
+			{
+				current_value = inData[position_in_data_pointer];
+				m_CamPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
+				colormapImage.SetRGB(x, y, red, green, blue);
+				++position_in_data_pointer;
+			}
+		}
+	}
+	wxBitmap imageBitmap(colormapImage);
+	dc.DrawBitmap(imageBitmap, 0.1 * imgWidth, 0.1 * imgWidth, true);
+
+	dc.SelectObject(wxNullBitmap);
+	return bitmap;
+}
+
 bool cMain::Cancelled()
 {
 	wxCriticalSectionLocker lock(m_CSCancelled);
@@ -2359,6 +2515,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	auto inputParameters = GenerateReportVariables::InputParameters();
 	inputParameters.pixelSizeUM = m_Settings->GetPixelSizeUM();
 	inputParameters.widthROIMM = m_Settings->GetCropSizeMM();
+	auto cropWindowSize = static_cast<int>(std::ceil(inputParameters.widthROIMM / (inputParameters.pixelSizeUM / 1000.0)));
 
 	cGenerateReportDialog dialog
 	(
@@ -2416,34 +2573,89 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	auto whiteImagePath = dialog.GetWhiteImagePath();
 	auto imagesForCalculationPath = dialog.GetImagesForCalculationPaths();
 
-	cv::Mat whiteImage = cv::imread(whiteImagePath.ToStdString(), cv::IMREAD_GRAYSCALE);
-	cv::Mat blackImage = cv::imread(blackImagePath.ToStdString(), cv::IMREAD_GRAYSCALE);
+	cv::Mat whiteImage = cv::imread(whiteImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
+	cv::Mat blackImage = cv::imread(blackImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
 
-	if (whiteImage.size() != blackImage.size() 
-		|| whiteImage.type() != blackImage.type()) return;
+	//if (whiteImage.size() != blackImage.size() 
+	//	|| whiteImage.type() != blackImage.type()) return;
 
-	cv::Mat numerator, denominator, correctedImage;
-	//cv::Mat epsilon = cv::Mat::zeros(denominator.size(), denominator.type());
-	//cv::add(epsilon, cv::Scalar(1e-6), epsilon);
+	//cv::Mat numerator, denominator, correctedImage;
+	////cv::Mat epsilon = cv::Mat::zeros(denominator.size(), denominator.type());
+	////cv::add(epsilon, cv::Scalar(1e-6), epsilon);
 
-	cv::subtract(whiteImage, blackImage, denominator, cv::noArray(), CV_32F);
-	cv::add(denominator, cv::Scalar(1e-6), denominator);
+	//cv::subtract(whiteImage, blackImage, denominator, cv::noArray(), CV_32F);
+	//cv::add(denominator, cv::Scalar(1e-6), denominator);
 	//denominator += epsilon;
 
+	auto croppedRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
+	auto croppedBlackRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
+	auto croppedWhiteRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
+
+	int bestXPos{}, bestYPos{};
     for (const auto& filePath : imagesForCalculationPath)
     {
-		cv::Mat rawImage = cv::imread(filePath.ToStdString(), cv::IMREAD_GRAYSCALE);
+		if (!wxFileName::FileExists(filePath)) continue;
+		cv::Mat rawImage = cv::imread(filePath.ToStdString(), cv::IMREAD_UNCHANGED);
 		if (rawImage.size() != blackImage.size() || rawImage.type() != blackImage.type()) continue;
 
-		cv::subtract(rawImage, blackImage, numerator, cv::noArray(), CV_32F);
+		FindSpotCenterCoordinates(rawImage, &bestXPos, &bestYPos);
+		if (bestXPos - cropWindowSize / 2 < 0 || bestXPos + cropWindowSize / 2 >= rawImage.cols
+			|| bestYPos - cropWindowSize / 2 < 0 || bestYPos + cropWindowSize / 2 >= rawImage.rows) continue;
 
-		cv::divide(numerator, denominator, correctedImage);
-		correctedImage.convertTo(correctedImage, rawImage.type());
+		auto startX = bestXPos - cropWindowSize / 2;
+		auto startY = bestYPos - cropWindowSize / 2;
+
+		// RAW Data
+		CropDataIntoArray
+		(
+			rawImage, 
+			startX, 
+			startY, 
+			cropWindowSize, 
+			croppedRAWData.get()
+		);
+
+		// Black FFC RAW Data
+		CropDataIntoArray
+		(
+			blackImage, 
+			startX, 
+			startY, 
+			cropWindowSize, 
+			croppedBlackRAWData.get()
+		);
+
+		// White FFC RAW Data
+		CropDataIntoArray
+		(
+			whiteImage, 
+			startX, 
+			startY, 
+			cropWindowSize, 
+			croppedWhiteRAWData.get()
+		);
+		
+		ApplyFFCOnData
+		(
+			croppedRAWData.get(), 
+			croppedBlackRAWData.get(), 
+			croppedWhiteRAWData.get(), 
+			cropWindowSize
+		);
+
+		auto bitmap = CreateColorMapImage(croppedRAWData.get(), cropWindowSize);
+	
+		//cv::subtract(rawImage, blackImage, numerator, cv::noArray(), CV_32F);
+
+		//cv::divide(numerator, denominator, correctedImage);
+		//correctedImage.convertTo(correctedImage, rawImage.type());
 
         wxFileName file(filePath);
+		file.SetExt("bmp");
         auto correctedFileName = wxString("ffc_") + file.GetFullName();
 		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
-		cv::imwrite(correctedFileNameWithPath.ToStdString(), correctedImage);
+		//cv::imwrite(correctedFileNameWithPath.ToStdString(), correctedImage);
+		if (!bitmap.SaveFile(correctedFileNameWithPath, wxBITMAP_TYPE_BMP)) return;
     }
 
 }
