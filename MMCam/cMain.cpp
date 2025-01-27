@@ -2424,6 +2424,7 @@ auto cMain::ApplyFFCOnData
 	}
 }
 
+
 auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap
 {
 	auto scaleFactor = 2500 / imgWidth;
@@ -2607,7 +2608,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	auto croppedBlackRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 	auto croppedWhiteRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 
+	auto horizontalFWHM = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
+	auto verticalFWHM = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
+
 	int bestXPos{}, bestYPos{};
+	int i{};
+	wxArrayString imagesPathArray{};
     for (const auto& filePath : imagesForCalculationPath)
     {
 		if (!wxFileName::FileExists(filePath)) continue;
@@ -2659,7 +2665,29 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			cropWindowSize
 		);
 
-		auto bitmap = CreateColorMapImage(croppedRAWData.get(), cropWindowSize);
+		auto horizontalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
+		auto verticalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
+
+		FWHM::CalculateSumVertically(croppedRAWData.get(), cropWindowSize, cropWindowSize, horizontalSumArray.get());
+		horizontalFWHM[i] = FWHM::CalculateFWHM
+			(
+				horizontalSumArray.get(), 
+				cropWindowSize
+			);
+		horizontalFWHM[i] = horizontalFWHM[i] == - 1.0 ? 0.0 : horizontalFWHM[i];
+		horizontalFWHM[i] *= inputParameters.pixelSizeUM;
+
+		FWHM::CalculateSumHorizontally(croppedRAWData.get(), cropWindowSize, cropWindowSize, verticalSumArray.get());
+		verticalFWHM[i] = FWHM::CalculateFWHM
+			(
+				verticalSumArray.get(), 
+				cropWindowSize
+			);
+		verticalFWHM[i] = verticalFWHM[i] == - 1.0 ? 0.0 : verticalFWHM[i];
+		verticalFWHM[i] *= inputParameters.pixelSizeUM;
+
+
+		//auto bitmap = CreateColorMapImage(croppedRAWData.get(), cropWindowSize);
 	
 		//cv::subtract(rawImage, blackImage, numerator, cv::noArray(), CV_32F);
 
@@ -2667,13 +2695,52 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		//correctedImage.convertTo(correctedImage, rawImage.type());
 
         wxFileName file(filePath);
-		file.SetExt("bmp");
+		//file.SetExt("bmp");
+		file.SetExt("png");
         auto correctedFileName = wxString("ffc_") + file.GetFullName();
 		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
+		imagesPathArray.Add(correctedFileNameWithPath);
+		WriteTempJSONImageDataToTXTFile
+		(
+			croppedRAWData.get(), 
+			cropWindowSize, 
+			cropWindowSize, 
+			inputParameters.pixelSizeUM,
+			correctedFileNameWithPath
+		);
+
+		++i;
 		//cv::imwrite(correctedFileNameWithPath.ToStdString(), correctedImage);
-		if (!bitmap.SaveFile(correctedFileNameWithPath, wxBITMAP_TYPE_BMP)) return;
+		//if (!bitmap.SaveFile(correctedFileNameWithPath, wxBITMAP_TYPE_BMP)) return;
     }
 
+#ifndef _DEBUG
+	if (!Invoke2DPlotsCreation(imagesPathArray)) return;
+#endif // DEBUG
+
+	//wxFileName jsonFWHMFileName(imagesForCalculationPath[0]);
+	//jsonFWHMFileName.SetFullName("fwhm_data.txt");
+
+	// FWHM Plot Creation
+	{
+		auto fwhmFileName = tempFolderPath + "fwhm_data.png";
+		wxFileName file(fwhmFileName);
+
+		WriteTempJSONFWHMDataToTXTFile
+		(
+			horizontalFWHM.get(),
+			verticalFWHM.get(),
+			imagesForCalculationPath.GetCount(),
+			22.5,
+			0.025,
+			file.GetFullPath()
+		);
+
+
+		//file.SetExt("bmp");
+		file.SetExt("txt");
+		if (!InvokeFWHMPlotCreation(file.GetFullPath()));
+	}
 }
 
 auto cMain::EnableControlsAfterCapturing() -> void

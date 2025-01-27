@@ -694,6 +694,153 @@ private:
 		const int imgWidth
 	) -> void;
 
+	auto WriteJSONDataToFile(const std::string& filePath, const std::string& data) -> void
+	{
+		std::ofstream outFile(filePath);
+		if (!outFile) 
+		{
+			throw std::runtime_error("Failed to create temporary file for data.");
+		}
+
+		outFile << data;
+		outFile.close();
+	}
+
+	auto WriteTempJSONImageDataToTXTFile
+	(
+		unsigned short* const dataPtr,
+		int width,
+		int height,
+		double pixelSizeUM,
+		wxString filePath
+	) -> void
+	{
+		using json = nlohmann::json;
+
+		// Prepare JSON string with data
+		json j;
+		j["data"] = std::vector<unsigned short>(dataPtr, dataPtr + (width * height));
+		j["width"] = width;
+		j["height"] = height;
+		j["pixelSizeUM"] = pixelSizeUM;
+		j["filePath"] = filePath;
+
+		std::string jsonString = j.dump();
+
+		// Create wxFileName object
+		wxFileName fileName(filePath);
+
+		// Change the file extension
+		fileName.SetExt("txt");
+
+		WriteJSONDataToFile(fileName.GetFullPath().ToStdString(), jsonString);
+	};
+
+	auto WriteTempJSONFWHMDataToTXTFile
+	(
+		double* const horizontalFWHMData,
+		double* const verticalFWHMData,
+		const int dataSize,
+		double startX,
+		double step,
+		wxString filePath
+	) -> void
+	{
+		using json = nlohmann::json;
+
+		// Prepare JSON string with data
+		json j;
+		j["horizontalData"] = std::vector<unsigned short>(horizontalFWHMData, horizontalFWHMData + dataSize);
+		j["verticalData"] = std::vector<unsigned short>(verticalFWHMData, verticalFWHMData + dataSize);
+		j["dataSize"] = dataSize;
+		j["startX"] = startX;
+		j["step"] = step;
+		j["filePath"] = filePath;
+
+		std::string jsonString = j.dump();
+
+		// Create wxFileName object
+		wxFileName fileName(filePath);
+
+		// Change the file extension
+		fileName.SetExt("txt");
+
+		WriteJSONDataToFile(fileName.GetFullPath().ToStdString(), jsonString);
+	};
+
+
+	auto Invoke2DPlotsCreation(wxArrayString filePaths) -> bool
+	{
+		constexpr auto raise_exception_msg = [](int code) 
+		{
+			wxString title = "Python execution error";
+			wxMessageBox(
+				wxT
+				(
+					"Failed to run Python script. Error code: " + wxString::Format(wxT("%i"), code)
+				),
+				title,
+				wxICON_ERROR);
+		};
+
+
+		std::string command = "cmd /c \"src\\ReportGenerator\\.venv\\Scripts\\activate && ";
+
+		for (const auto& filePath : filePaths)
+		{
+			wxFileName fileName(filePath);
+			fileName.SetExt("txt");
+			command += "py.exe src\\ReportGenerator\\visualize2DPlot.py \"" + fileName.GetFullPath().ToStdString() + "\" && ";
+		}
+		command += "deactivate\"";
+
+		// Execute the Python script
+		int result{};
+
+		result = std::system(command.c_str());
+		if (result != 0)
+		{
+			raise_exception_msg(result);
+			return false;
+		}
+
+		return true;
+	}
+
+	auto InvokeFWHMPlotCreation(wxString filePath) -> bool
+	{
+		constexpr auto raise_exception_msg = [](int code) 
+		{
+			wxString title = "Python execution error";
+			wxMessageBox(
+				wxT
+				(
+					"Failed to run Python script. Error code: " + wxString::Format(wxT("%i"), code)
+				),
+				title,
+				wxICON_ERROR);
+		};
+
+
+		std::string command = "cmd /c \"src\\ReportGenerator\\.venv\\Scripts\\activate && ";
+
+		command += "py.exe src\\ReportGenerator\\visualizeFWHMPlot.py \"" + filePath.ToStdString() + "\" && ";
+		command += "deactivate\"";
+
+		// Execute the Python script
+		int result{};
+
+		result = std::system(command.c_str());
+		if (result != 0)
+		{
+			raise_exception_msg(result);
+			return false;
+		}
+
+		return true;
+	}
+
+
 	auto CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap;
 
 private:
