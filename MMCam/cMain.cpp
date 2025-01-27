@@ -2622,6 +2622,9 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	auto gainMax = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
 	auto gainFWHM = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
 
+	auto bestHorizontalIntensityProfile = std::make_unique<unsigned short[]>(cropWindowSize);
+	auto bestVerticalIntensityProfile = std::make_unique<unsigned short[]>(cropWindowSize);
+
 	int bestXPos{}, bestYPos{};
 	int i{};
 	wxArrayString imagesPathArray{};
@@ -2692,6 +2695,9 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			bestPosInGain = i;
 			bestFocusPos = startPositionMM + i * stepMM;
 			memcpy(bestCroppedRAWData.get(), croppedRAWData.get(), sizeof(unsigned short) * cropWindowSize * cropWindowSize);
+			// Need to copy best Horizontal and Vertical line profiles
+			// 
+			//memcpy(bestHorizontalIntensityProfile.get(), bestCroppedRAWData[])
 		}
 
 		auto horizontalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
@@ -2755,21 +2761,42 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 	// Best Position Plot Creation
 	{
-		auto fileNameWithPath = tempFolderPath + "best2D.png";
-		wxFileName file(fileNameWithPath);
+		auto best2DFileNameWithPath = tempFolderPath + "best2D.png";
+		wxFileName file(best2DFileNameWithPath);
 
-		WriteTempJSONImageDataToTXTFile
-		(
-			bestCroppedRAWData.get(), 
-			cropWindowSize, 
-			cropWindowSize, 
-			inputParameters.pixelSizeUM,
-			file.GetFullPath()
-		);
+		// 2D Image
+		{
+			WriteTempJSONImageDataToTXTFile
+			(
+				bestCroppedRAWData.get(),
+				cropWindowSize,
+				cropWindowSize,
+				inputParameters.pixelSizeUM,
+				file.GetFullPath()
+			);
 
-		//file.SetExt("bmp");
-		file.SetExt("txt");
-		if (!InvokePlotGraphCreation("plot3DGraph", file.GetFullPath()));
+			file.SetExt("txt");
+			wxArrayString arrStr{};
+			arrStr.Add(file.GetFullPath());
+			if (!Invoke2DPlotsCreation(arrStr)) return;
+		}
+
+		// 3D Image
+		{
+			file.SetFullName("best3D.png");
+
+			WriteTempJSONImageDataToTXTFile
+			(
+				bestCroppedRAWData.get(),
+				cropWindowSize,
+				cropWindowSize,
+				inputParameters.pixelSizeUM,
+				file.GetFullPath()
+			);
+
+			file.SetExt("txt");
+			if (!InvokePlotGraphCreation("plot3DGraph", file.GetFullPath())) return;
+		}
 	}
 
 	//auto resultMaxGain = std::max_element(gainMax.get(), gainMax.get() + imagesForCalculationPath.GetCount());
