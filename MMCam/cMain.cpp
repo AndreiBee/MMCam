@@ -2541,10 +2541,17 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	);
 
 	auto retCode = dialog.ShowModal();
+
+	auto startPositionMM = 22.5;
+	auto stepMM = 0.025;
 	wxString outDirName{}, outFileName{};;
 	wxString outDirWithFileName{};
 
 	if (retCode == wxID_CANCEL) return;
+
+#ifndef _DEBUG
+	wxBusyCursor busy;
+#endif // !_DEBUG
 
 #ifdef _DEBUG
 	outDirName = wxString("D:\\Projects\\RIGAKU\\MMCam\\MMCam\\src\\dbg_fld");
@@ -2607,13 +2614,20 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	auto croppedRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 	auto croppedBlackRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 	auto croppedWhiteRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
+	auto bestCroppedRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 
 	auto horizontalFWHM = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
 	auto verticalFWHM = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
 
+	auto gainMax = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
+	auto gainFWHM = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
+
 	int bestXPos{}, bestYPos{};
 	int i{};
 	wxArrayString imagesPathArray{};
+	double bestGainMax{};
+	int bestPosInGain{};
+	double bestFocusPos{ startPositionMM };
     for (const auto& filePath : imagesForCalculationPath)
     {
 		if (!wxFileName::FileExists(filePath)) continue;
@@ -2656,7 +2670,14 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			cropWindowSize, 
 			croppedWhiteRAWData.get()
 		);
-		
+
+		gainMax[i] = FindGainMaxInArrayData
+		(
+			croppedRAWData.get(), 
+			croppedWhiteRAWData.get(), 
+			cropWindowSize
+		);
+
 		ApplyFFCOnData
 		(
 			croppedRAWData.get(), 
@@ -2664,6 +2685,14 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			croppedWhiteRAWData.get(), 
 			cropWindowSize
 		);
+
+		if (gainMax[i] > bestGainMax)
+		{
+			bestGainMax = gainMax[i];
+			bestPosInGain = i;
+			bestFocusPos = startPositionMM + i * stepMM;
+			memcpy(bestCroppedRAWData.get(), croppedRAWData.get(), sizeof(unsigned short) * cropWindowSize * cropWindowSize);
+		}
 
 		auto horizontalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
 		auto verticalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
@@ -2686,6 +2715,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		verticalFWHM[i] = verticalFWHM[i] == - 1.0 ? 0.0 : verticalFWHM[i];
 		verticalFWHM[i] *= inputParameters.pixelSizeUM;
 
+		gainFWHM[i] = FindGainFWHMInArrayData
+		(
+			croppedRAWData.get(), 
+			croppedWhiteRAWData.get(), 
+			cropWindowSize
+		);
 
 		//auto bitmap = CreateColorMapImage(croppedRAWData.get(), cropWindowSize);
 	
@@ -2718,28 +2753,87 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	if (!Invoke2DPlotsCreation(imagesPathArray)) return;
 #endif // DEBUG
 
-	//wxFileName jsonFWHMFileName(imagesForCalculationPath[0]);
-	//jsonFWHMFileName.SetFullName("fwhm_data.txt");
+	// Best Position Plot Creation
+	{
+		auto fileNameWithPath = tempFolderPath + "best2D.png";
+		wxFileName file(fileNameWithPath);
+
+		WriteTempJSONImageDataToTXTFile
+		(
+			bestCroppedRAWData.get(), 
+			cropWindowSize, 
+			cropWindowSize, 
+			inputParameters.pixelSizeUM,
+			file.GetFullPath()
+		);
+
+		//file.SetExt("bmp");
+		file.SetExt("txt");
+		if (!InvokePlotGraphCreation("plot3DGraph", file.GetFullPath()));
+	}
+
+	//auto resultMaxGain = std::max_element(gainMax.get(), gainMax.get() + imagesForCalculationPath.GetCount());
+	//auto distanceMaxGain = std::distance(gainMax.get(), resultMaxGain);
+
+	//auto resultFWHMGain = std::max_element(gainFWHM.get(), gainFWHM.get() + imagesForCalculationPath.GetCount());
+	//auto distanceFWHMGain = std::distance(gainFWHM.get(), resultFWHMGain);
+
+	//auto bestInGain = static_cast<int>(distanceMaxGain);
 
 	// FWHM Plot Creation
 	{
 		auto fwhmFileName = tempFolderPath + "fwhm_data.png";
 		wxFileName file(fwhmFileName);
 
-		WriteTempJSONFWHMDataToTXTFile
+		WriteTempJSONDataToTXTFile
 		(
 			horizontalFWHM.get(),
+			"Horizontal",
+			"b",
+			"Focal length [mm]",
 			verticalFWHM.get(),
+			"Vertical",
+			"g",
+			"FWHM [mm]",
 			imagesForCalculationPath.GetCount(),
-			22.5,
-			0.025,
+			startPositionMM,
+			stepMM,
+			bestPosInGain,
 			file.GetFullPath()
 		);
 
 
 		//file.SetExt("bmp");
 		file.SetExt("txt");
-		if (!InvokeFWHMPlotCreation(file.GetFullPath()));
+		if (!InvokePlotGraphCreation("plotGraph", file.GetFullPath()));
+	}
+
+	// Gain Plot Creation
+	{
+		auto gainFileName = tempFolderPath + "gain_data.png";
+		wxFileName file(gainFileName);
+
+		WriteTempJSONDataToTXTFile
+		(
+			gainMax.get(),
+			"Gain MAX",
+			"c",
+			"Focal length [mm]",
+			gainFWHM.get(),
+			"Gain FWHM",
+			"m",
+			"Gain [a.u.]",
+			imagesForCalculationPath.GetCount(),
+			startPositionMM,
+			stepMM,
+			bestPosInGain,
+			file.GetFullPath()
+		);
+
+
+		//file.SetExt("bmp");
+		file.SetExt("txt");
+		if (!InvokePlotGraphCreation("plotGraph", file.GetFullPath()));
 	}
 }
 

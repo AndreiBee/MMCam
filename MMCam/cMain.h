@@ -736,13 +736,20 @@ private:
 		WriteJSONDataToFile(fileName.GetFullPath().ToStdString(), jsonString);
 	};
 
-	auto WriteTempJSONFWHMDataToTXTFile
+	auto WriteTempJSONDataToTXTFile
 	(
-		double* const horizontalFWHMData,
-		double* const verticalFWHMData,
+		double* const firstData,
+		std::string firstSmallLabel,
+		std::string firstColor,
+		std::string xLabel,
+		double* const secondData,
+		std::string secondSmallLabel,
+		std::string secondColor,
+		std::string yLabel,
 		const int dataSize,
 		double startX,
 		double step,
+		int bestInGain,
 		wxString filePath
 	) -> void
 	{
@@ -750,11 +757,21 @@ private:
 
 		// Prepare JSON string with data
 		json j;
-		j["horizontalData"] = std::vector<unsigned short>(horizontalFWHMData, horizontalFWHMData + dataSize);
-		j["verticalData"] = std::vector<unsigned short>(verticalFWHMData, verticalFWHMData + dataSize);
+
+		j["firstData"] = std::vector<double>(firstData, firstData + dataSize);
+		j["firstSmallLabel"] = firstSmallLabel;
+		j["firstColor"] = firstColor;
+		j["xLabel"] = xLabel;
+
+		j["secondData"] = std::vector<double>(secondData, secondData + dataSize);
+		j["secondSmallLabel"] = secondSmallLabel;
+		j["secondColor"] = secondColor;
+		j["yLabel"] = yLabel;
+
 		j["dataSize"] = dataSize;
 		j["startX"] = startX;
 		j["step"] = step;
+		j["bestInGain"] = bestInGain;
 		j["filePath"] = filePath;
 
 		std::string jsonString = j.dump();
@@ -768,8 +785,7 @@ private:
 		WriteJSONDataToFile(fileName.GetFullPath().ToStdString(), jsonString);
 	};
 
-
-	auto Invoke2DPlotsCreation(wxArrayString filePaths) -> bool
+	auto Invoke2DPlotsCreation( wxArrayString filePaths) -> bool
 	{
 		constexpr auto raise_exception_msg = [](int code) 
 		{
@@ -807,7 +823,7 @@ private:
 		return true;
 	}
 
-	auto InvokeFWHMPlotCreation(wxString filePath) -> bool
+	auto InvokePlotGraphCreation(wxString pythonFileName, wxString filePath) -> bool
 	{
 		constexpr auto raise_exception_msg = [](int code) 
 		{
@@ -824,7 +840,8 @@ private:
 
 		std::string command = "cmd /c \"src\\ReportGenerator\\.venv\\Scripts\\activate && ";
 
-		command += "py.exe src\\ReportGenerator\\visualizeFWHMPlot.py \"" + filePath.ToStdString() + "\" && ";
+		//command += "py.exe src\\ReportGenerator\\plotGraph.py \"" + filePath.ToStdString() + "\" && ";
+		command += "py.exe src\\ReportGenerator\\" + pythonFileName + ".py \"" + filePath.ToStdString() + "\" && ";
 		command += "deactivate\"";
 
 		// Execute the Python script
@@ -839,6 +856,46 @@ private:
 
 		return true;
 	}
+
+	auto FindGainMaxInArrayData
+	(
+		unsigned short* const inRawData,
+		unsigned short* const inWhiteData,
+		const int imgWidth
+	) -> double
+	{
+		auto maxInRawData = *std::max_element(inRawData, inRawData + imgWidth * imgWidth);
+		auto sum = std::accumulate(inWhiteData, inWhiteData + imgWidth * imgWidth, 0);
+		auto mean = (double)sum / imgWidth / imgWidth;
+
+		return maxInRawData / mean;
+	};
+
+	auto FindGainFWHMInArrayData
+	(
+		unsigned short* const inRawData,
+		unsigned short* const inWhiteData,
+		const int imgWidth
+	) -> double
+	{
+		auto dataSize = imgWidth * imgWidth;
+		auto minMaxElement = std::minmax_element(inRawData, inRawData + dataSize);
+		auto halfMaxValue = (*minMaxElement.second - *minMaxElement.first) / 2 + *minMaxElement.first;
+
+		unsigned long long sumRAW{}, sumWhite{};
+
+		for (auto i{ 0 }; i < dataSize; ++i)
+		{
+			auto value = inRawData[i];
+			if (value > halfMaxValue)
+			{
+				sumRAW += value;
+				sumWhite += inWhiteData[i];
+			}
+		}
+
+		return (double)sumRAW / sumWhite;
+	};
 
 
 	auto CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap;
