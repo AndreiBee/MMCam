@@ -21,6 +21,18 @@
 namespace GenerateReportVariables {
     enum 
     {
+        // First Tab
+        ID_OPTICS_SERIAL_NUMBER_TXT_CTRL,
+        ID_OPTICS_PRODUCT_NUMBER_TXT_CTRL,
+        ID_OPTICS_TYPE_TXT_CTRL,
+        ID_REPORT_NAME_TXT_CTRL,
+        ID_REPORT_AUTHOR_TXT_CTRL,
+        ID_CUSTOMER_TXT_CTRL,
+        ID_START_POSITION_TXT_CTRL,
+        ID_STEP_TXT_CTRL,
+        ID_FOCUS_EXPOSURE_TXT_CTRL,
+        ID_CIRCLE_EXPOSURE_TXT_CTRL,
+        // Second Tab
         ID_IMG_DATA_TYPE,
         ID_IMG_WIDTH,
         ID_IMG_HEIGHT,
@@ -83,7 +95,8 @@ public:
     auto GetImagesForCalculationPaths() const -> wxArrayString { return m_ImagesForCalculationPathsArray; };
 
 private:
-    wxPanel* CreateSettingsPage(wxWindow* parent);
+    wxPanel* CreateReportVariablesPage(wxWindow* parent);
+    wxPanel* CreateFlatFieldPage(wxWindow* parent);
     auto OnOpenBlackImageBtn(wxCommandEvent& evt) -> void;
     auto OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void;
     auto OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void;
@@ -108,6 +121,9 @@ private:
     auto OnExitButtonClicked(wxCommandEvent& evt) -> void;
 
 protected:
+    std::unique_ptr<wxTextCtrl> m_OpticsSerialNumberTxtCtrl{}, m_OpticsProductNumberTxtCtrl{}, m_OpticsTypeTxtCtrl{}, m_AuthorTxtCtrl{}, m_CustomerTxtCtrl{}, m_ReportNameTxtCtrl{};
+    std::unique_ptr<wxTextCtrl> m_StartPositionTxtCtrl{}, m_StepTxtCtrl{}, m_FocusExposureTxtCtrl{}, m_CircleExposureTxtCtrl{};
+
     std::unique_ptr<wxChoice> m_ImgDataTypeChoice{};
     std::unique_ptr<wxTextCtrl> m_ImgWidthTxtCtrl{}, m_ImgHeightTxtCtrl{};
     // Black & White

@@ -28,15 +28,358 @@ cGenerateReportDialog::cGenerateReportDialog
     auto notebook = GetBookCtrl();
     notebook->SetImageList(m_imageList);
 
-    auto mainPanel = CreateSettingsPage(notebook);
+    auto reportVariables = CreateReportVariablesPage(notebook);
+    auto flatFieldPage = CreateFlatFieldPage(notebook);
 
-    notebook->AddPage(mainPanel, "Flat Field Correction", true, 0);
+    notebook->AddPage(reportVariables, "Report Variables", true, 0);
+    notebook->AddPage(flatFieldPage, "Flat Field Correction", false, 0);
 
     LayoutDialog();
 
 }
 
-wxPanel* cGenerateReportDialog::CreateSettingsPage(wxWindow* parent)
+wxPanel* cGenerateReportDialog::CreateReportVariablesPage(wxWindow* parent)
+{
+    wxPanel* panel = new wxPanel(parent, wxID_ANY);
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+
+    wxStaticBox* reportParametersStaticBox = new wxStaticBox(panel, wxID_ANY, "Report Parameters");
+
+
+    {
+        wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(reportParametersStaticBox, wxVERTICAL);
+
+        wxSizer* const settings_grid_sizer = new wxGridSizer(2);
+
+        // Report Name
+        {
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Report Name:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            m_ReportNameTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_REPORT_NAME_TXT_CTRL,
+                    wxString("TEST REPORT"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            settings_grid_sizer->Add(m_ReportNameTxtCtrl.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
+        }
+
+        // Author
+        {
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Author:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            m_AuthorTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_REPORT_AUTHOR_TXT_CTRL,
+                    wxString("Veronika Marsikova"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            settings_grid_sizer->Add(m_AuthorTxtCtrl.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
+        }
+
+        // Customer
+        {
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Customer:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            m_CustomerTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_CUSTOMER_TXT_CTRL,
+                    wxString("BRU"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            settings_grid_sizer->Add(m_CustomerTxtCtrl.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
+        }
+
+        // Optics Serial Number
+        {
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Serial Number:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            m_OpticsSerialNumberTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_OPTICS_SERIAL_NUMBER_TXT_CTRL,
+                    wxString("037"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            settings_grid_sizer->Add(m_OpticsSerialNumberTxtCtrl.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
+        }
+
+        // Optics Product Number
+        {
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Product Number:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            m_OpticsProductNumberTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_OPTICS_PRODUCT_NUMBER_TXT_CTRL,
+                    wxString("037-066"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            settings_grid_sizer->Add(m_OpticsProductNumberTxtCtrl.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
+        }
+
+        // Optics Type
+        {
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Optics Type:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            m_OpticsTypeTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_OPTICS_TYPE_TXT_CTRL,
+                    wxString("C0-06-19"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            settings_grid_sizer->Add(m_OpticsTypeTxtCtrl.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
+        }
+
+        // Start Position
+        {
+            wxBoxSizer* horSizer = new wxBoxSizer(wxHORIZONTAL);
+
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Start Position:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            wxFloatingPointValidator<double> val(2, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+            //val.SetMin(1);
+            m_StartPositionTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_START_POSITION_TXT_CTRL,
+                    wxString("22.50"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            m_StartPositionTxtCtrl->SetValidator(val);
+
+            horSizer->Add(m_StartPositionTxtCtrl.get(), 0, wxALIGN_CENTER_VERTICAL);
+            horSizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "[mm]"
+                ),
+                0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5
+            );
+            settings_grid_sizer->Add(horSizer, 0, wxEXPAND);
+        }
+
+        // Step
+        {
+            wxBoxSizer* horSizer = new wxBoxSizer(wxHORIZONTAL);
+
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Step:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            wxFloatingPointValidator<double> val(2, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+            m_StepTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_START_POSITION_TXT_CTRL,
+                    wxString("0.025"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            m_StepTxtCtrl->SetValidator(val);
+
+            horSizer->Add(m_StepTxtCtrl.get(), 0, wxALIGN_CENTER_VERTICAL);
+            horSizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "[mm]"
+                ),
+                0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5
+            );
+            settings_grid_sizer->Add(horSizer, 0, wxEXPAND);
+        }
+
+        // Focus Exposure
+        {
+            wxBoxSizer* horSizer = new wxBoxSizer(wxHORIZONTAL);
+
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Focus Exposure:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            wxIntegerValidator<unsigned int> val(NULL);
+            val.SetMin(1);
+            m_FocusExposureTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_FOCUS_EXPOSURE_TXT_CTRL,
+                    wxString("8"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            m_FocusExposureTxtCtrl->SetValidator(val);
+
+            horSizer->Add(m_FocusExposureTxtCtrl.get(), 0, wxALIGN_CENTER_VERTICAL);
+            horSizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "[ms]"
+                ),
+                0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5
+            );
+            settings_grid_sizer->Add(horSizer, 0, wxEXPAND);
+        }
+
+        // Circle Exposure
+        {
+            wxBoxSizer* horSizer = new wxBoxSizer(wxHORIZONTAL);
+
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Circle Exposure:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            wxIntegerValidator<unsigned int> val(NULL);
+            val.SetMin(1);
+            m_CircleExposureTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_CIRCLE_EXPOSURE_TXT_CTRL,
+                    wxString("150"),
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    wxTE_CENTRE
+                );
+            m_CircleExposureTxtCtrl->SetValidator(val);
+
+            horSizer->Add(m_CircleExposureTxtCtrl.get(), 0, wxALIGN_CENTER_VERTICAL);
+            horSizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "[ms]"
+                ),
+                0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5
+            );
+            settings_grid_sizer->Add(horSizer, 0, wxEXPAND);
+        }
+
+
+    //  m_FocusTimeTxtCtrl{}, m_CircleTimeTxtCtrl{};
+        staticBoxSizer->Add(settings_grid_sizer, 0, wxEXPAND | wxALL, 5);
+		topSizer->Add(staticBoxSizer, wxSizerFlags(1).Expand().Border(wxALL, 5));
+    }
+
+
+    panel->SetSizerAndFit(topSizer);
+    return panel;
+}
+
+wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
 {
     wxPanel* panel = new wxPanel(parent, wxID_ANY);
     wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
@@ -176,8 +519,11 @@ wxPanel* cGenerateReportDialog::CreateSettingsPage(wxWindow* parent)
             settings_grid_sizer->Add(imageHeightSizer, 0, wxEXPAND);
         }
         staticBoxSizer->Add(settings_grid_sizer, 0, wxCENTER | wxALL, 5);
-		topSizer->Add(staticBoxSizer, wxSizerFlags(1).Expand().Border(wxALL, 5));
+		//topSizer->Add(staticBoxSizer, wxSizerFlags(1).Expand().Border(wxALL, 5));
+		topSizer->Add(staticBoxSizer, 0, wxEXPAND | wxALL, 5);
     }
+
+    topSizer->AddStretchSpacer();
 
 	// Black Image
     wxStaticBox* blackStaticBox = new wxStaticBox(panel, wxID_ANY, "Black Image");
