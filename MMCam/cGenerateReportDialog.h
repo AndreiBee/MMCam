@@ -41,8 +41,17 @@ namespace GenerateReportVariables {
         ID_OPEN_WHITE_BTN,
         ID_BLACK_PATH_TXT_CTRL,
         ID_WHITE_PATH_TXT_CTRL,
+        // Third Tab
         ID_OPEN_IMAGES_FOR_CALCULATION_BTN,
-        ID_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL
+        ID_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL,
+        ID_OPEN_CIRCLE_IMAGES_FOR_CALCULATION_BTN,
+        ID_CIRCLE_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL,
+        ID_MEASURED_SPECTRUM_PATH_TXT_CTRL,
+        ID_OPEN_MEASURED_SPECTRUM_BTN,
+        ID_FIRST_GAIN_PATH_TXT_CTRL,
+        ID_OPEN_FIRST_GAIN_BTN,
+        ID_SECOND_GAIN_PATH_TXT_CTRL,
+        ID_OPEN_SECOND_GAIN_BTN
     };
 
     struct InputParameters
@@ -97,10 +106,17 @@ public:
 private:
     wxPanel* CreateReportVariablesPage(wxWindow* parent);
     wxPanel* CreateFlatFieldPage(wxWindow* parent);
+    wxPanel* CreateInputImagesPage(wxWindow* parent);
+
+    auto OnDataTypeChoice(wxCommandEvent& evt) -> void;
     auto OnOpenBlackImageBtn(wxCommandEvent& evt) -> void;
     auto OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void;
+
     auto OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void;
-    auto OnDataTypeChoice(wxCommandEvent& evt) -> void;
+    auto OnOpenCircleImagesForCalculationBtn(wxCommandEvent& evt) -> void;
+    auto OnOpenMeasuredSpectrumBtn(wxCommandEvent& evt) -> void;
+    auto OnOpenFirstGainBtn(wxCommandEvent& evt) -> void;
+    auto OnOpenSecondGainBtn(wxCommandEvent& evt) -> void;
 
     auto CheckIfImageIsCorrect
     (
@@ -121,19 +137,27 @@ private:
     auto OnExitButtonClicked(wxCommandEvent& evt) -> void;
 
 protected:
+    // First Tab
     std::unique_ptr<wxTextCtrl> m_OpticsSerialNumberTxtCtrl{}, m_OpticsProductNumberTxtCtrl{}, m_OpticsTypeTxtCtrl{}, m_AuthorTxtCtrl{}, m_CustomerTxtCtrl{}, m_ReportNameTxtCtrl{};
     std::unique_ptr<wxTextCtrl> m_StartPositionTxtCtrl{}, m_StepTxtCtrl{}, m_FocusExposureTxtCtrl{}, m_CircleExposureTxtCtrl{};
 
+    // Second Tab
     std::unique_ptr<wxChoice> m_ImgDataTypeChoice{};
     std::unique_ptr<wxTextCtrl> m_ImgWidthTxtCtrl{}, m_ImgHeightTxtCtrl{};
     // Black & White
+    std::unique_ptr<wxTextCtrl> m_BlackImgPathTxtCtrl{}, m_WhiteImgPathTxtCtrl{};
     std::unique_ptr<wxBitmapButton> m_OpenBlackImgBtn{}, m_OpenWhiteImgBtn{};
     bool m_IsBlackImgToggled{}, m_IsWhiteImageToggled{};
-    std::unique_ptr<wxTextCtrl> m_BlackImgPathTxtCtrl{}, m_WhiteImgPathTxtCtrl{};
-    // Select Input Images
-    std::unique_ptr<wxBitmapButton> m_OpenImagesForCalculationBtn{};
-    bool m_IsOpenImagesForCalculationToggled{};
-    std::unique_ptr<wxTextCtrl> m_ImagesForCalculationPaths{};
+
+    // Third Tab
+    std::unique_ptr<wxTextCtrl> m_ImagesForCalculationPaths{}, m_CircleImagesForCalculationPaths{};
+    std::unique_ptr<wxBitmapButton> m_OpenImagesForCalculationBtn{}, m_OpenCircleImagesForCalculationBtn{};
+    bool m_IsOpenImagesForCalculationToggled{}, m_IsOpenCircleImagesForCalculationToggled{};
+
+    // X-ray test
+    std::unique_ptr<wxTextCtrl> m_MeasuredSpectrumPath{}, m_FirstGainPath{}, m_SecondGainPath{};
+    std::unique_ptr<wxBitmapButton> m_OpenMeasuredSpectrumBtn{}, m_OpenFirstGainBtn{}, m_OpenSecondGainBtn{};
+    bool m_IsOpenMeasuredSpectrumToggled{}, m_IsOpenFirstGainToggled{}, m_IsOpenSecondGainToggled{};
 
     bool m_IsBlackImageLoadedSucc{}, m_IsWhiteImageLoadedSucc{};
 

@@ -30,9 +30,39 @@ cGenerateReportDialog::cGenerateReportDialog
 
     auto reportVariables = CreateReportVariablesPage(notebook);
     auto flatFieldPage = CreateFlatFieldPage(notebook);
+    auto inputImagesPage = CreateInputImagesPage(notebook);
 
-    notebook->AddPage(reportVariables, "Report Variables", true, 0);
-    notebook->AddPage(flatFieldPage, "Flat Field Correction", false, 0);
+    notebook->AddPage
+    (
+        reportVariables, 
+        "Report Variables", 
+#ifdef _DEBUG
+        false,
+#else
+        true, 
+#endif // _DEBUG
+        0
+    );
+    
+    notebook->AddPage
+    (
+        flatFieldPage, 
+        "Flat Field Correction", 
+        false, 
+        0
+    );
+    
+    notebook->AddPage
+    (
+        inputImagesPage, 
+        "Input Images", 
+#ifdef _DEBUG
+        true,
+#else
+        false, 
+#endif // _DEBUG
+        0
+    );
 
     LayoutDialog();
 
@@ -610,10 +640,21 @@ wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
 		topSizer->Add(staticBoxSizer,0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     }
 
+
+    panel->SetSizerAndFit(topSizer);
+    return panel;
+}
+
+wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
+{
+    wxPanel* panel = new wxPanel(parent, wxID_ANY);
+    wxBoxSizer* topSizer = new wxBoxSizer(wxVERTICAL);
+
+	topSizer->AddSpacer(5);
 	// Images for Calculation
     wxStaticBox* calculatedImagesStaticBox = new wxStaticBox(panel, wxID_ANY, "Images for Calculation");
     {
-        calculatedImagesStaticBox->SetBackgroundColour(wxColor(255, 255, 255));
+        calculatedImagesStaticBox->SetBackgroundColour(wxColor(34, 177, 76));
         wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(calculatedImagesStaticBox, wxVERTICAL);
         {
             wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -622,7 +663,7 @@ wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
                 (
                     panel,
                     GenerateReportVariables::ID_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL,
-                    wxT("Image Paths..."),
+                    wxT("Images Paths..."),
                     wxDefaultPosition, wxDefaultSize,
 					wxTE_LEFT | wxTE_READONLY
                 );
@@ -651,6 +692,189 @@ wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
         }
 		topSizer->Add(staticBoxSizer,0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     }
+
+	topSizer->AddSpacer(5);
+
+	// Circle Images for Calculation
+    wxStaticBox* circleImagesStaticBox = new wxStaticBox(panel, wxID_ANY, "Circle Images for Calculation");
+    {
+        circleImagesStaticBox->SetBackgroundColour(wxColor(0, 162, 232));
+        wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(circleImagesStaticBox, wxVERTICAL);
+        {
+            wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
+
+            m_CircleImagesForCalculationPaths = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_CIRCLE_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL,
+                    wxT("Circle Images Paths..."),
+                    wxDefaultPosition, wxDefaultSize,
+					wxTE_LEFT | wxTE_READONLY
+                );
+
+            horizontalSizer->Add(m_CircleImagesForCalculationPaths.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
+
+			auto bmp = wxMaterialDesignArtProvider::GetBitmap
+			(
+				wxART_TOGGLE_OFF, 
+				wxART_CLIENT_AWESOME_SOLID, 
+				wxSize(16, 16), 
+				wxColour(255, 0, 0)
+			);
+
+            m_OpenCircleImagesForCalculationBtn = std::make_unique<wxBitmapButton>
+                (
+                    panel,
+                    GenerateReportVariables::ID_OPEN_CIRCLE_IMAGES_FOR_CALCULATION_BTN,
+                    bmp
+                );
+
+			m_OpenCircleImagesForCalculationBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenCircleImagesForCalculationBtn, this);
+
+            horizontalSizer->Add(m_OpenCircleImagesForCalculationBtn.get(), 0, wxRIGHT, 2);
+            staticBoxSizer->Add(horizontalSizer, 0, wxEXPAND);
+        }
+		topSizer->Add(staticBoxSizer,0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    }
+
+	topSizer->AddStretchSpacer();
+
+    // X-Ray Test
+    auto xRayTestStaticBox = new wxStaticBoxSizer(wxVERTICAL, panel, "X-Ray Test");
+    {
+        // Measured Spectrum
+        wxStaticBox* measuredSpectrumStaticBox = new wxStaticBox(panel, wxID_ANY, "Measured Spectrum");
+        {
+            measuredSpectrumStaticBox->SetBackgroundColour(wxColor(255, 201, 14));
+            wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(measuredSpectrumStaticBox, wxVERTICAL);
+            {
+                wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
+
+                m_MeasuredSpectrumPath = std::make_unique<wxTextCtrl>
+                    (
+                        panel,
+                        GenerateReportVariables::ID_MEASURED_SPECTRUM_PATH_TXT_CTRL,
+                        wxT("Measure Spectrum Image Path..."),
+                        wxDefaultPosition, wxDefaultSize,
+                        wxTE_LEFT | wxTE_READONLY
+                    );
+
+                horizontalSizer->Add(m_MeasuredSpectrumPath.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
+
+                auto bmp = wxMaterialDesignArtProvider::GetBitmap
+                (
+                    wxART_TOGGLE_OFF,
+                    wxART_CLIENT_AWESOME_SOLID,
+                    wxSize(16, 16),
+                    wxColour(255, 0, 0)
+                );
+
+                m_OpenMeasuredSpectrumBtn = std::make_unique<wxBitmapButton>
+                    (
+                        panel,
+                        GenerateReportVariables::ID_OPEN_MEASURED_SPECTRUM_BTN,
+                        bmp
+                    );
+
+                m_OpenMeasuredSpectrumBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenMeasuredSpectrumBtn, this);
+
+                horizontalSizer->Add(m_OpenMeasuredSpectrumBtn.get(), 0, wxRIGHT, 2);
+                staticBoxSizer->Add(horizontalSizer, 0, wxEXPAND);
+            }
+            xRayTestStaticBox->Add(staticBoxSizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+        }
+
+        xRayTestStaticBox->AddSpacer(5);
+
+        // First Gain
+        auto firstGainStaticBox = new wxStaticBox(panel, wxID_ANY, "First Gain");
+        {
+            firstGainStaticBox->SetBackgroundColour(wxColor(255, 201, 14));
+            wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(firstGainStaticBox, wxVERTICAL);
+            {
+                wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
+
+                m_FirstGainPath = std::make_unique<wxTextCtrl>
+                    (
+                        panel,
+                        GenerateReportVariables::ID_FIRST_GAIN_PATH_TXT_CTRL,
+                        wxT("First Gain Image Path..."),
+                        wxDefaultPosition, wxDefaultSize,
+                        wxTE_LEFT | wxTE_READONLY
+                    );
+
+                horizontalSizer->Add(m_FirstGainPath.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
+
+                auto bmp = wxMaterialDesignArtProvider::GetBitmap
+                (
+                    wxART_TOGGLE_OFF,
+                    wxART_CLIENT_AWESOME_SOLID,
+                    wxSize(16, 16),
+                    wxColour(255, 0, 0)
+                );
+
+                m_OpenFirstGainBtn = std::make_unique<wxBitmapButton>
+                    (
+                        panel,
+                        GenerateReportVariables::ID_OPEN_FIRST_GAIN_BTN,
+                        bmp
+                    );
+
+                m_OpenFirstGainBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenFirstGainBtn, this);
+
+                horizontalSizer->Add(m_OpenFirstGainBtn.get(), 0, wxRIGHT, 2);
+                staticBoxSizer->Add(horizontalSizer, 0, wxEXPAND);
+            }
+            xRayTestStaticBox->Add(staticBoxSizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+        }
+
+        xRayTestStaticBox->AddSpacer(5);
+
+        // Second Gain
+        auto secondGainStaticBox = new wxStaticBox(panel, wxID_ANY, "Second Gain");
+        {
+            secondGainStaticBox->SetBackgroundColour(wxColor(255, 201, 14));
+            wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(secondGainStaticBox, wxVERTICAL);
+            {
+                wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
+
+                m_SecondGainPath = std::make_unique<wxTextCtrl>
+                    (
+                        panel,
+                        GenerateReportVariables::ID_SECOND_GAIN_PATH_TXT_CTRL,
+                        wxT("Second Gain Image Path..."),
+                        wxDefaultPosition, wxDefaultSize,
+                        wxTE_LEFT | wxTE_READONLY
+                    );
+
+                horizontalSizer->Add(m_SecondGainPath.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
+
+                auto bmp = wxMaterialDesignArtProvider::GetBitmap
+                (
+                    wxART_TOGGLE_OFF,
+                    wxART_CLIENT_AWESOME_SOLID,
+                    wxSize(16, 16),
+                    wxColour(255, 0, 0)
+                );
+
+                m_OpenSecondGainBtn = std::make_unique<wxBitmapButton>
+                    (
+                        panel,
+                        GenerateReportVariables::ID_OPEN_SECOND_GAIN_BTN,
+                        bmp
+                    );
+
+                m_OpenSecondGainBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenSecondGainBtn, this);
+
+                horizontalSizer->Add(m_OpenSecondGainBtn.get(), 0, wxRIGHT, 2);
+                staticBoxSizer->Add(horizontalSizer, 0, wxEXPAND);
+            }
+            xRayTestStaticBox->Add(staticBoxSizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+        }
+
+    }
+
+	topSizer->Add(xRayTestStaticBox, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
 
     panel->SetSizerAndFit(topSizer);
     return panel;
@@ -951,6 +1175,19 @@ auto cGenerateReportDialog::OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void
 
 auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void
 {
+	constexpr auto selected_files_quantity_exception_msg = [](int number_of_images)
+	{
+		wxString title = "Error image reading";
+		wxMessageBox(
+			wxT
+			(
+				"You have to select " + wxString::Format("%d images.", number_of_images) +
+				"\nPlease, try again."
+			),
+			title,
+			wxICON_ERROR);
+	};
+
     if (m_IsOpenImagesForCalculationToggled)
     {
         m_ImagesForCalculationPaths->ChangeValue(wxT("Image Paths..."));
@@ -967,6 +1204,7 @@ auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -
         return;
     }
 
+    auto imagesQuantity{ 13 };
 	wxArrayString filePaths{};
 #ifdef _DEBUG
 	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_01_11H_15M_09S_8000us_1A_11_280_2A_0_000.tif");
@@ -983,18 +1221,26 @@ auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -
 	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_12_11H_15M_09S_8000us_1A_11_555_2A_0_000.tif");
 	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\Data\\img_13_11H_15M_09S_8000us_1A_11_580_2A_0_000.tif");
 #else
-    wxFileDialog dlg
-    (
-        this,
-        "Select all the files that you want to calculate",
-        wxEmptyString,
-        wxEmptyString,
-        "TIF Files (*.tif)|*.tif",
-        wxFD_OPEN | wxFD_MULTIPLE | wxFD_FILE_MUST_EXIST
-    );
+	wxFileDialog dlg
+	(
+		this,
+		"Select all the files that you want to calculate",
+		wxEmptyString,
+		wxEmptyString,
+		"TIF Files (*.tif)|*.tif",
+		wxFD_OPEN | wxFD_MULTIPLE | wxFD_FILE_MUST_EXIST
+	);
 
-    if (dlg.ShowModal() != wxID_OK) return;
-    dlg.GetPaths(filePaths);
+    do
+    {
+		if (dlg.ShowModal() != wxID_OK) return;
+		dlg.GetPaths(filePaths);
+
+        if (filePaths.GetCount() != imagesQuantity)
+            selected_files_quantity_exception_msg(imagesQuantity);
+
+    } while (filePaths.GetCount() != imagesQuantity);
+
 #endif // _DEBUG
     m_ImagesForCalculationPathsArray = filePaths;
 
@@ -1018,6 +1264,22 @@ auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -
 		wxColour(0, 255, 0)
 	);
 	m_OpenImagesForCalculationBtn->SetBitmap(bmp);
+}
+
+auto cGenerateReportDialog::OnOpenCircleImagesForCalculationBtn(wxCommandEvent& evt) -> void
+{
+}
+
+auto cGenerateReportDialog::OnOpenMeasuredSpectrumBtn(wxCommandEvent& evt) -> void
+{
+}
+
+auto cGenerateReportDialog::OnOpenFirstGainBtn(wxCommandEvent& evt) -> void
+{
+}
+
+auto cGenerateReportDialog::OnOpenSecondGainBtn(wxCommandEvent& evt) -> void
+{
 }
 
 auto cGenerateReportDialog::OnDataTypeChoice(wxCommandEvent& evt) -> void
