@@ -126,6 +126,10 @@ cMain::cMain(const wxString& title_)
 		ProcessEvent(artEvt);
 	}
 #endif // _DEBUG
+
+	// Maximize application's window
+	Maximize();
+
 	{
 		//m_StartStopLiveCapturingTglBtn->SetValue(true);
 		//wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
@@ -2425,6 +2429,50 @@ auto cMain::ApplyFFCOnData
 }
 
 
+auto cMain::RemoveBackgroundFromTheImage(wxString imagePath) -> void
+{
+	wxImage image;
+
+	// Load the PNG image
+	if (!image.LoadFile(imagePath))
+	{
+		wxLogError("Failed to load image.");
+		return;
+	}
+
+	// Convert wxImage to wxBitmap for processing
+	wxBitmap bitmap(image);
+
+	int minX = image.GetWidth();
+	int minY = image.GetHeight();
+	int maxX = 0;
+	int maxY = 0;
+
+	// Scan the image to find the non-white border
+	for (int y = 0; y < image.GetHeight(); ++y)
+	{
+		for (int x = 0; x < image.GetWidth(); ++x)
+		{
+			auto red = image.GetRed(x, y);
+			auto green = image.GetGreen(x, y);
+			auto blue = image.GetBlue(x, y);
+
+			// Check if the pixel is non-white (you can adjust the tolerance if necessary)
+			if (red < 255 || green < 255 || blue < 255)
+			{
+				minX = std::min(minX, x);
+				minY = std::min(minY, y);
+				maxX = std::max(maxX, x);
+				maxY = std::max(maxY, y);
+			}
+		}
+	}
+
+	// Now, crop the image to remove the white border
+	wxImage croppedImage = image.GetSubImage(wxRect(minX, minY, maxX - minX + 1, maxY - minY + 1));
+	if (!croppedImage.SaveFile(imagePath, wxBITMAP_TYPE_PNG)) return;
+}
+
 auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap
 {
 	auto scaleFactor = 2500 / imgWidth;
@@ -2529,6 +2577,16 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 
 auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 {
+	wxString venvFolderName = ".venv";
+	wxString reportGeneratorPath = "src\\ReportGenerator";
+	wxString requirementsPath = reportGeneratorPath + "\\" + "requirements.txt";
+	wxString venvPath = reportGeneratorPath + "\\" + venvFolderName;
+	if (!IsVirtualEnvironmentAlreadyCreated(venvPath))
+	{
+		if (!IsPythonInstalledOnTheCurrentMachine()) return;
+		if (!CreateVirtualEnvironment(venvPath, requirementsPath)) return;
+	}
+
 	auto inputParameters = GenerateReportVariables::InputParameters();
 	inputParameters.pixelSizeUM = m_Settings->GetPixelSizeUM();
 	inputParameters.widthROIMM = m_Settings->GetCropSizeMM();
@@ -2757,6 +2815,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 #ifndef _DEBUG
 	if (!Invoke2DPlotsCreation(imagesPathArray)) return;
+	for (const auto& imagePath : imagesPathArray)
+	{
+		wxFileName file(imagePath);
+		file.SetExt("png");
+		RemoveBackgroundFromTheImage(file.GetFullPath());
+	}
 #endif // DEBUG
 
 	// Best Position Plot Creation
@@ -2779,6 +2843,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			wxArrayString arrStr{};
 			arrStr.Add(file.GetFullPath());
 			if (!Invoke2DPlotsCreation(arrStr)) return;
+			file.SetExt("png");
+			RemoveBackgroundFromTheImage(file.GetFullPath());
 		}
 
 		// 3D Image
@@ -2796,6 +2862,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 			file.SetExt("txt");
 			if (!InvokePlotGraphCreation("plot3DGraph", file.GetFullPath())) return;
+			file.SetExt("png");
+			RemoveBackgroundFromTheImage(file.GetFullPath());
 		}
 	}
 
@@ -2833,6 +2901,9 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		//file.SetExt("bmp");
 		file.SetExt("txt");
 		if (!InvokePlotGraphCreation("plotGraph", file.GetFullPath()));
+
+		file.SetExt("png");
+		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
 
 	// Gain Plot Creation
@@ -2861,7 +2932,107 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		//file.SetExt("bmp");
 		file.SetExt("txt");
 		if (!InvokePlotGraphCreation("plotGraph", file.GetFullPath()));
+
+		file.SetExt("png");
+		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
+}
+
+auto cMain::IsPythonInstalledOnTheCurrentMachine() -> bool
+{
+	constexpr auto raise_exception_msg = [](wxString pythonVersion) 
+	{
+		wxString title = "Python installation was not found";
+		wxMessageBox(
+			wxT
+			(
+				"Python installation was not found. At least Python " + pythonVersion + " has to be installed for the correct working of the application!"
+				"\nPlease, install Python of version " + pythonVersion + " and try again."
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	auto pythonMinorVer = 12;
+	wxArrayString output, errors;
+	long exitCode = wxExecute("py --list", output, errors, wxEXEC_SYNC);
+
+	std::vector<wxString> versions;
+	std::regex versionPattern(R"(-V:3\.(\d+))");  // Extracts only the minor version (e.g., "12")
+	std::smatch match;
+
+	if (exitCode == 0) 
+	{
+		for (const auto& line : output) 
+		{
+			std::string lineStr = line.ToStdString();
+			if (std::regex_search(lineStr, match, versionPattern)) 
+			{
+				wxString version = wxString(match[1]);  // Extract version number (e.g., "3.12")
+				versions.push_back(version);
+			}
+		}
+	}
+
+	// Sort and return the highest version
+	if (!versions.empty()) 
+	{
+		std::sort(versions.begin(), versions.end(), std::greater<>());
+		long verInt = 1;
+		versions.front().ToLong(&verInt);  // Latest version
+		if (verInt < pythonMinorVer)
+		{
+			raise_exception_msg("3." + wxString::Format(wxT("%i"), pythonMinorVer));
+			return false;
+		}
+		return true;
+	}
+	raise_exception_msg("3." + wxString::Format(wxT("%i"), pythonMinorVer));
+	return false;
+}
+
+auto cMain::IsVirtualEnvironmentAlreadyCreated(wxString pathToVenv) -> bool
+{
+	auto activateFile = pathToVenv + "\\Scripts\\activate";
+	if (wxFileExists(activateFile)) 
+	{
+		//wxPuts("File exists!");
+		return true;
+	}
+
+	return false;
+}
+
+auto cMain::CreateVirtualEnvironment(wxString pathToVenv, wxString pathToRequirements) -> bool
+{
+	constexpr auto raise_exception_msg = [](int code) 
+	{
+		wxString title = "Python execution error";
+		wxMessageBox(
+			wxT
+			(
+				"Failed to run Python script. Error code: " + wxString::Format(wxT("%i"), code)
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	std::string command = "cmd /c \"py -m venv \"" + pathToVenv.ToStdString() + " &&";
+	command += "src\\ReportGenerator\\.venv\\Scripts\\activate && ";
+	command += "pip install -r " + pathToRequirements + " && ";
+	command += "deactivate\"";
+
+	// Execute the Python script
+	int result{};
+
+	result = std::system(command.c_str());
+	if (result != 0)
+	{
+		raise_exception_msg(result);
+		return false;
+	}
+
+	return true;
 }
 
 auto cMain::EnableControlsAfterCapturing() -> void

@@ -12,6 +12,8 @@
 #include <string>
 #include <memory>
 #include <chrono>
+#include <regex>
+#include <algorithm>
 
 #include "json.hpp"
 
@@ -653,6 +655,9 @@ private:
 	void ExposureValueChanged(wxCommandEvent& evt);
 	/* Generate Report */
 	auto OnGenerateReportBtn(wxCommandEvent& evt) -> void;
+	auto IsPythonInstalledOnTheCurrentMachine() -> bool;
+	auto IsVirtualEnvironmentAlreadyCreated(wxString pathToVenv) -> bool;
+	auto CreateVirtualEnvironment(wxString pathToVenv, wxString pathToRequirements) -> bool;
 	/* Start Capturing */
 	void OnStartStopCapturingTglButton(wxCommandEvent& evt);
 	auto EnableControlsAfterCapturing() -> void;
@@ -896,6 +901,8 @@ private:
 
 		return (double)sumRAW / sumWhite;
 	};
+
+	auto RemoveBackgroundFromTheImage(wxString imagePath) -> void;
 
 
 	auto CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap;
