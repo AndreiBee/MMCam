@@ -799,6 +799,10 @@ auto cSettings::ReadInitializationFile() -> void
 	if (element)
 		m_CropSizeMM = std::atof(element->first_node()->value());
 
+	element = SettingsVariables::FindNode(app_node, "crop_size_circle_mm");
+	if (element)
+		m_CropCircleSizeMM = std::atof(element->first_node()->value());
+
 	element = SettingsVariables::FindNode(app_node, "pixel_size_um");
 	if (element)
 		m_PixelSizeUM = std::atof(element->first_node()->value());

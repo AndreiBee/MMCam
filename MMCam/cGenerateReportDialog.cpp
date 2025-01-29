@@ -1253,6 +1253,137 @@ auto cGenerateReportDialog::OnOpenOriginalWhiteImageBtn(wxCommandEvent& evt) -> 
 
 auto cGenerateReportDialog::OnOpenCircleBlackImageBtn(wxCommandEvent& evt) -> void
 {
+	constexpr auto empty_field_exception_msg = [](wxString type)
+	{
+		wxString title = "Empty settings field";
+		wxMessageBox(
+			wxT
+			(
+				"It seems that you don't have any value inside the \"" + type.Capitalize() + "\" settings field"
+				"\nPlease, enter value inside the \"" + type.Capitalize() + "\" field and try again"
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	constexpr auto loading_image_exception_msg = []()
+	{
+		wxString title = "Error image reading";
+		wxMessageBox(
+			wxT
+			(
+				"The image that you've selected can't be loaded."
+				"\nPlease, select another image."
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	constexpr auto different_image_sizes_exception_msg = []()
+	{
+		wxString title = "Error image reading";
+		wxMessageBox(
+			wxT
+			(
+				"The image that you've selected doesn't have the same size as the previously loaded image."
+				"\nPlease, select another image."
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+
+    m_IsCircleBlackImageLoadedSucc = false;
+
+    if (m_IsCircleBlackImgToggled)
+    {
+        m_CircleBlackImgPathTxtCtrl->ChangeValue(wxT("Black Image Path..."));
+        
+        m_IsCircleBlackImgToggled = false;
+		auto bmp = wxMaterialDesignArtProvider::GetBitmap
+		(
+			wxART_TOGGLE_OFF, 
+			wxART_CLIENT_AWESOME_SOLID, 
+			wxSize(16, 16), 
+			wxColour(255, 0, 0)
+		);
+		m_OpenCircleBlackImgBtn->SetBitmap(bmp);
+        return;
+    }
+
+	int imgWidthTxtCtrl{};
+	/* Image Width */
+	if (!m_ImgWidthTxtCtrl->GetValue().ToInt(&imgWidthTxtCtrl))
+	{
+		empty_field_exception_msg("width");
+		return;
+	}
+	int imgHeightTxtCtrl{};
+	/* Image Height */
+	if (!m_ImgHeightTxtCtrl->GetValue().ToInt(&imgHeightTxtCtrl))
+	{
+		empty_field_exception_msg("height");
+		return;
+	}
+
+	std::string file_path{};
+#ifdef _DEBUG
+	file_path = "D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\tmavy.tif";
+#else
+    wxFileDialog dlg
+    (
+        this,
+        "Open an image",
+        wxEmptyString,
+        wxEmptyString,
+        "TIF Files (*.tif)|*.tif",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST
+    );
+
+    if (dlg.ShowModal() != wxID_OK) return;
+    file_path = std::string(dlg.GetPath().mbc_str());
+#endif // _DEBUG
+
+    auto circleBlackImgMat = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
+    auto imgHeight = circleBlackImgMat.rows;
+    auto imgWidth = circleBlackImgMat.cols;
+
+    if (imgWidth <= 0 || imgHeight <= 0)
+    {
+        loading_image_exception_msg();
+        return;
+    }
+
+    if (!imgWidthTxtCtrl && !imgHeightTxtCtrl)
+    {
+        m_ImgWidthTxtCtrl->SetValue(wxString::Format(wxT("%i"), imgWidth));
+        m_ImgHeightTxtCtrl->SetValue(wxString::Format(wxT("%i"), imgHeight));
+    }
+    else
+    {
+        // Check if the first and the second image sizes are the same
+        if (imgWidth != imgWidthTxtCtrl || imgHeight != imgHeightTxtCtrl)
+        {
+            different_image_sizes_exception_msg();
+            return;
+        }
+    }
+
+    m_CircleBlackImagePath = file_path;
+
+    m_CircleBlackImgPathTxtCtrl->ChangeValue(file_path);
+
+    m_IsCircleBlackImageLoadedSucc = true;
+    m_IsCircleBlackImgToggled = true;
+
+	auto bmp = wxMaterialDesignArtProvider::GetBitmap
+	(
+		wxART_TOGGLE_ON, 
+		wxART_CLIENT_AWESOME_SOLID, 
+		wxSize(16, 16), 
+		wxColour(0, 255, 0)
+	);
+	m_OpenCircleBlackImgBtn->SetBitmap(bmp);
 }
 
 auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void
@@ -1350,6 +1481,95 @@ auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -
 
 auto cGenerateReportDialog::OnOpenCircleImagesForCalculationBtn(wxCommandEvent& evt) -> void
 {
+	constexpr auto selected_files_quantity_exception_msg = [](int number_of_images)
+	{
+		wxString title = "Error image reading";
+		wxMessageBox(
+			wxT
+			(
+				"You have to select " + wxString::Format("%d images.", number_of_images) +
+				"\nPlease, try again."
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+    if (m_IsOpenCircleImagesForCalculationToggled)
+    {
+        m_CircleImagesForCalculationPaths->ChangeValue(wxT("Image Paths..."));
+
+		auto bmp = wxMaterialDesignArtProvider::GetBitmap
+		(
+			wxART_TOGGLE_OFF, 
+			wxART_CLIENT_AWESOME_SOLID, 
+			wxSize(16, 16), 
+			wxColour(255, 0, 0)
+		);
+		m_OpenCircleImagesForCalculationBtn->SetBitmap(bmp);
+        m_IsOpenCircleImagesForCalculationToggled = false;
+        return;
+    }
+
+    auto imagesQuantity{ 13 };
+	wxArrayString filePaths{};
+#ifdef _DEBUG
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_01_09H_48M_52S_150000us_1A_8_910_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_02_09H_48M_52S_150000us_1A_9_410_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_03_09H_48M_52S_150000us_1A_9_910_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_04_09H_48M_52S_150000us_1A_10_410_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_05_09H_48M_52S_150000us_1A_10_910_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_06_09H_48M_52S_150000us_1A_11_410_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_07_09H_48M_52S_150000us_1A_11_910_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_08_09H_48M_52S_150000us_1A_12_410_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_09_09H_48M_52S_150000us_1A_12_910_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_10_09H_48M_52S_150000us_1A_13_410_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_11_09H_48M_52S_150000us_1A_13_910_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_12_09H_48M_52S_150000us_1A_14_410_2A_0_000.tif");
+	filePaths.Add("D:\\Data_RIGAKU\\2025\\VM\\kruhy\\kruhy\\img_13_09H_48M_52S_150000us_1A_14_910_2A_0_000.tif");
+#else
+	wxFileDialog dlg
+	(
+		this,
+		"Select all the circle files that you want to calculate",
+		wxEmptyString,
+		wxEmptyString,
+		"TIF Files (*.tif)|*.tif",
+		wxFD_OPEN | wxFD_MULTIPLE | wxFD_FILE_MUST_EXIST
+	);
+
+    do
+    {
+		if (dlg.ShowModal() != wxID_OK) return;
+		dlg.GetPaths(filePaths);
+
+        if (filePaths.GetCount() != imagesQuantity)
+            selected_files_quantity_exception_msg(imagesQuantity);
+
+    } while (filePaths.GetCount() != imagesQuantity);
+
+#endif // _DEBUG
+    m_CircleImagesForCalculationPathsArray = filePaths;
+
+    wxString fileNames{};
+    int i{};
+    for (const auto& filePath : filePaths)
+    {
+        if (i) fileNames += ", ";
+        wxFileName file(filePath);
+        fileNames += file.GetFullName();
+        ++i;
+    }
+    m_CircleImagesForCalculationPaths->ChangeValue(fileNames);
+
+    m_IsOpenCircleImagesForCalculationToggled = true;
+	auto bmp = wxMaterialDesignArtProvider::GetBitmap
+	(
+		wxART_TOGGLE_ON, 
+		wxART_CLIENT_AWESOME_SOLID, 
+		wxSize(16, 16), 
+		wxColour(0, 255, 0)
+	);
+	m_OpenCircleImagesForCalculationBtn->SetBitmap(bmp);
 }
 
 auto cGenerateReportDialog::OnOpenMeasuredSpectrumBtn(wxCommandEvent& evt) -> void

@@ -61,7 +61,7 @@ namespace GenerateReportVariables {
     struct InputParameters
     {
         double pixelSizeUM{};
-        double widthROIMM{};
+        double widthROIMM{}, widthCircleROIMM{};
     };
 }
 
@@ -103,9 +103,12 @@ public:
     //    else
     //        return cv::Mat();
     //};
-    auto GetBlackImagePath() const -> wxString { return m_OriginalBlackImagePath; };
-    auto GetWhiteImagePath() const -> wxString { return m_OriginalWhiteImagePath; };
+    auto GetOriginalBlackImagePath() const -> wxString { return m_OriginalBlackImagePath; };
+    auto GetOriginalWhiteImagePath() const -> wxString { return m_OriginalWhiteImagePath; };
     auto GetImagesForCalculationPaths() const -> wxArrayString { return m_ImagesForCalculationPathsArray; };
+
+    auto GetCircleBlackImagePath() const -> wxString { return m_CircleBlackImagePath; };
+    auto GetCircleImagesForCalculationPaths() const -> wxArrayString { return m_CircleImagesForCalculationPathsArray; };
 
 private:
     wxPanel* CreateReportVariablesPage(wxWindow* parent);
@@ -115,10 +118,12 @@ private:
     auto OnDataTypeChoice(wxCommandEvent& evt) -> void;
     auto OnOpenOriginalBlackImageBtn(wxCommandEvent& evt) -> void;
     auto OnOpenOriginalWhiteImageBtn(wxCommandEvent& evt) -> void;
+
     auto OnOpenCircleBlackImageBtn(wxCommandEvent& evt) -> void;
 
     auto OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void;
     auto OnOpenCircleImagesForCalculationBtn(wxCommandEvent& evt) -> void;
+
     auto OnOpenMeasuredSpectrumBtn(wxCommandEvent& evt) -> void;
     auto OnOpenFirstGainBtn(wxCommandEvent& evt) -> void;
     auto OnOpenSecondGainBtn(wxCommandEvent& evt) -> void;
@@ -192,11 +197,11 @@ protected:
     std::unique_ptr<wxBitmapButton> m_OpenMeasuredSpectrumBtn{}, m_OpenFirstGainBtn{}, m_OpenSecondGainBtn{};
     bool m_IsOpenMeasuredSpectrumToggled{}, m_IsOpenFirstGainToggled{}, m_IsOpenSecondGainToggled{};
 
-    bool m_IsOriginalBlackImageLoadedSucc{}, m_IsOriginalWhiteImageLoadedSucc{};
+    bool m_IsOriginalBlackImageLoadedSucc{}, m_IsOriginalWhiteImageLoadedSucc{}, m_IsCircleBlackImageLoadedSucc{};
 
     //cv::Mat m_BlackImageMat{}, m_WhiteImageMat{};
-    wxString m_OriginalBlackImagePath{}, m_OriginalWhiteImagePath{};
-    wxArrayString m_ImagesForCalculationPathsArray{};
+    wxString m_OriginalBlackImagePath{}, m_OriginalWhiteImagePath{}, m_CircleBlackImagePath{};
+    wxArrayString m_ImagesForCalculationPathsArray{}, m_CircleImagesForCalculationPathsArray{};
 
     wxImageList* m_imageList;
 

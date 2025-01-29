@@ -680,7 +680,13 @@ private:
 
 	auto CreateMetadataFile() -> void;
 
-	auto FindSpotCenterCoordinates(const cv::Mat& signal, int* bestX, int* bestY) -> void;
+	auto FindSpotCenterCoordinates
+	(
+		const cv::Mat& signal, 
+		int* bestX, 
+		int* bestY,
+		bool circleAnalyzing = false
+	) -> void;
 
 	auto CropDataIntoArray
 	(

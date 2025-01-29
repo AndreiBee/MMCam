@@ -2308,7 +2308,8 @@ auto cMain::FindSpotCenterCoordinates
 (
 	const cv::Mat& signal, 
 	int* bestX, 
-	int* bestY
+	int* bestY,
+	bool circleAnalyzing
 ) -> void
 {
 	auto findCenterFWHM = []
@@ -2357,12 +2358,19 @@ auto cMain::FindSpotCenterCoordinates
 		cv::minMaxLoc(rowSums, &minVal, &maxVal, nullptr, &maxPoint);
 
 		auto halfMax = (maxVal - minVal) / 2.0 + minVal;
+		auto threshold = (maxVal - minVal) * 0.1 + minVal;
 		int maxIndex = maxPoint.y; // x is used for 1D row data
 
 		auto leftFWHM = -1, rightFWHM = -1;
 
-		auto rowSumsType = rowSums.type();
-		findCenterFWHM(rowSums, maxIndex, halfMax, &leftFWHM, &rightFWHM);
+		findCenterFWHM
+		(
+			rowSums, 
+			maxIndex, 
+			circleAnalyzing ? threshold : halfMax, 
+			&leftFWHM, 
+			&rightFWHM
+		);
 
 		*bestY = (rightFWHM - leftFWHM) / 2 + leftFWHM;
 	}
@@ -2377,11 +2385,19 @@ auto cMain::FindSpotCenterCoordinates
 		cv::minMaxLoc(colSums, &minVal, &maxVal, nullptr, &maxPoint);
 
 		auto halfMax = (maxVal - minVal) / 2.0 + minVal;
+		auto threshold = (maxVal - minVal) * 0.1 + minVal;
 		int maxIndex = maxPoint.x; // x is used for 1D row data
 
 		auto leftFWHM = -1, rightFWHM = -1;
 
-		findCenterFWHM(colSums, maxIndex, halfMax, &leftFWHM, &rightFWHM);
+		findCenterFWHM
+		(
+			colSums, 
+			maxIndex, 
+			circleAnalyzing ? threshold : halfMax, 
+			&leftFWHM, 
+			&rightFWHM
+		);
 
 		*bestX = (rightFWHM - leftFWHM) / 2 + leftFWHM;
 	}
@@ -2591,7 +2607,10 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	auto inputParameters = GenerateReportVariables::InputParameters();
 	inputParameters.pixelSizeUM = m_Settings->GetPixelSizeUM();
 	inputParameters.widthROIMM = m_Settings->GetCropSizeMM();
+	inputParameters.widthCircleROIMM = m_Settings->GetCropCircleSizeMM();
+
 	auto cropWindowSize = static_cast<int>(std::ceil(inputParameters.widthROIMM / (inputParameters.pixelSizeUM / 1000.0)));
+	auto cropCircleWindowSize = static_cast<int>(std::ceil(inputParameters.widthCircleROIMM / (inputParameters.pixelSizeUM / 1000.0)));
 
 	cGenerateReportDialog dialog
 	(
@@ -2652,12 +2671,17 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			return;
 	}
 
-	auto blackImagePath = dialog.GetBlackImagePath();
-	auto whiteImagePath = dialog.GetWhiteImagePath();
+	auto origBlackImagePath = dialog.GetOriginalBlackImagePath();
+	auto origWhiteImagePath = dialog.GetOriginalWhiteImagePath();
 	auto imagesForCalculationPath = dialog.GetImagesForCalculationPaths();
 
-	cv::Mat whiteImage = cv::imread(whiteImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
-	cv::Mat blackImage = cv::imread(blackImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
+	auto circleBlackImagePath = dialog.GetCircleBlackImagePath();
+	auto circleImagesForCalculationPath = dialog.GetCircleImagesForCalculationPaths();
+
+	cv::Mat originalWhiteImage = cv::imread(origWhiteImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
+	cv::Mat originalBlackImage = cv::imread(origBlackImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
+
+	cv::Mat circleBlackImage = cv::imread(circleBlackImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
 
 	auto croppedRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 	auto croppedBlackRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
@@ -2675,7 +2699,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 	int bestXPos{}, bestYPos{};
 	int i{};
-	wxArrayString imagesPathArray{};
+	wxArrayString originalImagesPathArray{}, circleImagesPathArray{};
 	double bestGainMax{};
 	int bestPosInGain{};
 	double bestFocusPos{ startPositionMM };
@@ -2686,7 +2710,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
     {
 		if (!wxFileName::FileExists(filePath)) continue;
 		cv::Mat rawImage = cv::imread(filePath.ToStdString(), cv::IMREAD_UNCHANGED);
-		if (rawImage.size() != blackImage.size() || rawImage.type() != blackImage.type()) continue;
+		if (rawImage.size() != originalBlackImage.size() || rawImage.type() != originalBlackImage.type()) continue;
 
 		FindSpotCenterCoordinates(rawImage, &bestXPos, &bestYPos);
 		if (bestXPos - cropWindowSize / 2 < 0 || bestXPos + cropWindowSize / 2 >= rawImage.cols
@@ -2708,7 +2732,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		// Black FFC RAW Data
 		CropDataIntoArray
 		(
-			blackImage, 
+			originalBlackImage, 
 			startX, 
 			startY, 
 			cropWindowSize, 
@@ -2718,7 +2742,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		// White FFC RAW Data
 		CropDataIntoArray
 		(
-			whiteImage, 
+			originalWhiteImage, 
 			startX, 
 			startY, 
 			cropWindowSize, 
@@ -2793,7 +2817,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
         auto correctedFileName = wxString("ffc_") + file.GetFullName();
 		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
-		imagesPathArray.Add(correctedFileNameWithPath);
+		originalImagesPathArray.Add(correctedFileNameWithPath);
 
 		WriteTempJSONImageDataToTXTFile
 		(
@@ -2809,8 +2833,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
     }
 
 #ifndef _DEBUG
-	if (!Invoke2DPlotsCreation(imagesPathArray)) return;
-	for (const auto& imagePath : imagesPathArray)
+	if (!Invoke2DPlotsCreation(originalImagesPathArray)) return;
+	for (const auto& imagePath : originalImagesPathArray)
 	{
 		wxFileName file(imagePath);
 		file.SetExt("png");
@@ -3025,6 +3049,131 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
+
+	i = 0;
+
+	croppedRAWData = std::make_unique<unsigned short[]>(cropCircleWindowSize * cropCircleWindowSize);
+	croppedBlackRAWData = std::make_unique<unsigned short[]>(cropCircleWindowSize * cropCircleWindowSize);
+	croppedWhiteRAWData  = std::make_unique<unsigned short[]>(cropCircleWindowSize * cropCircleWindowSize);
+
+    for (const auto& filePath : circleImagesForCalculationPath)
+    {
+		if (!wxFileName::FileExists(filePath)) continue;
+		cv::Mat rawImage = cv::imread(filePath.ToStdString(), cv::IMREAD_UNCHANGED);
+		if (rawImage.size() != circleBlackImage.size() || rawImage.type() != circleBlackImage.type()) continue;
+
+		FindSpotCenterCoordinates(rawImage, &bestXPos, &bestYPos);
+		if (bestXPos - cropWindowSize / 2 < 0 || bestXPos + cropWindowSize / 2 >= rawImage.cols
+			|| bestYPos - cropWindowSize / 2 < 0 || bestYPos + cropWindowSize / 2 >= rawImage.rows) continue;
+
+		auto startX = bestXPos - cropWindowSize / 2;
+		auto startY = bestYPos - cropWindowSize / 2;
+
+		// RAW Data
+		CropDataIntoArray
+		(
+			rawImage, 
+			startX, 
+			startY, 
+			cropCircleWindowSize, 
+			croppedRAWData.get()
+		);
+
+		// Black FFC RAW Data
+		CropDataIntoArray
+		(
+			circleBlackImage, 
+			startX, 
+			startY, 
+			cropCircleWindowSize, 
+			croppedBlackRAWData.get()
+		);
+
+		ApplyFFCOnData
+		(
+			croppedRAWData.get(), 
+			croppedBlackRAWData.get(), 
+			croppedWhiteRAWData.get(), 
+			cropCircleWindowSize
+		);
+
+
+		//auto horizontalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
+		//auto verticalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
+
+		//FWHM::CalculateSumVertically(croppedRAWData.get(), cropWindowSize, cropWindowSize, horizontalSumArray.get());
+		//horizontalFWHM[i] = FWHM::CalculateFWHM
+		//	(
+		//		horizontalSumArray.get(), 
+		//		cropWindowSize
+		//	);
+		//horizontalFWHM[i] = horizontalFWHM[i] == - 1.0 ? 0.0 : horizontalFWHM[i];
+		//horizontalFWHM[i] *= inputParameters.pixelSizeUM;
+
+		//FWHM::CalculateSumHorizontally(croppedRAWData.get(), cropWindowSize, cropWindowSize, verticalSumArray.get());
+		//verticalFWHM[i] = FWHM::CalculateFWHM
+		//	(
+		//		verticalSumArray.get(), 
+		//		cropWindowSize
+		//	);
+		//verticalFWHM[i] = verticalFWHM[i] == - 1.0 ? 0.0 : verticalFWHM[i];
+		//verticalFWHM[i] *= inputParameters.pixelSizeUM;
+
+		//if (gainMax[i] > bestGainMax)
+		//{
+		//	bestGainMax = gainMax[i];
+		//	bestPosInGain = i;
+		//	bestFocusPos = startPositionMM + i * stepMM;
+		//	lineProfileX = bestXPos - startX;
+		//	lineProfileY = bestYPos - startY;
+		//	bestHorizontalFWHM = horizontalFWHM[i];
+		//	bestVerticalFWHM = verticalFWHM[i];
+
+		//	memcpy(bestCroppedRAWData.get(), croppedRAWData.get(), sizeof(unsigned short) * cropWindowSize * cropWindowSize);
+
+		//	// Copying Horizontal Intensity Profile
+		//	memcpy(bestHorizontalIntensityProfile.get(), croppedRAWData.get() + cropWindowSize * lineProfileY, sizeof(unsigned short) * cropWindowSize);
+
+		//	// Copying Vertical Intensity Profile
+		//	for (auto y{0}; y < cropWindowSize; ++y)
+		//		bestVerticalIntensityProfile[y] = croppedRAWData[y * cropWindowSize + lineProfileX];
+		//}
+
+		//gainFWHM[i] = FindGainFWHMInArrayData
+		//(
+		//	croppedRAWData.get(), 
+		//	croppedWhiteRAWData.get(), 
+		//	cropWindowSize
+		//);
+
+        wxFileName file(filePath);
+		file.SetExt("png");
+        auto correctedFileName = wxString("ffc_circle_") + file.GetFullName();
+		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
+		circleImagesPathArray.Add(correctedFileNameWithPath);
+
+		WriteTempJSONImageDataToTXTFile
+		(
+			croppedRAWData.get(), 
+			cropCircleWindowSize, 
+			cropCircleWindowSize, 
+			"plasma",
+			inputParameters.pixelSizeUM,
+			correctedFileNameWithPath
+		);
+
+		++i;
+    }
+
+#ifdef _DEBUG
+	if (!Invoke2DPlotsCreation(circleImagesPathArray)) return;
+	for (const auto& imagePath : circleImagesPathArray)
+	{
+		wxFileName file(imagePath);
+		file.SetExt("png");
+		RemoveBackgroundFromTheImage(file.GetFullPath());
+	}
+#endif // DEBUG
 }
 
 auto cMain::IsPythonInstalledOnTheCurrentMachine() -> bool
