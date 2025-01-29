@@ -99,8 +99,9 @@ if (-not (Test-Path -Path $report_generator_folder))
 $sourceFolder = "${other_files_folder}\src\ReportGenerator"
 $destinationFolder = "${report_generator_folder}"
 # Get all *.py, *.tex, *.txt and *.png files from the source folder and copy them to the destination folder
-Get-ChildItem -Path $sourceFolder -Filter *.py, *.tex, *.txt, *.png | ForEach-Object 
-{
+Get-ChildItem -Path $sourceFolder -Recurse -File | Where-Object { 
+    $_.Extension -match '(.py|.tex|.txt|.png)$' -and $_.FullName -notlike "*\.venv*"
+} | ForEach-Object {
     Copy-Item -Path $_.FullName -Destination "$destinationFolder\$($_.Name)" -Force
 }
 
