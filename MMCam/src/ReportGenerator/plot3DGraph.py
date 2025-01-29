@@ -19,9 +19,6 @@ def visualize(imgData, width, height, filePath):
     ax.set_ylabel("Distance [mm]")
     ax.set_zlabel("Intensity [a.u.]")
 
-    # Remove extra white spaces
-    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-
     plt.savefig(filePath, dpi=300)
 
     print('Plot of 3D Image Created Successfully')

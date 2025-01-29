@@ -790,6 +790,42 @@ private:
 		WriteJSONDataToFile(fileName.GetFullPath().ToStdString(), jsonString);
 	};
 
+	auto WriteTempJSONLineProfileDataToTXTFile
+	(
+		unsigned short* const lineProfileData,
+		double* const horizontalAxisData,
+		int width,	
+		std::string title,
+		std::string xLabel,
+		std::string yLabel,
+		std::string lineColour,
+		wxString filePath
+	) -> void
+	{
+		using json = nlohmann::json;
+
+		// Prepare JSON string with data
+		json j;
+		j["lineProfileData"] = std::vector<unsigned short>(lineProfileData, lineProfileData + width);
+		j["horizontalAxisData"] = std::vector<double>(horizontalAxisData, horizontalAxisData + width);
+		j["width"] = width;
+		j["title"] = title;
+		j["xLabel"] = xLabel;
+		j["yLabel"] = yLabel;
+		j["lineColour"] = lineColour;
+		j["filePath"] = filePath;
+
+		std::string jsonString = j.dump();
+
+		// Create wxFileName object
+		wxFileName fileName(filePath);
+
+		// Change the file extension
+		fileName.SetExt("txt");
+
+		WriteJSONDataToFile(fileName.GetFullPath().ToStdString(), jsonString);
+	};
+
 	auto Invoke2DPlotsCreation( wxArrayString filePaths) -> bool
 	{
 		constexpr auto raise_exception_msg = [](int code) 
@@ -904,8 +940,7 @@ private:
 
 	auto RemoveBackgroundFromTheImage(wxString imagePath) -> void;
 
-
-	auto CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap;
+	auto Create2DImageInGrayscale(unsigned short* const inData, const int imgWidth) -> wxBitmap;
 
 private:
 	/* Settings Menu */

@@ -98,8 +98,9 @@ cMain::cMain(const wxString& title_)
 	m_ProgressBar->SetIcon(logo_xpm);
 
 	CenterOnScreen();
+	// Maximize application's window
+	Maximize();
 	Show();
-
 
 	// Enable Dark Mode
 	{
@@ -126,10 +127,6 @@ cMain::cMain(const wxString& title_)
 		ProcessEvent(artEvt);
 	}
 #endif // _DEBUG
-
-	// Maximize application's window
-	Maximize();
-
 	{
 		//m_StartStopLiveCapturingTglBtn->SetValue(true);
 		//wxCommandEvent art_start_live_capturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
@@ -2473,13 +2470,14 @@ auto cMain::RemoveBackgroundFromTheImage(wxString imagePath) -> void
 	if (!croppedImage.SaveFile(imagePath, wxBITMAP_TYPE_PNG)) return;
 }
 
-auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth) -> wxBitmap
+auto cMain::Create2DImageInGrayscale(unsigned short* const inData, const int imgWidth) -> wxBitmap
 {
 	auto scaleFactor = 2500 / imgWidth;
 	scaleFactor = scaleFactor < 1 ? 1 : scaleFactor;
 	wxImage colormapImage(scaleFactor * imgWidth, scaleFactor * imgWidth);
 
-	auto outImageSize = wxSize(1.2 * colormapImage.GetWidth(), 1.2 * colormapImage.GetHeight());
+	//auto outImageSize = wxSize(1.2 * colormapImage.GetWidth(), 1.2 * colormapImage.GetHeight());
+	auto outImageSize = wxSize(colormapImage.GetWidth(), colormapImage.GetHeight());
 
 	wxBitmap bitmap(outImageSize.GetWidth(), outImageSize.GetHeight());
 	wxMemoryDC dc(bitmap);
@@ -2489,6 +2487,7 @@ auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth
 	dc.Clear();
 
 	{
+		auto maxValue = *std::max_element(inData, inData + imgWidth * imgWidth);
 		unsigned short current_value{};
 		unsigned char red{}, green{}, blue{};
 		unsigned long long position_in_data_pointer{};
@@ -2498,12 +2497,14 @@ auto cMain::CreateColorMapImage(unsigned short* const inData, const int imgWidth
 			for (auto x{ 0 }; x < colormapImage.GetWidth(); x += scaleFactor)
 			{
 				current_value = inData[position_in_data_pointer];
-				m_CamPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
+				red = static_cast<unsigned char>((maxValue - current_value) * UCHAR_MAX / maxValue);
+				//colormapImage.SetRGB(x, y, red, red, red);
+				//m_CamPreview->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
 				for (auto yInside{ y }; yInside < y + scaleFactor; ++yInside)
 				{
 					for (auto xInside{ x }; xInside < x + scaleFactor; ++xInside)
 					{
-						colormapImage.SetRGB(xInside, yInside, red, green, blue);
+						colormapImage.SetRGB(xInside, yInside, red, red, red);
 					}
 				}
 				++position_in_data_pointer;
@@ -2689,6 +2690,9 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	double bestGainMax{};
 	int bestPosInGain{};
 	double bestFocusPos{ startPositionMM };
+	int lineProfileX{}, lineProfileY{};
+	double bestHorizontalFWHM{}, bestVerticalFWHM{};
+
     for (const auto& filePath : imagesForCalculationPath)
     {
 		if (!wxFileName::FileExists(filePath)) continue;
@@ -2747,16 +2751,6 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			cropWindowSize
 		);
 
-		if (gainMax[i] > bestGainMax)
-		{
-			bestGainMax = gainMax[i];
-			bestPosInGain = i;
-			bestFocusPos = startPositionMM + i * stepMM;
-			memcpy(bestCroppedRAWData.get(), croppedRAWData.get(), sizeof(unsigned short) * cropWindowSize * cropWindowSize);
-			// Need to copy best Horizontal and Vertical line profiles
-			// 
-			//memcpy(bestHorizontalIntensityProfile.get(), bestCroppedRAWData[])
-		}
 
 		auto horizontalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
 		auto verticalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
@@ -2779,6 +2773,26 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		verticalFWHM[i] = verticalFWHM[i] == - 1.0 ? 0.0 : verticalFWHM[i];
 		verticalFWHM[i] *= inputParameters.pixelSizeUM;
 
+		if (gainMax[i] > bestGainMax)
+		{
+			bestGainMax = gainMax[i];
+			bestPosInGain = i;
+			bestFocusPos = startPositionMM + i * stepMM;
+			lineProfileX = bestXPos - startX;
+			lineProfileY = bestYPos - startY;
+			bestHorizontalFWHM = horizontalFWHM[i];
+			bestVerticalFWHM = verticalFWHM[i];
+
+			memcpy(bestCroppedRAWData.get(), croppedRAWData.get(), sizeof(unsigned short) * cropWindowSize * cropWindowSize);
+
+			// Copying Horizontal Intensity Profile
+			memcpy(bestHorizontalIntensityProfile.get(), croppedRAWData.get() + cropWindowSize * lineProfileY, sizeof(unsigned short) * cropWindowSize);
+
+			// Copying Vertical Intensity Profile
+			for (auto y{0}; y < cropWindowSize; ++y)
+				bestVerticalIntensityProfile[y] = croppedRAWData[y * cropWindowSize + lineProfileX];
+		}
+
 		gainFWHM[i] = FindGainFWHMInArrayData
 		(
 			croppedRAWData.get(), 
@@ -2786,15 +2800,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			cropWindowSize
 		);
 
-		//auto bitmap = CreateColorMapImage(croppedRAWData.get(), cropWindowSize);
-	
-		//cv::subtract(rawImage, blackImage, numerator, cv::noArray(), CV_32F);
-
-		//cv::divide(numerator, denominator, correctedImage);
-		//correctedImage.convertTo(correctedImage, rawImage.type());
-
         wxFileName file(filePath);
-		//file.SetExt("bmp");
 		file.SetExt("png");
         auto correctedFileName = wxString("ffc_") + file.GetFullName();
 		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
@@ -2809,8 +2815,6 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		);
 
 		++i;
-		//cv::imwrite(correctedFileNameWithPath.ToStdString(), correctedImage);
-		//if (!bitmap.SaveFile(correctedFileNameWithPath, wxBITMAP_TYPE_BMP)) return;
     }
 
 #ifndef _DEBUG
@@ -2823,7 +2827,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	}
 #endif // DEBUG
 
-	// Best Position Plot Creation
+	// Best Position Plots Creation
 	{
 		auto best2DFileNameWithPath = tempFolderPath + "best2D.png";
 		wxFileName file(best2DFileNameWithPath);
@@ -2865,6 +2869,81 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			file.SetExt("png");
 			RemoveBackgroundFromTheImage(file.GetFullPath());
 		}
+
+		// Horizontal Intensity Profile
+		{
+			file.SetFullName("bestHorizontalProfile.png");
+
+			// Generating Horizontal (X) array
+			auto bestHorizontalIntensityProfileX = std::make_unique<double[]>(cropWindowSize);
+			{
+				for (auto i{ 0 }; i < cropWindowSize; ++i)
+					bestHorizontalIntensityProfileX[i] = (i - lineProfileX) * (inputParameters.pixelSizeUM / 1000.0);
+			}
+
+			auto title = wxString("Horizontal FWHM = ");
+			title += wxString::Format(wxT("%.2f"), bestHorizontalFWHM);
+			title += " [um]";
+			WriteTempJSONLineProfileDataToTXTFile
+			(
+				bestHorizontalIntensityProfile.get(),
+				bestHorizontalIntensityProfileX.get(),
+				cropWindowSize,
+				title.ToStdString(),
+				"Distance [mm]",
+				"Intensity [a.u.]",
+				"#ed1c24",
+				file.GetFullPath()
+			);
+
+			file.SetExt("txt");
+			if (!InvokePlotGraphCreation("plotLineProfileGraph", file.GetFullPath())) return;
+
+			file.SetExt("png");
+			RemoveBackgroundFromTheImage(file.GetFullPath());
+		}
+
+		// Vertical Intensity Profile
+		{
+			file.SetFullName("bestVerticalProfile.png");
+
+			// Generating Horizontal (X) array
+			auto bestVerticalIntensityProfileX = std::make_unique<double[]>(cropWindowSize);
+			{
+				for (auto i{ 0 }; i < cropWindowSize; ++i)
+					bestVerticalIntensityProfileX[i] = (i - lineProfileY) * (inputParameters.pixelSizeUM / 1000.0);
+			}
+
+			auto title = wxString("Vertical FWHM = ");
+			title += wxString::Format(wxT("%.2f"), bestVerticalFWHM);
+			title += " [um]";
+			WriteTempJSONLineProfileDataToTXTFile
+			(
+				bestVerticalIntensityProfile.get(),
+				bestVerticalIntensityProfileX.get(),
+				cropWindowSize,
+				title.ToStdString(),
+				"Distance [mm]",
+				"Intensity [a.u.]",
+				"#ed1c24",
+				file.GetFullPath()
+			);
+
+			file.SetExt("txt");
+			if (!InvokePlotGraphCreation("plotLineProfileGraph", file.GetFullPath())) return;
+
+			file.SetExt("png");
+			RemoveBackgroundFromTheImage(file.GetFullPath());
+		}
+
+		// Grayscale Image
+		{
+			file.SetFullName("bestGrayscale.png");
+
+			auto bmp = Create2DImageInGrayscale(croppedRAWData.get(), cropWindowSize);
+			if (!bmp.SaveFile(file.GetFullPath(), wxBITMAP_TYPE_PNG)) return;
+		}
+
 	}
 
 	//auto resultMaxGain = std::max_element(gainMax.get(), gainMax.get() + imagesForCalculationPath.GetCount());
