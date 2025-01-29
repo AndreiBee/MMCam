@@ -106,6 +106,39 @@ wxPanel* cGenerateReportDialog::CreateReportVariablesPage(wxWindow* parent)
             settings_grid_sizer->Add(m_ReportNameTxtCtrl.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
         }
 
+        // Optics Scheme
+        {
+            settings_grid_sizer->Add
+            (
+                new wxStaticText
+                (
+                    panel,
+                    wxID_ANY,
+                    "&Optics Scheme:"
+                ),
+                0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+            );
+
+            wxString folderPath = wxGetCwd() + "\\src\\ReportGenerator\\"; // Gets current working directory
+            wxArrayString pngFiles;
+            GetPngFiles(folderPath, pngFiles);
+
+            m_OpticsSchemeChoice = std::make_unique<wxChoice>
+                (
+                    panel,
+                    GenerateReportVariables::ID_OPTICS_CHEME_CHOICE,
+                    wxDefaultPosition,
+                    wxDefaultSize,
+                    pngFiles
+                );
+
+            if (!pngFiles.IsEmpty())
+				m_OpticsSchemeChoice->SetSelection(0);
+
+            settings_grid_sizer->Add(m_OpticsSchemeChoice.get(), wxSizerFlags(1).Expand().Align(wxALIGN_CENTER_VERTICAL));
+        }
+
+
         // Author
         {
             settings_grid_sizer->Add
@@ -553,10 +586,9 @@ wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
 		topSizer->Add(staticBoxSizer, 0, wxEXPAND | wxALL, 5);
     }
 
-    topSizer->AddStretchSpacer();
 
-	// Black Image
-    wxStaticBox* blackStaticBox = new wxStaticBox(panel, wxID_ANY, "Black Image");
+	// Original Black Image
+    wxStaticBox* blackStaticBox = new wxStaticBox(panel, wxID_ANY, "Original Black Image");
     {
         blackStaticBox->SetBackgroundColour(wxColor(90, 90, 90));
 
@@ -564,16 +596,16 @@ wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
         {
             wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
 
-            m_BlackImgPathTxtCtrl = std::make_unique<wxTextCtrl>
+            m_OriginalBlackImgPathTxtCtrl = std::make_unique<wxTextCtrl>
                 (
                     panel,
-                    GenerateReportVariables::ID_BLACK_PATH_TXT_CTRL,
+                    GenerateReportVariables::ID_ORIGINAL_BLACK_PATH_TXT_CTRL,
                     wxT("Black Image Path..."),
                     wxDefaultPosition, wxDefaultSize,
 					wxTE_LEFT | wxTE_READONLY
                 );
 
-            horizontalSizer->Add(m_BlackImgPathTxtCtrl.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
+            horizontalSizer->Add(m_OriginalBlackImgPathTxtCtrl.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
 
 			auto bmp = wxMaterialDesignArtProvider::GetBitmap
 			(
@@ -583,39 +615,39 @@ wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
 				wxColour(255, 0, 0)
 			);
 
-            m_OpenBlackImgBtn = std::make_unique<wxBitmapButton>
+            m_OpenOriginalBlackImgBtn = std::make_unique<wxBitmapButton>
                 (
                     panel,
-                    GenerateReportVariables::ID_OPEN_BLACK_BTN,
+                    GenerateReportVariables::ID_OPEN_ORIGINAL_BLACK_BTN,
                     bmp
                 );
-			m_OpenBlackImgBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenBlackImageBtn, this);
+			m_OpenOriginalBlackImgBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenOriginalBlackImageBtn, this);
 
-            horizontalSizer->Add(m_OpenBlackImgBtn.get(), 0, wxRIGHT, 2);
+            horizontalSizer->Add(m_OpenOriginalBlackImgBtn.get(), 0, wxRIGHT, 2);
 
             staticBoxSizer->Add(horizontalSizer, 0, wxEXPAND);
         }
 		topSizer->Add(staticBoxSizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     }
 
-	// White Image
-    wxStaticBox* whiteStaticBox = new wxStaticBox(panel, wxID_ANY, "White Image");
+	// Original White Image
+    wxStaticBox* whiteStaticBox = new wxStaticBox(panel, wxID_ANY, "Original White Image");
     {
         whiteStaticBox->SetBackgroundColour(wxColor(255, 255, 255));
         wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(whiteStaticBox, wxVERTICAL);
         {
             wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
 
-            m_WhiteImgPathTxtCtrl = std::make_unique<wxTextCtrl>
+            m_OriginalWhiteImgPathTxtCtrl = std::make_unique<wxTextCtrl>
                 (
                     panel,
-                    GenerateReportVariables::ID_WHITE_PATH_TXT_CTRL,
+                    GenerateReportVariables::ID_ORIGINAL_WHITE_PATH_TXT_CTRL,
                     wxT("White Image Path..."),
                     wxDefaultPosition, wxDefaultSize,
 					wxTE_LEFT | wxTE_READONLY
                 );
 
-            horizontalSizer->Add(m_WhiteImgPathTxtCtrl.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
+            horizontalSizer->Add(m_OriginalWhiteImgPathTxtCtrl.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
 
 			auto bmp = wxMaterialDesignArtProvider::GetBitmap
 			(
@@ -625,20 +657,66 @@ wxPanel* cGenerateReportDialog::CreateFlatFieldPage(wxWindow* parent)
 				wxColour(255, 0, 0)
 			);
 
-            m_OpenWhiteImgBtn = std::make_unique<wxBitmapButton>
+            m_OpenOriginalWhiteImgBtn = std::make_unique<wxBitmapButton>
                 (
                     panel,
-                    GenerateReportVariables::ID_OPEN_WHITE_BTN,
+                    GenerateReportVariables::ID_OPEN_ORIGINAL_WHITE_BTN,
                     bmp
                 );
 
-			m_OpenWhiteImgBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenWhiteImageBtn, this);
+			m_OpenOriginalWhiteImgBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenOriginalWhiteImageBtn, this);
 
-            horizontalSizer->Add(m_OpenWhiteImgBtn.get(), 0, wxRIGHT, 2);
+            horizontalSizer->Add(m_OpenOriginalWhiteImgBtn.get(), 0, wxRIGHT, 2);
             staticBoxSizer->Add(horizontalSizer, 0, wxEXPAND);
         }
 		topSizer->Add(staticBoxSizer,0, wxEXPAND | wxLEFT | wxRIGHT, 5);
     }
+
+    topSizer->AddStretchSpacer();
+
+	// Circle Black Image
+    wxStaticBox* circleBlackStaticBox = new wxStaticBox(panel, wxID_ANY, "Circle Black Image");
+    {
+        circleBlackStaticBox->SetBackgroundColour(wxColor(90, 90, 90));
+
+        wxStaticBoxSizer* staticBoxSizer = new wxStaticBoxSizer(circleBlackStaticBox, wxVERTICAL);
+        {
+            wxBoxSizer* horizontalSizer = new wxBoxSizer(wxHORIZONTAL);
+
+            m_CircleBlackImgPathTxtCtrl = std::make_unique<wxTextCtrl>
+                (
+                    panel,
+                    GenerateReportVariables::ID_CIRCLE_BLACK_PATH_TXT_CTRL,
+                    wxT("Black Image Path..."),
+                    wxDefaultPosition, wxDefaultSize,
+					wxTE_LEFT | wxTE_READONLY
+                );
+
+            horizontalSizer->Add(m_CircleBlackImgPathTxtCtrl.get(), 1, wxLEFT | wxRIGHT | wxEXPAND, 2);
+
+			auto bmp = wxMaterialDesignArtProvider::GetBitmap
+			(
+				wxART_TOGGLE_OFF, 
+				wxART_CLIENT_AWESOME_SOLID, 
+				wxSize(16, 16), 
+				wxColour(255, 0, 0)
+			);
+
+            m_OpenCircleBlackImgBtn = std::make_unique<wxBitmapButton>
+                (
+                    panel,
+                    GenerateReportVariables::ID_OPEN_CIRCLE_BLACK_BTN,
+                    bmp
+                );
+			m_OpenCircleBlackImgBtn->Bind(wxEVT_BUTTON, &cGenerateReportDialog::OnOpenCircleBlackImageBtn, this);
+
+            horizontalSizer->Add(m_OpenCircleBlackImgBtn.get(), 0, wxRIGHT, 2);
+
+            staticBoxSizer->Add(horizontalSizer, 0, wxEXPAND);
+        }
+		topSizer->Add(staticBoxSizer, 0, wxEXPAND | wxLEFT | wxRIGHT, 5);
+    }
+
 
 
     panel->SetSizerAndFit(topSizer);
@@ -740,7 +818,7 @@ wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
 	topSizer->AddStretchSpacer();
 
     // X-Ray Test
-    auto xRayTestStaticBox = new wxStaticBoxSizer(wxVERTICAL, panel, "X-Ray Test");
+    auto xRayTestStaticBox = new wxStaticBoxSizer(wxVERTICAL, panel, "X-Ray Test (Optional)");
     {
         // Measured Spectrum
         wxStaticBox* measuredSpectrumStaticBox = new wxStaticBox(panel, wxID_ANY, "Measured Spectrum");
@@ -880,7 +958,7 @@ wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
     return panel;
 }
 
-auto cGenerateReportDialog::OnOpenBlackImageBtn(wxCommandEvent& evt) -> void
+auto cGenerateReportDialog::OnOpenOriginalBlackImageBtn(wxCommandEvent& evt) -> void
 {
 	constexpr auto empty_field_exception_msg = [](wxString type)
 	{
@@ -922,14 +1000,14 @@ auto cGenerateReportDialog::OnOpenBlackImageBtn(wxCommandEvent& evt) -> void
 	};
 
 
-    m_IsBlackImageLoadedSucc = false;
+    m_IsOriginalBlackImageLoadedSucc = false;
 
-    if (m_IsBlackImgToggled)
+    if (m_IsOriginalBlackImgToggled)
     {
-        m_BlackImageMat = cv::Mat();
-        m_BlackImgPathTxtCtrl->ChangeValue(wxT("Black Image Path..."));
+        //m_BlackImageMat = cv::Mat();
+        m_OriginalBlackImgPathTxtCtrl->ChangeValue(wxT("Black Image Path..."));
         
-        m_IsBlackImgToggled = false;
+        m_IsOriginalBlackImgToggled = false;
 		auto bmp = wxMaterialDesignArtProvider::GetBitmap
 		(
 			wxART_TOGGLE_OFF, 
@@ -937,7 +1015,7 @@ auto cGenerateReportDialog::OnOpenBlackImageBtn(wxCommandEvent& evt) -> void
 			wxSize(16, 16), 
 			wxColour(255, 0, 0)
 		);
-		m_OpenBlackImgBtn->SetBitmap(bmp);
+		m_OpenOriginalBlackImgBtn->SetBitmap(bmp);
 		//m_OpenBlackImgBtn->SetLabel(wxT("Open"));
 
    //     if (m_IsWhiteImageToggled)
@@ -981,9 +1059,9 @@ auto cGenerateReportDialog::OnOpenBlackImageBtn(wxCommandEvent& evt) -> void
     file_path = std::string(dlg.GetPath().mbc_str());
 #endif // _DEBUG
 
-    m_BlackImageMat = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
-    auto imgHeight = m_BlackImageMat.rows;
-    auto imgWidth = m_BlackImageMat.cols;
+    auto origBlackImgMat = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
+    auto imgHeight = origBlackImgMat.rows;
+    auto imgWidth = origBlackImgMat.cols;
 
     if (imgWidth <= 0 || imgHeight <= 0)
     {
@@ -1006,12 +1084,12 @@ auto cGenerateReportDialog::OnOpenBlackImageBtn(wxCommandEvent& evt) -> void
         }
     }
 
-    m_BlackImagePath = file_path;
+    m_OriginalBlackImagePath = file_path;
 
-    m_BlackImgPathTxtCtrl->ChangeValue(file_path);
+    m_OriginalBlackImgPathTxtCtrl->ChangeValue(file_path);
 
-    m_IsBlackImageLoadedSucc = true;
-    m_IsBlackImgToggled = true;
+    m_IsOriginalBlackImageLoadedSucc = true;
+    m_IsOriginalBlackImgToggled = true;
 
 	auto bmp = wxMaterialDesignArtProvider::GetBitmap
 	(
@@ -1020,14 +1098,14 @@ auto cGenerateReportDialog::OnOpenBlackImageBtn(wxCommandEvent& evt) -> void
 		wxSize(16, 16), 
 		wxColour(0, 255, 0)
 	);
-	m_OpenBlackImgBtn->SetBitmap(bmp);
+	m_OpenOriginalBlackImgBtn->SetBitmap(bmp);
     //m_OpenBlackImgBtn->SetLabel(wxT("Close"));
 
     //m_ImgWidthTxtCtrl->Disable();
     //m_ImgHeightTxtCtrl->Disable();
 }
 
-auto cGenerateReportDialog::OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void
+auto cGenerateReportDialog::OnOpenOriginalWhiteImageBtn(wxCommandEvent& evt) -> void
 {
 	constexpr auto empty_field_exception_msg = [](wxString type)
 	{
@@ -1068,12 +1146,12 @@ auto cGenerateReportDialog::OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void
 			wxICON_ERROR);
 	};
 
-    m_IsWhiteImageLoadedSucc = false;
+    m_IsOriginalWhiteImageLoadedSucc = false;
 
-    if (m_IsWhiteImageToggled)
+    if (m_IsOriginalWhiteImageToggled)
     {
-        m_WhiteImageMat = cv::Mat();
-        m_WhiteImgPathTxtCtrl->ChangeValue(wxT("White Image Path..."));
+        //m_WhiteImageMat = cv::Mat();
+        m_OriginalWhiteImgPathTxtCtrl->ChangeValue(wxT("White Image Path..."));
 
 		auto bmp = wxMaterialDesignArtProvider::GetBitmap
 		(
@@ -1082,8 +1160,8 @@ auto cGenerateReportDialog::OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void
 			wxSize(16, 16), 
 			wxColour(255, 0, 0)
 		);
-		m_OpenWhiteImgBtn->SetBitmap(bmp);
-        m_IsWhiteImageToggled = false;
+		m_OpenOriginalWhiteImgBtn->SetBitmap(bmp);
+        m_IsOriginalWhiteImageToggled = false;
 		//m_OpenWhiteImgBtn->SetLabel(wxT("Open"));
 
    //     if (m_IsBlackImgToggled)
@@ -1127,9 +1205,9 @@ auto cGenerateReportDialog::OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void
     file_path = std::string(dlg.GetPath().mbc_str());
 #endif // _DEBUG
 
-    m_WhiteImageMat = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
-    auto imgHeight = m_WhiteImageMat.rows;
-    auto imgWidth = m_WhiteImageMat.cols;
+    auto origImgMat = cv::imread(file_path, cv::IMREAD_GRAYSCALE);
+    auto imgHeight = origImgMat.rows;
+    auto imgWidth = origImgMat.cols;
 
     if (imgWidth <= 0 || imgHeight <= 0)
     {
@@ -1152,12 +1230,12 @@ auto cGenerateReportDialog::OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void
         }
     }
 
-    m_WhiteImagePath = file_path;
+    m_OriginalWhiteImagePath = file_path;
 
-    m_WhiteImgPathTxtCtrl->ChangeValue(file_path);
+    m_OriginalWhiteImgPathTxtCtrl->ChangeValue(file_path);
 
-    m_IsWhiteImageLoadedSucc = true;
-    m_IsWhiteImageToggled = true;
+    m_IsOriginalWhiteImageLoadedSucc = true;
+    m_IsOriginalWhiteImageToggled = true;
 
 	auto bmp = wxMaterialDesignArtProvider::GetBitmap
 	(
@@ -1166,11 +1244,15 @@ auto cGenerateReportDialog::OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void
 		wxSize(16, 16), 
 		wxColour(0, 255, 0)
 	);
-	m_OpenWhiteImgBtn->SetBitmap(bmp);
+	m_OpenOriginalWhiteImgBtn->SetBitmap(bmp);
     //m_OpenWhiteImgTglBtn->SetLabel(wxT("Close"));
 
     //m_ImgWidthTxtCtrl->Disable();
     //m_ImgHeightTxtCtrl->Disable();
+}
+
+auto cGenerateReportDialog::OnOpenCircleBlackImageBtn(wxCommandEvent& evt) -> void
+{
 }
 
 auto cGenerateReportDialog::OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void
@@ -1398,7 +1480,7 @@ auto cGenerateReportDialog::OnExitButtonClicked(wxCommandEvent& evt) -> void
         return;
     }
 
-    if (!m_IsBlackImageLoadedSucc || !m_IsWhiteImageLoadedSucc)
+    if (!m_IsOriginalBlackImageLoadedSucc || !m_IsOriginalWhiteImageLoadedSucc)
     {
         raise_image_isnt_set();
         return;

@@ -716,6 +716,7 @@ private:
 		unsigned short* const dataPtr,
 		int width,
 		int height,
+		wxString colormap,
 		double pixelSizeUM,
 		wxString filePath
 	) -> void
@@ -727,6 +728,7 @@ private:
 		j["data"] = std::vector<unsigned short>(dataPtr, dataPtr + (width * height));
 		j["width"] = width;
 		j["height"] = height;
+		j["colormap"] = colormap;
 		j["pixelSizeUM"] = pixelSizeUM;
 		j["filePath"] = filePath;
 

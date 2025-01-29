@@ -2659,17 +2659,6 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	cv::Mat whiteImage = cv::imread(whiteImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
 	cv::Mat blackImage = cv::imread(blackImagePath.ToStdString(), cv::IMREAD_UNCHANGED);
 
-	//if (whiteImage.size() != blackImage.size() 
-	//	|| whiteImage.type() != blackImage.type()) return;
-
-	//cv::Mat numerator, denominator, correctedImage;
-	////cv::Mat epsilon = cv::Mat::zeros(denominator.size(), denominator.type());
-	////cv::add(epsilon, cv::Scalar(1e-6), epsilon);
-
-	//cv::subtract(whiteImage, blackImage, denominator, cv::noArray(), CV_32F);
-	//cv::add(denominator, cv::Scalar(1e-6), denominator);
-	//denominator += epsilon;
-
 	auto croppedRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 	auto croppedBlackRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
 	auto croppedWhiteRAWData = std::make_unique<unsigned short[]>(cropWindowSize * cropWindowSize);
@@ -2805,11 +2794,13 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
         auto correctedFileName = wxString("ffc_") + file.GetFullName();
 		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
 		imagesPathArray.Add(correctedFileNameWithPath);
+
 		WriteTempJSONImageDataToTXTFile
 		(
 			croppedRAWData.get(), 
 			cropWindowSize, 
 			cropWindowSize, 
+			"plasma",
 			inputParameters.pixelSizeUM,
 			correctedFileNameWithPath
 		);
@@ -2839,6 +2830,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 				bestCroppedRAWData.get(),
 				cropWindowSize,
 				cropWindowSize,
+				"plasma",
 				inputParameters.pixelSizeUM,
 				file.GetFullPath()
 			);
@@ -2860,6 +2852,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 				bestCroppedRAWData.get(),
 				cropWindowSize,
 				cropWindowSize,
+				"plasma",
 				inputParameters.pixelSizeUM,
 				file.GetFullPath()
 			);
@@ -2940,8 +2933,25 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		{
 			file.SetFullName("bestGrayscale.png");
 
-			auto bmp = Create2DImageInGrayscale(croppedRAWData.get(), cropWindowSize);
-			if (!bmp.SaveFile(file.GetFullPath(), wxBITMAP_TYPE_PNG)) return;
+			WriteTempJSONImageDataToTXTFile
+			(
+				bestCroppedRAWData.get(),
+				cropWindowSize,
+				cropWindowSize,
+				"gist_yarg",
+				inputParameters.pixelSizeUM,
+				file.GetFullPath()
+			);
+
+			file.SetExt("txt");
+			wxArrayString arrStr{};
+			arrStr.Add(file.GetFullPath());
+			if (!Invoke2DPlotsCreation(arrStr)) return;
+			file.SetExt("png");
+			RemoveBackgroundFromTheImage(file.GetFullPath());
+
+			//auto bmp = Create2DImageInGrayscale(croppedRAWData.get(), cropWindowSize);
+			//if (!bmp.SaveFile(file.GetFullPath(), wxBITMAP_TYPE_PNG)) return;
 		}
 
 	}

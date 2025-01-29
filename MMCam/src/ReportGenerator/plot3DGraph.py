@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def visualize(imgData, width, height, filePath):
+def visualize(imgData, width, height, colormap, filePath):
     data_reshaped = np.array(imgData, dtype=np.uint16).reshape((height, width))
     # Create the x and y coordinates
     x = np.arange(data_reshaped.shape[1])
@@ -13,7 +13,7 @@ def visualize(imgData, width, height, filePath):
     # Plot the 3D surface
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
-    surface = ax.plot_surface(x, y, data_reshaped, cmap='plasma')
+    surface = ax.plot_surface(x, y, data_reshaped, cmap=colormap)
 
     ax.set_xlabel("Distance [mm]")
     ax.set_ylabel("Distance [mm]")
@@ -37,7 +37,8 @@ if __name__ == "__main__":
     imgData = params["data"]
     imgWidth = params["width"]
     imgheight = params["height"]
+    colormap = params["colormap"]
     filePath = params["filePath"]
 
     visualize(imgData=imgData, width=imgWidth,
-              height=imgheight, filePath=filePath)
+              height=imgheight, colormap=colormap, filePath=filePath)

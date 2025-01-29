@@ -3,6 +3,7 @@
 #define CGENERATEREPORTDIALOG_H
 
 #include "wx/wx.h"
+#include "wx/dir.h"
 #include "wx/propdlg.h"
 #include "wx/filename.h"
 #include "wx/bookctrl.h"
@@ -32,15 +33,18 @@ namespace GenerateReportVariables {
         ID_STEP_TXT_CTRL,
         ID_FOCUS_EXPOSURE_TXT_CTRL,
         ID_CIRCLE_EXPOSURE_TXT_CTRL,
+        ID_OPTICS_CHEME_CHOICE,
         // Second Tab
         ID_IMG_DATA_TYPE,
         ID_IMG_WIDTH,
         ID_IMG_HEIGHT,
         ID_LITTLE_ENDIAN_BYTE_ORDER_CHECK_BOX,
-        ID_OPEN_BLACK_BTN,
-        ID_OPEN_WHITE_BTN,
-        ID_BLACK_PATH_TXT_CTRL,
-        ID_WHITE_PATH_TXT_CTRL,
+        ID_OPEN_ORIGINAL_BLACK_BTN,
+        ID_OPEN_ORIGINAL_WHITE_BTN,
+        ID_ORIGINAL_BLACK_PATH_TXT_CTRL,
+        ID_ORIGINAL_WHITE_PATH_TXT_CTRL,
+        ID_OPEN_CIRCLE_BLACK_BTN,
+        ID_CIRCLE_BLACK_PATH_TXT_CTRL,
         // Third Tab
         ID_OPEN_IMAGES_FOR_CALCULATION_BTN,
         ID_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL,
@@ -85,22 +89,22 @@ public:
         m_ImgHeightTxtCtrl->GetValue().ToInt(&imgHeight);
         return imgHeight;
     };
-    auto GetBlackImage() -> cv::Mat
-    { 
-        if (m_IsBlackImageLoadedSucc)
-            return m_BlackImageMat;
-        else
-            return cv::Mat();
-    };
-    auto GetWhiteImage() -> cv::Mat
-    {
-        if (m_IsWhiteImageLoadedSucc)
-            return m_WhiteImageMat;
-        else
-            return cv::Mat();
-    };
-    auto GetBlackImagePath() const -> wxString { return m_BlackImagePath; };
-    auto GetWhiteImagePath() const -> wxString { return m_WhiteImagePath; };
+    //auto GetBlackImage() -> cv::Mat
+    //{ 
+    //    if (m_IsBlackImageLoadedSucc)
+    //        return m_OriginalBlackImageMat;
+    //    else
+    //        return cv::Mat();
+    //};
+    //auto GetWhiteImage() -> cv::Mat
+    //{
+    //    if (m_IsWhiteImageLoadedSucc)
+    //        return m_WhiteImageMat;
+    //    else
+    //        return cv::Mat();
+    //};
+    auto GetBlackImagePath() const -> wxString { return m_OriginalBlackImagePath; };
+    auto GetWhiteImagePath() const -> wxString { return m_OriginalWhiteImagePath; };
     auto GetImagesForCalculationPaths() const -> wxArrayString { return m_ImagesForCalculationPathsArray; };
 
 private:
@@ -109,8 +113,9 @@ private:
     wxPanel* CreateInputImagesPage(wxWindow* parent);
 
     auto OnDataTypeChoice(wxCommandEvent& evt) -> void;
-    auto OnOpenBlackImageBtn(wxCommandEvent& evt) -> void;
-    auto OnOpenWhiteImageBtn(wxCommandEvent& evt) -> void;
+    auto OnOpenOriginalBlackImageBtn(wxCommandEvent& evt) -> void;
+    auto OnOpenOriginalWhiteImageBtn(wxCommandEvent& evt) -> void;
+    auto OnOpenCircleBlackImageBtn(wxCommandEvent& evt) -> void;
 
     auto OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void;
     auto OnOpenCircleImagesForCalculationBtn(wxCommandEvent& evt) -> void;
@@ -136,18 +141,46 @@ private:
 
     auto OnExitButtonClicked(wxCommandEvent& evt) -> void;
 
+    auto GetPngFiles(const wxString& directory, wxArrayString& pngFiles) -> void
+    {
+        wxDir dir(directory);
+        if (!dir.IsOpened())
+        {
+            wxLogError("Could not open directory: %s", directory);
+            return;
+        }
+
+        wxString filename;
+        bool cont = dir.GetFirst(&filename, "*.png", wxDIR_FILES);
+        while (cont)
+        {
+            if (!filename.IsSameAs("logo.png", false)) // Exclude "logo.png" (case-insensitive)
+            {
+                pngFiles.Add(filename);
+            }
+            cont = dir.GetNext(&filename);
+        }
+    }
+
 protected:
     // First Tab
     std::unique_ptr<wxTextCtrl> m_OpticsSerialNumberTxtCtrl{}, m_OpticsProductNumberTxtCtrl{}, m_OpticsTypeTxtCtrl{}, m_AuthorTxtCtrl{}, m_CustomerTxtCtrl{}, m_ReportNameTxtCtrl{};
     std::unique_ptr<wxTextCtrl> m_StartPositionTxtCtrl{}, m_StepTxtCtrl{}, m_FocusExposureTxtCtrl{}, m_CircleExposureTxtCtrl{};
+    std::unique_ptr<wxChoice> m_OpticsSchemeChoice{};
 
     // Second Tab
     std::unique_ptr<wxChoice> m_ImgDataTypeChoice{};
     std::unique_ptr<wxTextCtrl> m_ImgWidthTxtCtrl{}, m_ImgHeightTxtCtrl{};
-    // Black & White
-    std::unique_ptr<wxTextCtrl> m_BlackImgPathTxtCtrl{}, m_WhiteImgPathTxtCtrl{};
-    std::unique_ptr<wxBitmapButton> m_OpenBlackImgBtn{}, m_OpenWhiteImgBtn{};
-    bool m_IsBlackImgToggled{}, m_IsWhiteImageToggled{};
+
+    // Original Black & White
+    std::unique_ptr<wxTextCtrl> m_OriginalBlackImgPathTxtCtrl{}, m_OriginalWhiteImgPathTxtCtrl{};
+    std::unique_ptr<wxBitmapButton> m_OpenOriginalBlackImgBtn{}, m_OpenOriginalWhiteImgBtn{};
+    bool m_IsOriginalBlackImgToggled{}, m_IsOriginalWhiteImageToggled{};
+
+    // Circle Black 
+    std::unique_ptr<wxTextCtrl> m_CircleBlackImgPathTxtCtrl{};
+    std::unique_ptr<wxBitmapButton> m_OpenCircleBlackImgBtn{};
+    bool m_IsCircleBlackImgToggled{};
 
     // Third Tab
     std::unique_ptr<wxTextCtrl> m_ImagesForCalculationPaths{}, m_CircleImagesForCalculationPaths{};
@@ -159,10 +192,10 @@ protected:
     std::unique_ptr<wxBitmapButton> m_OpenMeasuredSpectrumBtn{}, m_OpenFirstGainBtn{}, m_OpenSecondGainBtn{};
     bool m_IsOpenMeasuredSpectrumToggled{}, m_IsOpenFirstGainToggled{}, m_IsOpenSecondGainToggled{};
 
-    bool m_IsBlackImageLoadedSucc{}, m_IsWhiteImageLoadedSucc{};
+    bool m_IsOriginalBlackImageLoadedSucc{}, m_IsOriginalWhiteImageLoadedSucc{};
 
-    cv::Mat m_BlackImageMat{}, m_WhiteImageMat{};
-    wxString m_BlackImagePath{}, m_WhiteImagePath{};
+    //cv::Mat m_BlackImageMat{}, m_WhiteImageMat{};
+    wxString m_OriginalBlackImagePath{}, m_OriginalWhiteImagePath{};
     wxArrayString m_ImagesForCalculationPathsArray{};
 
     wxImageList* m_imageList;

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def visualize(data, width, height, pixelSize, filePath):
+def visualize(data, width, height, pixelSize, colormap, filePath):
     # Reshape data to 2D array
     array = np.array(data, dtype=np.uint16).reshape((height, width))
 
@@ -16,7 +16,7 @@ def visualize(data, width, height, pixelSize, filePath):
 
     # 2D Colormap Graph
     plt.figure()
-    plt.imshow(array, cmap="plasma")
+    plt.imshow(array, cmap=colormap)
     # plt.colorbar()
     # Adding labels to the axes
     plt.xlabel('Distance [mm]', fontsize=12)
@@ -58,7 +58,9 @@ if __name__ == "__main__":
     data = params["data"]
     width = params["width"]
     height = params["height"]
+    colormap = params["colormap"]
     pixelSize = params["pixelSizeUM"]
     filePath = params["filePath"]
 
-    visualize(data, width, height, pixelSize, filePath)
+    visualize(data=data, width=width, height=height,
+              pixelSize=pixelSize, colormap=colormap, filePath=filePath)
