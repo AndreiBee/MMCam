@@ -83,10 +83,26 @@ if (-not (Test-Path -Path $src_folder))
 {
     New-Item -Path $src_folder -ItemType Directory
 }
-Copy-Item -Path "${other_files_folder}\src\bruker.xml" -Destination "${release_folder}\src\bruker.xml" -Force
-Copy-Item -Path "${other_files_folder}\src\experimental.xml" -Destination "${release_folder}\src\experimental.xml" -Force
-Copy-Item -Path "${other_files_folder}\src\specs.xml" -Destination "${release_folder}\src\specs.xml" -Force
-Copy-Item -Path "${other_files_folder}\src\init.ini" -Destination "${release_folder}\src\init.ini" -Force
+Copy-Item -Path "${other_files_folder}\src\bruker.xml" -Destination "${src_folder}\bruker.xml" -Force
+Copy-Item -Path "${other_files_folder}\src\experimental.xml" -Destination "${src_folder}\experimental.xml" -Force
+Copy-Item -Path "${other_files_folder}\src\specs.xml" -Destination "${src_folder}\specs.xml" -Force
+Copy-Item -Path "${other_files_folder}\src\init.ini" -Destination "${src_folder}\init.ini" -Force
+
+# Check if the ReportGenerator folder exists, and create it if not
+$report_generator_folder = "${release_folder}\src\ReportGenerator"
+# Check if the temp folder exists, and create it if not
+if (-not (Test-Path -Path $report_generator_folder)) 
+{
+    New-Item -Path $report_generator_folder -ItemType Directory
+}
+
+$sourceFolder = "${other_files_folder}\src\ReportGenerator"
+$destinationFolder = "${report_generator_folder}"
+# Get all *.py, *.tex, *.txt and *.png files from the source folder and copy them to the destination folder
+Get-ChildItem -Path $sourceFolder -Filter *.py, *.tex, *.txt, *.png | ForEach-Object 
+{
+    Copy-Item -Path $_.FullName -Destination "$destinationFolder\$($_.Name)" -Force
+}
 
 # Preparing name for the output archive
 $commit_number = git rev-list --count HEAD  # Get the total number of commits in the repository
