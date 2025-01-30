@@ -2318,29 +2318,58 @@ auto cMain::FindSpotCenterCoordinates
 		const int maxI, 
 		const double hMax, 
 		int* left, 
-		int* right
+		int* right,
+		bool startCalculationFromTheBeginningAndEndOfTheData
 		) 
 		{
 			auto leftFWHM = -1, rightFWHM = -1;
-			// Looking for the left FWHM value
-			for (int i = maxI; i >= 0; --i) 
+
+			if (startCalculationFromTheBeginningAndEndOfTheData)
 			{
-				auto value = data1D.at<float>(i);
-				if (leftFWHM == -1 && value < hMax)
+				// Looking for the left FWHM value
+				for (auto i = 0; i <= maxI; ++i) 
 				{
-					leftFWHM = i + 1;
-					break;
+					auto value = data1D.at<float>(i);
+					if (leftFWHM == -1 && value >= hMax)
+					{
+						leftFWHM = i;
+						break;
+					}
+				}
+
+				// Looking for the right FWHM value
+				for (auto i = data1D.total() - 1; i > maxI; --i) 
+				{
+					auto value = data1D.at<float>(i);
+					if (leftFWHM != -1 && value >= hMax)
+					{
+						rightFWHM = i + 1;
+						break;
+					}
 				}
 			}
-
-			// Looking for the right FWHM value
-			for (int i = maxI; i < data1D.total(); ++i) 
+			else
 			{
-				auto value = data1D.at<float>(i);
-				if (leftFWHM != -1 && value < hMax)
+				// Looking for the left FWHM value
+				for (int i = maxI; i >= 0; --i) 
 				{
-					rightFWHM = i - 1;
-					break;
+					auto value = data1D.at<float>(i);
+					if (leftFWHM == -1 && value < hMax)
+					{
+						leftFWHM = i + 1;
+						break;
+					}
+				}
+
+				// Looking for the right FWHM value
+				for (int i = maxI; i < data1D.total(); ++i) 
+				{
+					auto value = data1D.at<float>(i);
+					if (leftFWHM != -1 && value < hMax)
+					{
+						rightFWHM = i - 1;
+						break;
+					}
 				}
 			}
 
@@ -2367,9 +2396,10 @@ auto cMain::FindSpotCenterCoordinates
 		(
 			rowSums, 
 			maxIndex, 
-			circleAnalyzing ? threshold : halfMax, 
+			halfMax, 
 			&leftFWHM, 
-			&rightFWHM
+			&rightFWHM,
+			circleAnalyzing
 		);
 
 		*bestY = (rightFWHM - leftFWHM) / 2 + leftFWHM;
@@ -2385,7 +2415,6 @@ auto cMain::FindSpotCenterCoordinates
 		cv::minMaxLoc(colSums, &minVal, &maxVal, nullptr, &maxPoint);
 
 		auto halfMax = (maxVal - minVal) / 2.0 + minVal;
-		auto threshold = (maxVal - minVal) * 0.1 + minVal;
 		int maxIndex = maxPoint.x; // x is used for 1D row data
 
 		auto leftFWHM = -1, rightFWHM = -1;
@@ -2394,9 +2423,10 @@ auto cMain::FindSpotCenterCoordinates
 		(
 			colSums, 
 			maxIndex, 
-			circleAnalyzing ? threshold : halfMax, 
+			halfMax, 
 			&leftFWHM, 
-			&rightFWHM
+			&rightFWHM,
+			circleAnalyzing
 		);
 
 		*bestX = (rightFWHM - leftFWHM) / 2 + leftFWHM;
@@ -2840,7 +2870,6 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
-#endif // DEBUG
 
 	// Best Position Plots Creation
 	{
@@ -3049,6 +3078,9 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
+#endif // DEBUG
+
+	// Circles
 
 	i = 0;
 
@@ -3062,12 +3094,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		cv::Mat rawImage = cv::imread(filePath.ToStdString(), cv::IMREAD_UNCHANGED);
 		if (rawImage.size() != circleBlackImage.size() || rawImage.type() != circleBlackImage.type()) continue;
 
-		FindSpotCenterCoordinates(rawImage, &bestXPos, &bestYPos);
-		if (bestXPos - cropWindowSize / 2 < 0 || bestXPos + cropWindowSize / 2 >= rawImage.cols
-			|| bestYPos - cropWindowSize / 2 < 0 || bestYPos + cropWindowSize / 2 >= rawImage.rows) continue;
+		FindSpotCenterCoordinates(rawImage, &bestXPos, &bestYPos, true);
+		if (bestXPos - cropCircleWindowSize / 2 < 0 || bestXPos + cropCircleWindowSize / 2 >= rawImage.cols
+			|| bestYPos - cropCircleWindowSize / 2 < 0 || bestYPos + cropCircleWindowSize / 2 >= rawImage.rows) continue;
 
-		auto startX = bestXPos - cropWindowSize / 2;
-		auto startY = bestYPos - cropWindowSize / 2;
+		auto startX = bestXPos - cropCircleWindowSize / 2;
+		auto startY = bestYPos - cropCircleWindowSize / 2;
 
 		// RAW Data
 		CropDataIntoArray
