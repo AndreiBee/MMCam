@@ -119,9 +119,8 @@ wxPanel* cGenerateReportDialog::CreateReportVariablesPage(wxWindow* parent)
                 0, wxALL | wxALIGN_CENTER_VERTICAL, 5
             );
 
-            wxString folderPath = wxGetCwd() + "\\src\\ReportGenerator\\"; // Gets current working directory
             wxArrayString pngFiles;
-            GetPngFiles(folderPath, pngFiles);
+            GetPngFiles(m_ReportGeneratorPath, pngFiles);
 
             m_OpticsSchemeChoice = std::make_unique<wxChoice>
                 (

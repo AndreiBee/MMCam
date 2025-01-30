@@ -2591,6 +2591,151 @@ auto cMain::Create2DImageInGrayscale(unsigned short* const inData, const int img
 	return bitmap;
 }
 
+auto cMain::GeneratePDFReportUsingLatex
+(
+	wxString folderContainingTEXFile, 
+	wxString folderWithData,
+	const MainFrameVariables::ImagesFilePaths& imageFilePaths
+) -> void
+{
+	constexpr auto raise_exception_msg = [](int code) 
+	{
+		wxString title = "CMD execution error";
+		wxMessageBox(
+			wxT
+			(
+				"Failed to run CMD script. Error code: " + wxString::Format(wxT("%i"), code)
+			),
+			title,
+			wxICON_ERROR);
+	};
+
+	wxString filename, sourceFilePath, destinationFilePath;
+
+	// Copy the TEX Template file
+	{
+		wxDir dir(folderContainingTEXFile);
+		if (!dir.IsOpened())
+		{
+			wxPuts("Failed to open source directory.");
+			return;
+		}
+
+		bool found = dir.GetFirst(&filename, "*.tex", wxDIR_FILES); // Find first .tex file
+
+		if (!found) return;
+
+		sourceFilePath = folderContainingTEXFile;
+		sourceFilePath += folderContainingTEXFile.EndsWith("\\") ? filename : "\\" + filename;
+
+		destinationFilePath = folderWithData;
+		destinationFilePath += folderWithData.EndsWith("\\") ? filename : "\\" + filename;
+
+		if (!wxCopyFile(sourceFilePath, destinationFilePath, true)) return; // Overwrite if exists
+	}
+
+	// Replace Content inside the TEX file
+	wxString placeholder = "{#LogoImage}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.logoPath));
+	placeholder = "{#OpticsScheme}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.opticsScheme));
+	placeholder = "{#FWHMDiagram}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.fwhmPath));
+	placeholder = "{#GainDiagram}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.gainPath));
+
+	// Optimal Position
+	for (auto i{ 0 }; i < imageFilePaths.optimalPositionArray.GetCount(); ++i)
+	{
+		placeholder = "{#OptimalPosition" + wxString::Format(wxT("%i"), i + 1) + "}";
+		ReplacePlaceholderInTexFile
+		(
+			destinationFilePath, 
+			placeholder, 
+			ConvertToForwardSlashes(imageFilePaths.optimalPositionArray[i])
+		);
+	}
+
+	// Best Position
+	placeholder = "{#Best2DImage}";
+	ReplacePlaceholderInTexFile
+	(
+		destinationFilePath, 
+		placeholder, 
+		ConvertToForwardSlashes(imageFilePaths.best2DImage)
+	);
+
+	placeholder = "{#Best3DImage}";
+	ReplacePlaceholderInTexFile
+	(
+		destinationFilePath, 
+		placeholder, 
+		ConvertToForwardSlashes(imageFilePaths.best3DImage)
+	);
+
+	placeholder = "{#BestHorizontalProfile}";
+	ReplacePlaceholderInTexFile
+	(
+		destinationFilePath, 
+		placeholder, 
+		ConvertToForwardSlashes(imageFilePaths.bestHorizontalProfile)
+	);
+
+	placeholder = "{#BestVerticalProfile}";
+	ReplacePlaceholderInTexFile
+	(
+		destinationFilePath, 
+		placeholder, 
+		ConvertToForwardSlashes(imageFilePaths.bestVerticalProfile)
+	);
+
+	placeholder = "{#BestGreyscaleImage}";
+	ReplacePlaceholderInTexFile
+	(
+		destinationFilePath, 
+		placeholder, 
+		ConvertToForwardSlashes(imageFilePaths.bestGreyscaleImage)
+	);
+
+	// Circle Position
+	for (auto i{ 0 }; i < imageFilePaths.circleArray.GetCount(); ++i)
+	{
+		placeholder = "{#CirclePosition" + wxString::Format(wxT("%i"), i + 1) + "}";
+		ReplacePlaceholderInTexFile
+		(
+			destinationFilePath, 
+			placeholder, 
+			ConvertToForwardSlashes(imageFilePaths.circleArray[i])
+		);
+	}
+
+	// X-Ray Images
+	bool isXRayArrayEmpty{ true };
+
+	for (const auto& str : imageFilePaths.xRayArray)
+		isXRayArrayEmpty = str.IsEmpty();
+
+	if (isXRayArrayEmpty)
+	{
+		RemoveSectionFromFile(destinationFilePath, "% START_REMOVE", "% END_REMOVE");
+	}
+	else
+	{
+		for (auto i{ 0 }; i < imageFilePaths.xRayArray.GetCount(); ++i)
+		{
+			placeholder = "{#XRayImage" + wxString::Format(wxT("%i"), i + 1) + "}";
+			ReplacePlaceholderInTexFile
+			(
+				destinationFilePath, 
+				placeholder, 
+				ConvertToForwardSlashes(imageFilePaths.xRayArray[i])
+			);
+		}
+	}
+
+	ExecuteLatex(destinationFilePath);
+}
+
 bool cMain::Cancelled()
 {
 	wxCriticalSectionLocker lock(m_CSCancelled);
@@ -2645,7 +2790,7 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 {
 	wxString venvFolderName = ".venv";
-	wxString reportGeneratorPath = "src\\ReportGenerator";
+	wxString reportGeneratorPath = wxGetCwd() + "\\" + "src\\ReportGenerator";
 	wxString requirementsPath = reportGeneratorPath + "\\" + "requirements.txt";
 	wxString venvPath = reportGeneratorPath + "\\" + venvFolderName;
 	if (!IsVirtualEnvironmentAlreadyCreated(venvPath))
@@ -2703,6 +2848,18 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	wxFileName fileName(outDirWithFileName);
 	outDirName = fileName.GetPath();
 #endif // _DEBUG
+
+	MainFrameVariables::ImagesFilePaths imageFilePaths{};
+
+	// Logo Path
+	{
+		auto logoPath = reportGeneratorPath + "\\" + "logo.png";
+		wxFileName file(logoPath);
+		imageFilePaths.logoPath = file.GetFullPath();
+	}
+
+	// Optics Scheme
+	imageFilePaths.opticsScheme = dialog.GetOpticsSchemePath();
 
 	// Create outputImages folder
 	wxDateTime nowDateTime = wxDateTime::Now();
@@ -2868,6 +3025,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
         auto correctedFileName = wxString("ffc_") + file.GetFullName();
 		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
 		originalImagesPathArray.Add(correctedFileNameWithPath);
+		imageFilePaths.optimalPositionArray.Add(correctedFileNameWithPath);
 
 		WriteTempJSONImageDataToTXTFile
 		(
@@ -2882,7 +3040,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		++i;
     }
 
-#ifndef _DEBUG
+//#ifndef _DEBUG
 	if (!Invoke2DPlotsCreation(originalImagesPathArray)) return;
 	for (const auto& imagePath : originalImagesPathArray)
 	{
@@ -2890,16 +3048,15 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
-#endif // DEBUG
+//#endif // DEBUG
 
+//#ifndef _DEBUG
 	// Best Position Plots Creation
 	{
 		auto best2DFileNameWithPath = tempFolderPath + "best2D.png";
 		wxFileName file(best2DFileNameWithPath);
-
-#ifndef _DEBUG
-
-
+		imageFilePaths.best2DImage = file.GetFullPath();
+		
 		// 2D Image
 		{
 			WriteTempJSONImageDataToTXTFile
@@ -2923,6 +3080,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		// 3D Image
 		{
 			file.SetFullName("best3D.png");
+			imageFilePaths.best3DImage = file.GetFullPath();
 
 			WriteTempJSONImageDataToTXTFile
 			(
@@ -2943,6 +3101,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		// Horizontal Intensity Profile
 		{
 			file.SetFullName("bestHorizontalProfile.png");
+			imageFilePaths.bestHorizontalProfile = file.GetFullPath();
 
 			// Generating Horizontal (X) array
 			auto bestHorizontalIntensityProfileX = std::make_unique<double[]>(cropWindowSize);
@@ -2976,6 +3135,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		// Vertical Intensity Profile
 		{
 			file.SetFullName("bestVerticalProfile.png");
+			imageFilePaths.bestVerticalProfile = file.GetFullPath();
 
 			// Generating Horizontal (X) array
 			auto bestVerticalIntensityProfileX = std::make_unique<double[]>(cropWindowSize);
@@ -3005,11 +3165,11 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			file.SetExt("png");
 			RemoveBackgroundFromTheImage(file.GetFullPath());
 		}
-#endif // !_DEBUG
 
 		// Grayscale Image
 		{
-			file.SetFullName("bestGrayscale.png");
+			file.SetFullName("bestGreyscale.png");
+			imageFilePaths.bestGreyscaleImage = file.GetFullPath();
 
 			auto croppGreyscaleImageWidth = static_cast<int>(std::max(bestHorizontalFWHM, bestVerticalFWHM));
 			croppGreyscaleImageWidth *= 2;
@@ -3052,20 +3212,15 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		}
 
 	}
+//#endif // !_DEBUG
 
-	//auto resultMaxGain = std::max_element(gainMax.get(), gainMax.get() + imagesForCalculationPath.GetCount());
-	//auto distanceMaxGain = std::distance(gainMax.get(), resultMaxGain);
-
-	//auto resultFWHMGain = std::max_element(gainFWHM.get(), gainFWHM.get() + imagesForCalculationPath.GetCount());
-	//auto distanceFWHMGain = std::distance(gainFWHM.get(), resultFWHMGain);
-
-	//auto bestInGain = static_cast<int>(distanceMaxGain);
-
-#ifndef _DEBUG
+//#ifndef _DEBUG
 	// FWHM Plot Creation
 	{
 		auto fwhmFileName = tempFolderPath + "fwhm_data.png";
 		wxFileName file(fwhmFileName);
+
+		imageFilePaths.fwhmPath = file.GetFullPath();
 
 		WriteTempJSONDataToTXTFile
 		(
@@ -3098,6 +3253,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		auto gainFileName = tempFolderPath + "gain_data.png";
 		wxFileName file(gainFileName);
 
+		imageFilePaths.gainPath = file.GetFullPath();
+
 		WriteTempJSONDataToTXTFile
 		(
 			gainMax.get(),
@@ -3123,9 +3280,9 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
-#endif // _DEBUG
+//#endif // _DEBUG
 
-#ifndef _DEBUG
+//#ifndef _DEBUG
 	// Circles
 	i = 0;
 
@@ -3174,60 +3331,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			cropCircleWindowSize
 		);
 
-
-		//auto horizontalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
-		//auto verticalSumArray = std::make_unique<unsigned int[]>(cropWindowSize);
-
-		//FWHM::CalculateSumVertically(croppedRAWData.get(), cropWindowSize, cropWindowSize, horizontalSumArray.get());
-		//horizontalFWHM[i] = FWHM::CalculateFWHM
-		//	(
-		//		horizontalSumArray.get(), 
-		//		cropWindowSize
-		//	);
-		//horizontalFWHM[i] = horizontalFWHM[i] == - 1.0 ? 0.0 : horizontalFWHM[i];
-		//horizontalFWHM[i] *= inputParameters.pixelSizeUM;
-
-		//FWHM::CalculateSumHorizontally(croppedRAWData.get(), cropWindowSize, cropWindowSize, verticalSumArray.get());
-		//verticalFWHM[i] = FWHM::CalculateFWHM
-		//	(
-		//		verticalSumArray.get(), 
-		//		cropWindowSize
-		//	);
-		//verticalFWHM[i] = verticalFWHM[i] == - 1.0 ? 0.0 : verticalFWHM[i];
-		//verticalFWHM[i] *= inputParameters.pixelSizeUM;
-
-		//if (gainMax[i] > bestGainMax)
-		//{
-		//	bestGainMax = gainMax[i];
-		//	bestPosInGain = i;
-		//	bestFocusPos = startPositionMM + i * stepMM;
-		//	lineProfileX = bestXPos - startX;
-		//	lineProfileY = bestYPos - startY;
-		//	bestHorizontalFWHM = horizontalFWHM[i];
-		//	bestVerticalFWHM = verticalFWHM[i];
-
-		//	memcpy(bestCroppedRAWData.get(), croppedRAWData.get(), sizeof(unsigned short) * cropWindowSize * cropWindowSize);
-
-		//	// Copying Horizontal Intensity Profile
-		//	memcpy(bestHorizontalIntensityProfile.get(), croppedRAWData.get() + cropWindowSize * lineProfileY, sizeof(unsigned short) * cropWindowSize);
-
-		//	// Copying Vertical Intensity Profile
-		//	for (auto y{0}; y < cropWindowSize; ++y)
-		//		bestVerticalIntensityProfile[y] = croppedRAWData[y * cropWindowSize + lineProfileX];
-		//}
-
-		//gainFWHM[i] = FindGainFWHMInArrayData
-		//(
-		//	croppedRAWData.get(), 
-		//	croppedWhiteRAWData.get(), 
-		//	cropWindowSize
-		//);
-
         wxFileName file(filePath);
 		file.SetExt("png");
         auto correctedFileName = wxString("ffc_circle_") + file.GetFullName();
 		auto correctedFileNameWithPath = tempFolderPath + correctedFileName;
 		circleImagesPathArray.Add(correctedFileNameWithPath);
+		imageFilePaths.circleArray.Add(correctedFileNameWithPath);
 
 		WriteTempJSONImageDataToTXTFile
 		(
@@ -3241,9 +3350,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 		++i;
     }
-#endif // _DEBUG
 
-#ifndef _DEBUG
+	// Replace the seventh image for the original one
+	imageFilePaths.circleArray[6] = imageFilePaths.best2DImage;
+//#endif // _DEBUG
+
+//#ifndef _DEBUG
 	if (!Invoke2DPlotsCreation(circleImagesPathArray)) return;
 	for (const auto& imagePath : circleImagesPathArray)
 	{
@@ -3251,7 +3363,14 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
-#endif // DEBUG
+//#endif // DEBUG
+
+	GeneratePDFReportUsingLatex
+	(
+		reportGeneratorPath, 
+		tempFolder.GetFullPath(),
+		imageFilePaths
+	);
 }
 
 auto cMain::IsPythonInstalledOnTheCurrentMachine() -> bool

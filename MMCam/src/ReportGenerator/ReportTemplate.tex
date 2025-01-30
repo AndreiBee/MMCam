@@ -10,12 +10,15 @@
 \usepackage{cellspace}
 \usepackage{siunitx} %number rounding
 \usepackage{numprint}
+\usepackage{url}
+
+\begin{document}
 
 \setlength\cellspacetoplimit{10pt}
 \setlength\cellspacebottomlimit{2pt}
 \pagestyle{fancy}
 \graphicspath{{./}}
-\lhead{\includegraphics[width=0.28\textwidth]{logo.png}}
+\lhead{\includegraphics[width=0.28\textwidth]{{#LogoImage}}}
 \setlength{\headheight}{1cm} % Set header height
 \setlength{\footskip}{1cm} % Set footer height
 \fancyfoot[R]{\large{\textbf{\textcolor{red}{Rigaku confidential}}}}
@@ -26,26 +29,28 @@
 \newcommand{\Optics}{\text{037-066}}
 \newcommand{\OpticsType}{\text{C0-06-19}}
 \newcommand{\Fokus}{\text{22.85}}
+\newcommand{\Step}{\text{0.025}}
 \newcommand{\FokusTime}{\text{8}}
 \newcommand{\CircleTime}{\text{150}}
 \newcommand{\Author}{\text{Veronika Marsikova}}
 \newcommand{\Customer}{\text{BRU}}
 \newcommand{\ReportName}{\text{TEST REPORT}}
 
+% Start of the Document
 \rhead{\large{\textbf{\textcolor{ultramarine}{\Optics{}}}}}
 
-\title{\textbf{\textcolor{ultramarine}{\Optics{} (C0-06-19)}}}
+\title{\textbf{\textcolor{ultramarine}{\Optics{} (\OpticsType{})}}}
 \date{\textbf{\textcolor{ultramarine}{\ReportName{}}}}
 
-\begin{document}
 
- \maketitle
- \thispagestyle{fancy} % Přidáváme fancy styl na titulní stranu
+
+\maketitle
+\thispagestyle{fancy} % Přidáváme fancy styl na titulní stranu
 \captionsetup[subfigure]{singlelinecheck=off, justification=centering}
 
 \begin{figure}[ht]
     \begin{center}
-    \includegraphics[width= 7 cm]{optics_parabola.png}
+    \includegraphics[width= 7 cm]{{#OpticsScheme}}
     \end{center}
     \label{fig:optika}
 \end{figure}
@@ -78,149 +83,149 @@ Customer:&			\Customer{}\\
 
 \section{VID measurement}
 
-Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
-\begin{table}[h]
-    \centering
-    \begin{tabular}{c c c c c c}
-  	Z & Gain$_{max}$ & Gain$_{FWHM}$ & FWHM ($\mu$m) & FWHM$_x$ ($\mu$m) &FWHM$_y$ ($\mu$m)\\
-  	\hline
-  	\hline
+%Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
+%\begin{table}[h]
+%    \centering
+%    \begin{tabular}{c c c c c c}
+%  	Z & Gain$_{max}$ & Gain$_{FWHM}$ & FWHM ($\mu$m) & FWHM$_x$ ($\mu$m) &FWHM$_y$ ($\mu$m)\\
+%  	\hline
+%  	\hline
 
-\input{vysledky_formatovane.txt}  % Načtení souboru
+%\input{vysledky_formatovane.txt}  % Načtení souboru
 
-\end{tabular}
- \caption{Parameters of foci.}
-\label{tab:01}
-\end{table}
+%\end{tabular}
+%\caption{Parameters of foci.}
+%\label{tab:01}
+%\end{table}
 
 \begin{figure}[h!]
 \begin{center}
-    \begin{subfigure}[b]{0.4\textwidth}
-	\centering
-      \includegraphics[width=7cm, height=4.5cm]{FWHM x.png}
-      \label{fig:02x}
+    \begin{subfigure}[b]{0.6\textwidth}  % Adjust subfigure width to 80% of text width
+        \centering
+        \includegraphics[width=\linewidth]{{#FWHMDiagram}}
+        \label{fig:02x}
     \end{subfigure}
-    \begin{subfigure}[b]{0.4\textwidth}
-	\centering
-      \includegraphics[width=7cm, height=4.5cm]{FWHM y.png}
-      \label{fig:02y}
+    \caption{FWHM.}
+    
+    \vspace{0.5cm}  % Add vertical space between the figures
+    
+    \begin{subfigure}[b]{0.6\textwidth}  % Adjust subfigure width to 80% of text width
+        \centering
+        \includegraphics[width=\linewidth]{{#GainDiagram}}
+        \label{fig:03max}
     \end{subfigure}
-  	\caption{FWHM.}
-    \begin{subfigure}[b]{0.4\textwidth}
-	\centering
-      \includegraphics[width=7cm, height=4.5cm]{GAIN max.png}
-      \label{fig:03max}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.4\textwidth}
-	\centering
-      \includegraphics[width=7cm, height=4.5cm]{GAIN FWHM.png}
-      \label{fig:03}
-    \end{subfigure}
-  	\caption{Gain.}
+    \caption{Gain.}
 \end{center}
 \end{figure}
 
 \clearpage
 \newpage
-
-\section{Finding the optimal position - step 0.025 mm}
+\section{Finding the optimal position - step \Step{} mm}
 
 \begin{figure}[h!]
 \centering
-	\begin{subfigure}[b]{0.3\textwidth}
-	\includegraphics[width=\textwidth]{1_color.png}
-\centering
-		\text{Z - 0.150 mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{2_color.png}
-\centering
-		\text{Z - 0.125 mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{3_color.png}
-\centering
-		\text{Z - 0.100 mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{4_color.png}
-\centering
-		\text{Z - 0.075  mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{5_color.png}
-\centering
-		\text{Z - 0.050  mm}
-	\end{subfigure}
-		\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{6_color.png}
-\centering
-		\text{Z - 0.025  mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{7_color.png}
-\centering
-		\text{Z = \Fokus{} mm}
-	\end{subfigure}
-		\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{8_color.png}
-\centering
-		\text{Z + 0.025 mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{9_color.png}
-\centering
-		\text{Z + 0.050 mm}
-	\end{subfigure}
-		\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{10_color.png}
-\centering
-		\text{Z + 0.075 mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{11_color.png}
-\centering
-		\text{Z + 0.100 mm}
-	\end{subfigure}
-		\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{12_color.png}
-\centering
-		\text{Z + 0.125 mm}
-	\end{subfigure}
-	\begin{subfigure}[b]{0.3\textwidth}
-		\includegraphics[width=\textwidth]{13_color.png}
-\centering
-		\text{Z + 0.150 mm}
-	\end{subfigure}
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition1}}
+        \centering
+        \text{Z - 0.150 mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition2}}
+        \centering
+        \text{Z - 0.125 mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition3}}
+        \centering
+        \text{Z - 0.100 mm}
+    \end{minipage}
+    \\[1ex] % Line break for the next row
+
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition4}}
+        \centering
+        \text{Z - 0.075 mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition5}}
+        \centering
+        \text{Z - 0.050 mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition6}}
+        \centering
+        \text{Z - 0.025 mm}
+    \end{minipage}
+    \\[1ex] % Line break for the next row
+
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition7}}
+        \centering
+        \text{Z = \Fokus{} mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition8}}
+        \centering
+        \text{Z + 0.025 mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition9}}
+        \centering
+        \text{Z + 0.050 mm}
+    \end{minipage}
+    \\[1ex] % Line break for the next row
+
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition10}}
+        \centering
+        \text{Z + 0.075 mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition11}}
+        \centering
+        \text{Z + 0.100 mm}
+    \end{minipage} \hfill
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition12}}
+        \centering
+        \text{Z + 0.125 mm}
+    \end{minipage}
+    \\[1ex] % Line break for the next row
+
+    \begin{minipage}[b]{0.22\textwidth}
+        \includegraphics[width=\textwidth]{{#OptimalPosition13}}
+        \centering
+        \text{Z + 0.150 mm}
+    \end{minipage}
 
 \bigskip	
-\caption{Images of focus ( \FokusTime{}ms).}
+\caption{Images of focus (\FokusTime{} [ms]).}
 \end{figure}
 
 \clearpage
 
-\section{Best focus (Z = \Fokus{}  mm)}
+\section{Best focus (Z=\Fokus{} [mm])}
 
 \begin{figure}[h!]
   \begin{center}
-   \begin{subfigure}[b]{0.45\textwidth}
-      \includegraphics[width=\textwidth]{7_color.png}
-      \caption{3D image in false scale.}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.45\textwidth}
-      \includegraphics[width=\textwidth]{focus_3D.png}
+   \begin{subfigure}[b]{0.4\textwidth}
+      \includegraphics[width=\textwidth]{{#Best2DImage}}
       \caption{2D image in false scale.}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.4\textwidth}
+      \includegraphics[width=\textwidth]{{#Best3DImage}}
+      \caption{3D image in false scale.}
     \end{subfigure}
     
 \bigskip
 \bigskip
 
-    \begin{subfigure}{0.45\textwidth}
-      \includegraphics[width=\textwidth]{focus_section_x.png}
+    \begin{subfigure}{0.4\textwidth}
+      \includegraphics[width=\textwidth]{{#BestHorizontalProfile}}
       \caption{Horizontal profile.}
     \end{subfigure}
-    \begin{subfigure}{0.45\textwidth}
-      \includegraphics[width=\textwidth]{focus_section_y.png}
+    \begin{subfigure}{0.4\textwidth}
+      \includegraphics[width=\textwidth]{{#BestVerticalProfile}}
       \caption{Vertical profile.}
     \end{subfigure}
     
@@ -228,12 +233,12 @@ Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
 \bigskip
 
      \begin{subfigure}[c]{0.4\textwidth}
-      \includegraphics[width=\textwidth]{focus_data.png}
-      \caption{2D image in grey scale.}
+      \includegraphics[width=\textwidth]{{#BestGreyscaleImage}}
+      \caption{2D image in inverted greyscale.}
     \end{subfigure}  
      
  \end{center}
-\caption{Images of the best focus (Z = \Fokus{}  mm, \FokusTime{}ms).}
+\caption{Images of the best focus (Z=\Fokus{} [mm], \FokusTime{} [ms]).}
 \label{fig:04}
 \end{figure}
 
@@ -241,36 +246,35 @@ Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
 
 \section{Images in front and behind of the focus}
 
-
 \begin{figure}[h!]
 \centering
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{13_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition13}}
 \centering
 	\text{Z - 3.0 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{12_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition12}}
 \centering
 	\text{Z - 2.5 mm, \CircleTime{}msms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{11_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition11}}
 \centering
 	\text{Z - 2.0 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{10_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition10}}
 \centering
 	\text{Z - 1.5 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{9_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition9}}
 \centering
 	\text{Z - 1.0 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{8_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition8}}
 \centering
 	\text{Z - 0.5 mm, \CircleTime{}ms}
 	\end{subfigure}
@@ -278,42 +282,42 @@ Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
 
 \begin{figure}[h!]
 \centering
-\begin{subfigure}{0.25\textwidth}
-\includegraphics[width=\textwidth]{7_color.png}
+\begin{subfigure}{0.17\textheight}
+\includegraphics[width=\textwidth]{{#Best2DImage}}
 \centering
-\text{Z = \Fokus{}  mm, \FokusTime{} ms}
+\text{Z=\Fokus{} [mm], \FokusTime{} [ms]}
 \end{subfigure}
 \end{figure}
 
 \begin{figure}[h!]
 \centering
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{6_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition6}}
 	\centering
 	\text{Z + 0.5 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{5_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition5}}
 	\centering
 	\text{Z + 1.0 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{4_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition4}}
 	\centering
 	\text{Z + 1.5 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{3_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition3}}
 	\centering
 	\text{Z + 2.0 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{2_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition2}}
 	\centering
 	\text{Z + 2.5 mm, \CircleTime{}ms}
 	\end{subfigure}
-	\begin{subfigure}{0.25\textwidth}
-	\includegraphics[width=\textwidth]{1_kruhy.png}
+	\begin{subfigure}{0.17\textheight}
+	\includegraphics[width=\textwidth]{{#CirclePosition1}}
 	\centering
 	\text{Z + 3.0 mm, \CircleTime{}ms}
 	\end{subfigure}
@@ -322,6 +326,7 @@ Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
 \caption{Images of focus (Z - distance from the end the optics to the detector).}
 \end{figure}
 
+% START_REMOVE
 \newpage
 
 \section{X-ray test}
@@ -330,7 +335,7 @@ Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
   \centering
    \begin{subfigure}[b]{0.65\textwidth}
 	\centering
-	\includegraphics[width=\textwidth]{mca_graf.png}
+	\includegraphics[width=\textwidth]{{#XRayImage1}}
  	\end{subfigure}
 \caption{Measured spectrum - \Optics{}.}
  \end{figure} 
@@ -339,7 +344,7 @@ Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
   \centering
    \begin{subfigure}[b]{0.5\textwidth}
 	\centering
-	\includegraphics[width=\textwidth]{Gain.png}
+	\includegraphics[width=\textwidth]{{#XRayImage2}}
     \end{subfigure}
  \caption{Gain - comparison spectrum behind of \Optics{} and without optics.}
  \end{figure}  
@@ -348,10 +353,10 @@ Source (white LED + 500 $\mu$m PINHOLE + 40x lens):
   \centering
    \begin{subfigure}[b]{0.5\textwidth}
 	\centering
-	\includegraphics[width=\textwidth]{Gain_compare.png}
+	\includegraphics[width=\textwidth]{{#XRayImage3}}
  	    \end{subfigure}
 \caption{Gain - comparison spectrum behind of \Optics{} and without optics.}
 \end{figure}
-
+% END_REMOVE
 
 \end{document}

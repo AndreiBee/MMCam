@@ -3,6 +3,8 @@
 #define CMAIN_H
 
 #include "wx/wx.h"
+#include "wx/filefn.h"
+#include "wx/textfile.h"
 #include "wx/tglbtn.h"
 #include "wx/valnum.h"
 #include "wx/thread.h"
@@ -212,6 +214,15 @@ namespace MainFrameVariables
 		int axis_number{ -1 };
 		float start{}, step{}, finish{};
 		int step_number{};
+	};
+
+	struct ImagesFilePaths
+	{
+		wxString opticsScheme{}, logoPath{}, fwhmPath{}, gainPath{};
+		wxArrayString optimalPositionArray{};
+		wxString best2DImage{}, best3DImage{}, bestHorizontalProfile{}, bestVerticalProfile{}, bestGreyscaleImage{};
+		wxArrayString circleArray{};
+		wxArrayString xRayArray{};
 	};
 }
 
@@ -916,6 +927,41 @@ private:
 		return true;
 	}
 
+	auto ExecuteLatex(wxString latexFilePath) -> bool
+	{
+		constexpr auto raise_exception_msg = [](int code) 
+		{
+			wxString title = "CMD execution error";
+			wxMessageBox(
+				wxT
+				(
+					"Failed to run CMD script. Error code: " + wxString::Format(wxT("%i"), code)
+				),
+				title,
+				wxICON_ERROR);
+		};
+
+
+		wxFileName file(latexFilePath);
+		std::string command = "cmd /c \"cd " + file.GetPath().ToStdString() + " && pdflatex ";
+
+		command += latexFilePath.ToStdString();
+		command += "\"";
+
+		// Execute the CMD script
+		int result{};
+
+		result = std::system(command.c_str());
+		if (result != 0)
+		{
+			raise_exception_msg(result);
+			return false;
+		}
+
+		return true;
+	}
+
+
 	auto FindGainMaxInArrayData
 	(
 		unsigned short* const inRawData,
@@ -959,6 +1005,98 @@ private:
 	auto RemoveBackgroundFromTheImage(wxString imagePath) -> void;
 
 	auto Create2DImageInGrayscale(unsigned short* const inData, const int imgWidth) -> wxBitmap;
+
+	auto GeneratePDFReportUsingLatex
+	(
+		wxString folderContainingTEXFile, 
+		wxString folderWithData,
+		const MainFrameVariables::ImagesFilePaths& imageFilePaths
+	) -> void;
+
+	void ReplacePlaceholderInTexFile
+	(
+		const wxString& texFilePath, 
+		const wxString& placeholder, 
+		const wxString& imagePath
+	) 
+	{
+		wxTextFile file(texFilePath);
+
+		if (!file.Open()) 
+		{
+			wxLogError("Failed to open the TEX file: %s", texFilePath);
+			return;
+		}
+
+		// Store modified content
+		wxArrayString lines;
+		for (size_t i = 0; i < file.GetLineCount(); ++i) 
+		{
+			wxString line = file.GetLine(i);
+			line.Replace(placeholder, imagePath);
+			lines.Add(line);
+		}
+
+		// Rewrite the file
+		file.Clear();  // Clears the file contents
+		for (const auto& line : lines) {
+			file.AddLine(line);
+		}
+		file.Write();
+		file.Close();
+	}
+
+	void RemoveSectionFromFile
+	(
+		const wxString& filePath, 
+		const wxString& startMarker, 
+		const wxString& endMarker
+	) 
+	{
+		wxTextFile file(filePath);
+
+		if (!file.Open()) 
+		{
+			wxLogError("Failed to open file: %s", filePath);
+			return;
+		}
+
+		bool insideSection = false;
+
+		for (size_t i = 0; i < file.GetLineCount(); /* no increment here */) 
+		{
+			wxString line = file.GetLine(i);
+
+			if (line.Contains(startMarker)) 
+			{
+				insideSection = true;
+			}
+
+			if (insideSection) 
+			{
+				file.RemoveLine(i);  // Remove the current line
+			}
+			else 
+			{
+				i++;  // Only increment if we don't remove a line
+			}
+
+			if (line.Contains(endMarker)) 
+			{
+				insideSection = false;
+			}
+		}
+
+		file.Write();
+		file.Close();
+	}
+
+	wxString ConvertToForwardSlashes(const wxString & path) 
+	{
+		wxString convertedPath = path;
+		convertedPath.Replace("\\", "/");  // Replace all backslashes with forward slashes
+		return convertedPath;
+	}
 
 private:
 	/* Settings Menu */

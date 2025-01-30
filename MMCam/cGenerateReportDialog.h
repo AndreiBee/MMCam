@@ -109,6 +109,13 @@ public:
 
     auto GetCircleBlackImagePath() const -> wxString { return m_CircleBlackImagePath; };
     auto GetCircleImagesForCalculationPaths() const -> wxArrayString { return m_CircleImagesForCalculationPathsArray; };
+    auto GetOpticsSchemePath() const -> wxString 
+    { 
+        auto currentSelection = m_OpticsSchemeChoice->GetString(m_OpticsSchemeChoice->GetSelection());
+        auto outOpticsSchemePath = m_ReportGeneratorPath;
+        outOpticsSchemePath += outOpticsSchemePath.EndsWith("\\") ? currentSelection : "\\" + currentSelection;
+        return outOpticsSchemePath; 
+    };
 
 private:
     wxPanel* CreateReportVariablesPage(wxWindow* parent);
@@ -168,6 +175,7 @@ private:
     }
 
 protected:
+	wxString m_ReportGeneratorPath = wxGetCwd() + "\\src\\ReportGenerator\\"; // Gets current working directory
     // First Tab
     std::unique_ptr<wxTextCtrl> m_OpticsSerialNumberTxtCtrl{}, m_OpticsProductNumberTxtCtrl{}, m_OpticsTypeTxtCtrl{}, m_AuthorTxtCtrl{}, m_CustomerTxtCtrl{}, m_ReportNameTxtCtrl{};
     std::unique_ptr<wxTextCtrl> m_StartPositionTxtCtrl{}, m_StepTxtCtrl{}, m_FocusExposureTxtCtrl{}, m_CircleExposureTxtCtrl{};
