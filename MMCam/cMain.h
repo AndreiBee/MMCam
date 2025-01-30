@@ -697,6 +697,16 @@ private:
 		unsigned short* const outData
 	) -> void;
 
+	auto CropDataIntoArray
+	(
+		unsigned short* const inData, 
+		const int origDataWidth,
+		const int startX, 
+		const int startY, 
+		const int windowWidth,
+		unsigned short* const outData
+	) -> void;
+
 	auto ApplyFFCOnData
 	(
 		unsigned short* const inRawData, 

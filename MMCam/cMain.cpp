@@ -2452,6 +2452,26 @@ auto cMain::CropDataIntoArray
 	}
 }
 
+auto cMain::CropDataIntoArray
+(
+	unsigned short* const inData, 
+	const int origDataWidth,
+	const int startX, 
+	const int startY, 
+	const int windowWidth, 
+	unsigned short* const outData
+) -> void
+{	
+	for (auto y = startY; y < startY + windowWidth; ++y)
+	{
+		for (auto x = startX; x < startX + windowWidth; ++x)
+		{
+			outData[(y - startY) * windowWidth + (x - startX)] = inData[y * origDataWidth + x];
+		}
+	}
+
+}
+
 auto cMain::ApplyFFCOnData
 (
 	unsigned short* const inRawData, 
@@ -2870,11 +2890,15 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
+#endif // DEBUG
 
 	// Best Position Plots Creation
 	{
 		auto best2DFileNameWithPath = tempFolderPath + "best2D.png";
 		wxFileName file(best2DFileNameWithPath);
+
+#ifndef _DEBUG
+
 
 		// 2D Image
 		{
@@ -2981,16 +3005,35 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			file.SetExt("png");
 			RemoveBackgroundFromTheImage(file.GetFullPath());
 		}
+#endif // !_DEBUG
 
 		// Grayscale Image
 		{
 			file.SetFullName("bestGrayscale.png");
 
+			auto croppGreyscaleImageWidth = static_cast<int>(std::max(bestHorizontalFWHM, bestVerticalFWHM));
+			croppGreyscaleImageWidth *= 2;
+
+			auto startX = lineProfileX - croppGreyscaleImageWidth / 2;
+			auto startY = lineProfileY - croppGreyscaleImageWidth / 2;
+			
+			auto croppedGreyscaleImageData = std::make_unique<unsigned short[]>(croppGreyscaleImageWidth * croppGreyscaleImageWidth);
+
+			CropDataIntoArray
+			(
+				bestCroppedRAWData.get(), 
+				cropWindowSize, 
+				startX, 
+				startY, 
+				croppGreyscaleImageWidth, 
+				croppedGreyscaleImageData.get()
+			);
+
 			WriteTempJSONImageDataToTXTFile
 			(
-				bestCroppedRAWData.get(),
-				cropWindowSize,
-				cropWindowSize,
+				croppedGreyscaleImageData.get(),
+				croppGreyscaleImageWidth,
+				croppGreyscaleImageWidth,
 				"gist_yarg",
 				inputParameters.pixelSizeUM,
 				file.GetFullPath()
@@ -3000,6 +3043,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			wxArrayString arrStr{};
 			arrStr.Add(file.GetFullPath());
 			if (!Invoke2DPlotsCreation(arrStr)) return;
+
 			file.SetExt("png");
 			RemoveBackgroundFromTheImage(file.GetFullPath());
 
@@ -3017,6 +3061,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 	//auto bestInGain = static_cast<int>(distanceMaxGain);
 
+#ifndef _DEBUG
 	// FWHM Plot Creation
 	{
 		auto fwhmFileName = tempFolderPath + "fwhm_data.png";
@@ -3078,10 +3123,10 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		file.SetExt("png");
 		RemoveBackgroundFromTheImage(file.GetFullPath());
 	}
-#endif // DEBUG
+#endif // _DEBUG
 
+#ifndef _DEBUG
 	// Circles
-
 	i = 0;
 
 	croppedRAWData = std::make_unique<unsigned short[]>(cropCircleWindowSize * cropCircleWindowSize);
@@ -3196,8 +3241,9 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 		++i;
     }
+#endif // _DEBUG
 
-#ifdef _DEBUG
+#ifndef _DEBUG
 	if (!Invoke2DPlotsCreation(circleImagesPathArray)) return;
 	for (const auto& imagePath : circleImagesPathArray)
 	{
