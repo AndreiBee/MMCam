@@ -63,6 +63,14 @@ namespace GenerateReportVariables {
         double pixelSizeUM{};
         double widthROIMM{}, widthCircleROIMM{};
     };
+
+    struct ReportParameters
+    {
+        wxString serialNumber{}, opticsProductNumber{}, opticsType{}, author{}, customer{}, reportName{};
+        double start{}, step{}, focus{};
+        std::unique_ptr<double[]> optimalPositionsArray{};
+        int focusExposure, circleExposure{};
+    };
 }
 
 class cGenerateReportDialog: public wxPropertySheetDialog
@@ -89,32 +97,57 @@ public:
         m_ImgHeightTxtCtrl->GetValue().ToInt(&imgHeight);
         return imgHeight;
     };
-    //auto GetBlackImage() -> cv::Mat
-    //{ 
-    //    if (m_IsBlackImageLoadedSucc)
-    //        return m_OriginalBlackImageMat;
-    //    else
-    //        return cv::Mat();
-    //};
-    //auto GetWhiteImage() -> cv::Mat
-    //{
-    //    if (m_IsWhiteImageLoadedSucc)
-    //        return m_WhiteImageMat;
-    //    else
-    //        return cv::Mat();
-    //};
+
     auto GetOriginalBlackImagePath() const -> wxString { return m_OriginalBlackImagePath; };
     auto GetOriginalWhiteImagePath() const -> wxString { return m_OriginalWhiteImagePath; };
-    auto GetImagesForCalculationPaths() const -> wxArrayString { return m_ImagesForCalculationPathsArray; };
 
     auto GetCircleBlackImagePath() const -> wxString { return m_CircleBlackImagePath; };
+    
+    auto GetImagesForCalculationPaths() const -> wxArrayString { return m_ImagesForCalculationPathsArray; };
+
     auto GetCircleImagesForCalculationPaths() const -> wxArrayString { return m_CircleImagesForCalculationPathsArray; };
+    
     auto GetOpticsSchemePath() const -> wxString 
     { 
         auto currentSelection = m_OpticsSchemeChoice->GetString(m_OpticsSchemeChoice->GetSelection());
         auto outOpticsSchemePath = m_ReportGeneratorPath;
         outOpticsSchemePath += outOpticsSchemePath.EndsWith("\\") ? currentSelection : "\\" + currentSelection;
         return outOpticsSchemePath; 
+    };
+
+    auto GetReportParameters() const -> GenerateReportVariables::ReportParameters 
+    { 
+        GenerateReportVariables::ReportParameters reportParameters{};
+        
+        // String Parameters
+        reportParameters.serialNumber = m_OpticsSerialNumberTxtCtrl->GetValue(); 
+        reportParameters.opticsProductNumber = m_OpticsProductNumberTxtCtrl->GetValue(); 
+        reportParameters.opticsType = m_OpticsTypeTxtCtrl->GetValue(); 
+        reportParameters.author = m_AuthorTxtCtrl->GetValue(); 
+        reportParameters.customer = m_CustomerTxtCtrl->GetValue(); 
+        reportParameters.reportName = m_ReportNameTxtCtrl->GetValue(); 
+
+        // Double Parameters
+        {
+            double parameter{};
+            m_StartPositionTxtCtrl->GetValue().ToDouble(&parameter);
+            reportParameters.start = parameter;
+
+            m_StepTxtCtrl->GetValue().ToDouble(&parameter);
+            reportParameters.step = parameter;
+        }
+
+        // Int Parameters
+        {
+            int parameter{};
+            m_FocusExposureTxtCtrl->GetValue().ToInt(&parameter);
+            reportParameters.focusExposure = parameter;
+
+            m_CircleExposureTxtCtrl->GetValue().ToInt(&parameter);
+            reportParameters.circleExposure = parameter;
+        }
+
+        return reportParameters; 
     };
 
 private:
@@ -205,7 +238,7 @@ protected:
     std::unique_ptr<wxBitmapButton> m_OpenMeasuredSpectrumBtn{}, m_OpenFirstGainBtn{}, m_OpenSecondGainBtn{};
     bool m_IsOpenMeasuredSpectrumToggled{}, m_IsOpenFirstGainToggled{}, m_IsOpenSecondGainToggled{};
 
-    bool m_IsOriginalBlackImageLoadedSucc{}, m_IsOriginalWhiteImageLoadedSucc{}, m_IsCircleBlackImageLoadedSucc{};
+    //bool m_IsOriginalBlackImageLoadedSucc{}, m_IsOriginalWhiteImageLoadedSucc{}, m_IsCircleBlackImageLoadedSucc{};
 
     //cv::Mat m_BlackImageMat{}, m_WhiteImageMat{};
     wxString m_OriginalBlackImagePath{}, m_OriginalWhiteImagePath{}, m_CircleBlackImagePath{};

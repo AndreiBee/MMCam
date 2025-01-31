@@ -25,21 +25,21 @@
 \fancyfoot[C]{\thepage} % Align page number to the page center
 
 % Define variable parameters 
-\newcommand{\SerialNumber}{\text{037}}
-\newcommand{\Optics}{\text{037-066}}
-\newcommand{\OpticsType}{\text{C0-06-19}}
-\newcommand{\Fokus}{\text{22.85}}
-\newcommand{\Step}{\text{0.025}}
-\newcommand{\FokusTime}{\text{8}}
-\newcommand{\CircleTime}{\text{150}}
-\newcommand{\Author}{\text{Veronika Marsikova}}
-\newcommand{\Customer}{\text{BRU}}
-\newcommand{\ReportName}{\text{TEST REPORT}}
+\newcommand{\SerialNumber}{\text{{#SerialNumber}}}
+\newcommand{\OpticsProductNumber}{\text{{#OpticsProductNumber}}}
+\newcommand{\OpticsType}{\text{{#OpticsType}}}
+\newcommand{\Focus}{\text{{#Focus}}}
+\newcommand{\Step}{\text{{#Step}}}
+\newcommand{\FocusExposure}{\text{{#FocusExposure}}}
+\newcommand{\CircleExposure}{\text{{#CircleExposure}}}
+\newcommand{\Author}{\text{{#Author}}}
+\newcommand{\Customer}{\text{{#Customer}}}
+\newcommand{\ReportName}{\text{{#ReportName}}}
 
 % Start of the Document
-\rhead{\large{\textbf{\textcolor{ultramarine}{\Optics{}}}}}
+\rhead{\large{\textbf{\textcolor{ultramarine}{\OpticsProductNumber{}}}}}
 
-\title{\textbf{\textcolor{ultramarine}{\Optics{} (\OpticsType{})}}}
+\title{\textbf{\textcolor{ultramarine}{\OpticsProductNumber{} (\OpticsType{})}}}
 \date{\textbf{\textcolor{ultramarine}{\ReportName{}}}}
 
 
@@ -65,7 +65,7 @@
 Tested by:&			\Author{}\\	\hline
 Date:&				\today\\	\hline
 Serial number:&		\SerialNumber{}\\	\hline
-Product number:&	\Optics{}\\	\hline
+Product number:&	\OpticsProductNumber{}\\	\hline
 Customer:&			\Customer{}\\
 &						\\
 &						\\
@@ -125,86 +125,86 @@ Customer:&			\Customer{}\\
 \begin{figure}[h!]
 \centering
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition1}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg1}}
         \centering
-        \text{Z - 0.150 mm}
+        \text{Z {#OptimalPosition1} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition2}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg2}}
         \centering
-        \text{Z - 0.125 mm}
+        \text{Z {#OptimalPosition2} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition3}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg3}}
         \centering
-        \text{Z - 0.100 mm}
+        \text{Z {#OptimalPosition3} [mm]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition4}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg4}}
         \centering
-        \text{Z - 0.075 mm}
+        \text{Z {#OptimalPosition4} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition5}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg5}}
         \centering
-        \text{Z - 0.050 mm}
+        \text{Z {#OptimalPosition5} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition6}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg6}}
         \centering
-        \text{Z - 0.025 mm}
+        \text{Z {#OptimalPosition6} [mm]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition7}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg7}}
         \centering
-        \text{Z = \Fokus{} mm}
+        \text{Z {#OptimalPosition7} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition8}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg8}}
         \centering
-        \text{Z + 0.025 mm}
+        \text{Z {#OptimalPosition8} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition9}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg9}}
         \centering
-        \text{Z + 0.050 mm}
+        \text{Z {#OptimalPosition9} [mm]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition10}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg10}}
         \centering
-        \text{Z + 0.075 mm}
+        \text{Z {#OptimalPosition10} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition11}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg11}}
         \centering
-        \text{Z + 0.100 mm}
+        \text{Z {#OptimalPosition11} [mm]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition12}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg12}}
         \centering
-        \text{Z + 0.125 mm}
+        \text{Z {#OptimalPosition12} [mm]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
     \begin{minipage}[b]{0.22\textwidth}
-        \includegraphics[width=\textwidth]{{#OptimalPosition13}}
+        \includegraphics[width=\textwidth]{{#OptimalPositionImg13}}
         \centering
-        \text{Z + 0.150 mm}
+        \text{Z {#OptimalPosition13} [mm]}
     \end{minipage}
 
 \bigskip	
-\caption{Images of focus (\FokusTime{} [ms]).}
+\caption{Images of focus (\FocusExposure{} [ms]).}
 \end{figure}
 
 \clearpage
 
-\section{Best focus (Z=\Fokus{} [mm])}
+\section{Best focus (Z = \Focus{} [mm])}
 
 \begin{figure}[h!]
   \begin{center}
@@ -238,7 +238,7 @@ Customer:&			\Customer{}\\
     \end{subfigure}  
      
  \end{center}
-\caption{Images of the best focus (Z=\Fokus{} [mm], \FokusTime{} [ms]).}
+\caption{Images of the best focus (Z = \Focus{} [mm], \FocusExposure{} [ms]).}
 \label{fig:04}
 \end{figure}
 
@@ -251,34 +251,34 @@ Customer:&			\Customer{}\\
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition13}}
         \centering
-        \text{Z -3.0 [mm], \CircleTime{} [ms]}
+        \text{Z -3.0 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition12}}
         \centering
-        \text{Z -2.5 [mm], \CircleTime{} [ms]}
+        \text{Z -2.5 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition11}}
         \centering
-        \text{Z -2.0 [mm], \CircleTime{} [ms]}
+        \text{Z -2.0 [mm], \CircleExposure{} [ms]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition10}}
         \centering
-        \text{Z -1.5 [mm], \CircleTime{} [ms]}
+        \text{Z -1.5 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition9}}
         \centering
-        \text{Z -1.0 [mm], \CircleTime{} [ms]}
+        \text{Z -1.0 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition8}}
         \centering
-        \text{Z -0.5 [mm], \CircleTime{} [ms]}
+        \text{Z -0.5 [mm], \CircleExposure{} [ms]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
@@ -286,41 +286,41 @@ Customer:&			\Customer{}\\
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#Best2DImage}}
         \centering
-        \text{Z=\Fokus{} [mm], \FokusTime{} [ms]}
+        \text{Z=\Focus{} [mm], \FocusExposure{} [ms]}
     \end{minipage}
 	\\[1ex] % Line break for the next row
 
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition6}}
         \centering
-        \text{Z +0.5 [mm], \CircleTime{} [ms]}
+        \text{Z +0.5 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition5}}
         \centering
-        \text{Z +1.0 [mm], \CircleTime{} [ms]}
+        \text{Z +1.0 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition4}}
         \centering
-        \text{Z +1.5 [mm], \CircleTime{} [ms]}
+        \text{Z +1.5 [mm], \CircleExposure{} [ms]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition3}}
         \centering
-        \text{Z +2.0 [mm], \CircleTime{} [ms]}
+        \text{Z +2.0 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition2}}
         \centering
-        \text{Z +2.5 [mm], \CircleTime{} [ms]}
+        \text{Z +2.5 [mm], \CircleExposure{} [ms]}
     \end{minipage} \hfill
     \begin{minipage}[b]{0.22\textwidth}
         \includegraphics[width=\textwidth]{{#CirclePosition1}}
         \centering
-        \text{Z +3.0 [mm], \CircleTime{} [ms]}
+        \text{Z +3.0 [mm], \CircleExposure{} [ms]}
     \end{minipage}
     \\[1ex] % Line break for the next row
 
@@ -339,7 +339,7 @@ Customer:&			\Customer{}\\
 	\centering
 	\includegraphics[width=\textwidth]{{#XRayImage1}}
  	\end{subfigure}
-\caption{Measured spectrum - \Optics{}.}
+\caption{Measured spectrum - \OpticsProductNumber{}.}
  \end{figure} 
 
  \begin{figure}[h]
@@ -348,7 +348,7 @@ Customer:&			\Customer{}\\
 	\centering
 	\includegraphics[width=\textwidth]{{#XRayImage2}}
     \end{subfigure}
- \caption{Gain - comparison spectrum behind of \Optics{} and without optics.}
+ \caption{Gain - comparison spectrum behind of \OpticsProductNumber{} and without optics.}
  \end{figure}  
 
  \begin{figure}[h!]
@@ -357,7 +357,7 @@ Customer:&			\Customer{}\\
 	\centering
 	\includegraphics[width=\textwidth]{{#XRayImage3}}
  	    \end{subfigure}
-\caption{Gain - comparison spectrum behind of \Optics{} and without optics.}
+\caption{Gain - comparison spectrum behind of \OpticsProductNumber{} and without optics.}
 \end{figure}
 % END_REMOVE
 

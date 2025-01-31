@@ -1010,7 +1010,8 @@ private:
 	(
 		wxString folderContainingTEXFile, 
 		wxString folderWithData,
-		const MainFrameVariables::ImagesFilePaths& imageFilePaths
+		const MainFrameVariables::ImagesFilePaths& imageFilePaths,
+		const GenerateReportVariables::ReportParameters& reportParameters
 	) -> void;
 
 	void ReplacePlaceholderInTexFile
@@ -1096,6 +1097,21 @@ private:
 		wxString convertedPath = path;
 		convertedPath.Replace("\\", "/");  // Replace all backslashes with forward slashes
 		return convertedPath;
+	}
+
+	wxString FormatNumber(double number) 
+	{
+		std::ostringstream oss;
+		oss << std::fixed << std::setprecision(5) << number;  // Convert with fixed precision
+		std::string str = oss.str();
+
+		// Remove trailing zeros and possible trailing decimal point
+		str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+		if (str.back() == '.') {
+			str.pop_back();
+		}
+
+		return wxString(str);
 	}
 
 private:

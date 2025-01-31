@@ -2595,7 +2595,8 @@ auto cMain::GeneratePDFReportUsingLatex
 (
 	wxString folderContainingTEXFile, 
 	wxString folderWithData,
-	const MainFrameVariables::ImagesFilePaths& imageFilePaths
+	const MainFrameVariables::ImagesFilePaths& imageFilePaths,
+	const GenerateReportVariables::ReportParameters& reportParameters
 ) -> void
 {
 	constexpr auto raise_exception_msg = [](int code) 
@@ -2635,7 +2636,73 @@ auto cMain::GeneratePDFReportUsingLatex
 	}
 
 	// Replace Content inside the TEX file
-	wxString placeholder = "{#LogoImage}";
+	wxString placeholder = "{#ReportName}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, reportParameters.reportName);
+	placeholder = "{#Customer}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, reportParameters.customer);
+	placeholder = "{#Author}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, reportParameters.author);
+	placeholder = "{#SerialNumber}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, reportParameters.serialNumber);
+	placeholder = "{#OpticsProductNumber}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, reportParameters.opticsProductNumber);
+	placeholder = "{#OpticsType}";
+	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, reportParameters.opticsType);
+
+	// Double Parameters
+	{
+		placeholder = "{#Focus}";
+		ReplacePlaceholderInTexFile
+		(
+			destinationFilePath,
+			placeholder,
+			wxString::Format(wxT("%.2f"), reportParameters.focus)
+		);
+		placeholder = "{#Step}";
+		ReplacePlaceholderInTexFile
+		(
+			destinationFilePath,
+			placeholder,
+			wxString::Format(wxT("%.3f"), reportParameters.step)
+		);
+
+		// Optimal Positions Images
+		for (auto i{ 0 }; i < imageFilePaths.optimalPositionArray.GetCount(); ++i)
+		{
+			placeholder = "{#OptimalPosition" + wxString::Format(wxT("%i"), i + 1) + "}";
+			auto isPositiveNumber = reportParameters.optimalPositionsArray[i] > 0.0 ? true : false;
+			auto outSign = reportParameters.optimalPositionsArray[i] == reportParameters.focus ? wxString("= ") : (isPositiveNumber ? wxString("+") : wxString(""));
+			ReplacePlaceholderInTexFile
+			(
+				destinationFilePath, 
+				placeholder, 
+				outSign + FormatNumber(reportParameters.optimalPositionsArray[i])
+			);
+		}
+
+	}
+
+	// Int Parameters
+	{
+		placeholder = "{#FocusExposure}";
+		ReplacePlaceholderInTexFile
+		(
+			destinationFilePath,
+			placeholder,
+			wxString::Format(wxT("%i"), reportParameters.focusExposure)
+		);
+
+		placeholder = "{#CircleExposure}";
+		ReplacePlaceholderInTexFile
+		(
+			destinationFilePath,
+			placeholder,
+			wxString::Format(wxT("%i"), reportParameters.circleExposure)
+		);
+	}
+
+	// Paths
+	placeholder = "{#LogoImage}";
 	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.logoPath));
 	placeholder = "{#OpticsScheme}";
 	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.opticsScheme));
@@ -2644,10 +2711,10 @@ auto cMain::GeneratePDFReportUsingLatex
 	placeholder = "{#GainDiagram}";
 	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.gainPath));
 
-	// Optimal Position
+	// Optimal Position Images
 	for (auto i{ 0 }; i < imageFilePaths.optimalPositionArray.GetCount(); ++i)
 	{
-		placeholder = "{#OptimalPosition" + wxString::Format(wxT("%i"), i + 1) + "}";
+		placeholder = "{#OptimalPositionImg" + wxString::Format(wxT("%i"), i + 1) + "}";
 		ReplacePlaceholderInTexFile
 		(
 			destinationFilePath, 
@@ -2734,6 +2801,12 @@ auto cMain::GeneratePDFReportUsingLatex
 	}
 
 	ExecuteLatex(destinationFilePath);
+
+	// Replacing *.tex extension to *.pdf
+	wxFileName file(destinationFilePath);
+	file.SetExt("pdf");
+
+	wxLaunchDefaultApplication(file.GetFullPath());
 }
 
 bool cMain::Cancelled()
@@ -2814,13 +2887,15 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	);
 
 	auto retCode = dialog.ShowModal();
+	if (retCode == wxID_CANCEL) return;
 
-	auto startPositionMM = 22.5;
-	auto stepMM = 0.025;
+	auto reportParameters = dialog.GetReportParameters();
+
+	//auto startPositionMM = 22.5;
+	//auto stepMM = 0.025;
+
 	wxString outDirName{}, outFileName{};;
 	wxString outDirWithFileName{};
-
-	if (retCode == wxID_CANCEL) return;
 
 #ifndef _DEBUG
 	wxBusyCursor busy;
@@ -2909,7 +2984,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	wxArrayString originalImagesPathArray{}, circleImagesPathArray{};
 	double bestGainMax{};
 	int bestPosInGain{};
-	double bestFocusPos{ startPositionMM };
+	auto bestFocusPos{ reportParameters.start };
+	auto bestI{ i };
 	int lineProfileX{}, lineProfileY{};
 	double bestHorizontalFWHM{}, bestVerticalFWHM{};
 
@@ -2997,11 +3073,14 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		{
 			bestGainMax = gainMax[i];
 			bestPosInGain = i;
-			bestFocusPos = startPositionMM + i * stepMM;
+			bestFocusPos = reportParameters.start + i * reportParameters.step;
 			lineProfileX = bestXPos - startX;
 			lineProfileY = bestYPos - startY;
 			bestHorizontalFWHM = horizontalFWHM[i];
 			bestVerticalFWHM = verticalFWHM[i];
+
+			reportParameters.focus = reportParameters.start + i * reportParameters.step;
+			bestI = i;
 
 			memcpy(bestCroppedRAWData.get(), croppedRAWData.get(), sizeof(unsigned short) * cropWindowSize * cropWindowSize);
 
@@ -3233,8 +3312,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			"g",
 			"FWHM [mm]",
 			imagesForCalculationPath.GetCount(),
-			startPositionMM,
-			stepMM,
+			reportParameters.start,
+			reportParameters.step,
 			bestPosInGain,
 			file.GetFullPath()
 		);
@@ -3266,8 +3345,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			"m",
 			"Gain [a.u.]",
 			imagesForCalculationPath.GetCount(),
-			startPositionMM,
-			stepMM,
+			reportParameters.start,
+			reportParameters.step,
 			bestPosInGain,
 			file.GetFullPath()
 		);
@@ -3365,11 +3444,21 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	}
 //#endif // DEBUG
 
+	// Fill Optimal Positions Array
+	reportParameters.optimalPositionsArray = std::make_unique<double[]>(imagesForCalculationPath.GetCount());
+	for (i = 0; i < imagesForCalculationPath.GetCount(); ++i)
+	{
+		reportParameters.optimalPositionsArray[i] = (i - bestI) * reportParameters.step;
+		if (i == bestI)
+			reportParameters.optimalPositionsArray[i] = reportParameters.focus;
+	}
+
 	GeneratePDFReportUsingLatex
 	(
 		reportGeneratorPath, 
 		tempFolder.GetFullPath(),
-		imageFilePaths
+		imageFilePaths,
+		reportParameters
 	);
 }
 

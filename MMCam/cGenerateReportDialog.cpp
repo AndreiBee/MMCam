@@ -155,7 +155,11 @@ wxPanel* cGenerateReportDialog::CreateReportVariablesPage(wxWindow* parent)
                 (
                     panel,
                     GenerateReportVariables::ID_REPORT_AUTHOR_TXT_CTRL,
+#ifdef _DEBUG
+                    wxString("Andrej"),
+#else
                     wxString("Veronika Marsikova"),
+#endif // _DEBUG
                     wxDefaultPosition,
                     wxDefaultSize,
                     wxTE_CENTRE
@@ -320,7 +324,7 @@ wxPanel* cGenerateReportDialog::CreateReportVariablesPage(wxWindow* parent)
                 0, wxALL | wxALIGN_CENTER_VERTICAL, 5
             );
 
-            wxFloatingPointValidator<double> val(2, NULL, wxNUM_VAL_ZERO_AS_BLANK);
+            wxFloatingPointValidator<double> val(3, NULL, wxNUM_VAL_ZERO_AS_BLANK);
             m_StepTxtCtrl = std::make_unique<wxTextCtrl>
                 (
                     panel,
@@ -999,7 +1003,7 @@ auto cGenerateReportDialog::OnOpenOriginalBlackImageBtn(wxCommandEvent& evt) -> 
 	};
 
 
-    m_IsOriginalBlackImageLoadedSucc = false;
+    //m_IsOriginalBlackImageLoadedSucc = false;
 
     if (m_IsOriginalBlackImgToggled)
     {
@@ -1087,7 +1091,7 @@ auto cGenerateReportDialog::OnOpenOriginalBlackImageBtn(wxCommandEvent& evt) -> 
 
     m_OriginalBlackImgPathTxtCtrl->ChangeValue(file_path);
 
-    m_IsOriginalBlackImageLoadedSucc = true;
+    //m_IsOriginalBlackImageLoadedSucc = true;
     m_IsOriginalBlackImgToggled = true;
 
 	auto bmp = wxMaterialDesignArtProvider::GetBitmap
@@ -1145,7 +1149,7 @@ auto cGenerateReportDialog::OnOpenOriginalWhiteImageBtn(wxCommandEvent& evt) -> 
 			wxICON_ERROR);
 	};
 
-    m_IsOriginalWhiteImageLoadedSucc = false;
+    //m_IsOriginalWhiteImageLoadedSucc = false;
 
     if (m_IsOriginalWhiteImageToggled)
     {
@@ -1233,7 +1237,7 @@ auto cGenerateReportDialog::OnOpenOriginalWhiteImageBtn(wxCommandEvent& evt) -> 
 
     m_OriginalWhiteImgPathTxtCtrl->ChangeValue(file_path);
 
-    m_IsOriginalWhiteImageLoadedSucc = true;
+    //m_IsOriginalWhiteImageLoadedSucc = true;
     m_IsOriginalWhiteImageToggled = true;
 
 	auto bmp = wxMaterialDesignArtProvider::GetBitmap
@@ -1292,7 +1296,7 @@ auto cGenerateReportDialog::OnOpenCircleBlackImageBtn(wxCommandEvent& evt) -> vo
 	};
 
 
-    m_IsCircleBlackImageLoadedSucc = false;
+    //m_IsCircleBlackImageLoadedSucc = false;
 
     if (m_IsCircleBlackImgToggled)
     {
@@ -1372,7 +1376,7 @@ auto cGenerateReportDialog::OnOpenCircleBlackImageBtn(wxCommandEvent& evt) -> vo
 
     m_CircleBlackImgPathTxtCtrl->ChangeValue(file_path);
 
-    m_IsCircleBlackImageLoadedSucc = true;
+    //m_IsCircleBlackImageLoadedSucc = true;
     m_IsCircleBlackImgToggled = true;
 
 	auto bmp = wxMaterialDesignArtProvider::GetBitmap
@@ -1680,13 +1684,30 @@ auto cGenerateReportDialog::LoadData
 
 auto cGenerateReportDialog::OnExitButtonClicked(wxCommandEvent& evt) -> void
 {
-	constexpr auto raise_image_isnt_set = []()
+	auto raise_image_isnt_set = [&]()
 		{
 			wxString title = "Image data error";
+            wxString trueSign = "[OK]";
+            wxString falseSign = "[X]";
+
+            wxString allImages{};
+            allImages += m_IsOriginalBlackImgToggled ? trueSign : falseSign;
+            allImages += " Original Black Image\n";
+            allImages += m_IsOriginalWhiteImageToggled ? trueSign : falseSign;
+            allImages += " Original White Image\n";
+            allImages += m_IsCircleBlackImgToggled ? trueSign : falseSign;
+            allImages += " Circle Black Image\n";
+            allImages += m_IsOpenImagesForCalculationToggled ? trueSign : falseSign;
+            allImages += " Images For Calculation\n";
+            allImages += m_IsOpenCircleImagesForCalculationToggled ? trueSign : falseSign;
+            allImages += " Circle Images For Calculation\n";
+
 			wxMessageBox(
 				wxT
 				(
-					"You hasn't selected one of the images properly.\nPlease select Black and White images properly."
+					"You hasn't selected one of the required images properly.\n" + 
+                    allImages +
+                    "\nPlease select required images properly."
 				),
 				title,
 				wxICON_ERROR);
@@ -1699,7 +1720,8 @@ auto cGenerateReportDialog::OnExitButtonClicked(wxCommandEvent& evt) -> void
         return;
     }
 
-    if (!m_IsOriginalBlackImageLoadedSucc || !m_IsOriginalWhiteImageLoadedSucc)
+    if (!m_IsOriginalBlackImgToggled || !m_IsOriginalWhiteImageToggled || !m_IsCircleBlackImgToggled 
+        || !m_IsOpenImagesForCalculationToggled || !m_IsOpenCircleImagesForCalculationToggled)
     {
         raise_image_isnt_set();
         return;
