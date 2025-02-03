@@ -1010,8 +1010,9 @@ private:
 		wxString folderContainingTEXFile, 
 		wxString folderWithData,
 		const MainFrameVariables::ImagesFilePaths& imageFilePaths,
-		const GenerateReportVariables::ReportParameters& reportParameters
-	) -> void;
+		const GenerateReportVariables::ReportParameters& reportParameters,
+		const wxString timeStamp
+	) -> wxString;
 
 	void ReplacePlaceholderInTexFile
 	(
@@ -1189,6 +1190,55 @@ private:
 		}
 
 		file.Close();
+	}
+
+	bool EnsureFolderHierarchy(const wxString& basePath, wxString& targetFolder) 
+	{
+		wxDateTime now = wxDateTime::Now();
+		wxString yearFolder = basePath + wxFileName::GetPathSeparator() + now.Format("%Y");
+		wxString monthFolder = yearFolder + wxFileName::GetPathSeparator() + now.Format("%m");
+
+		// Ensure Year Folder
+		if (!wxDirExists(yearFolder)) 
+		{
+			if (!wxMkdir(yearFolder)) 
+			{
+				wxLogError("Failed to create year folder: %s", yearFolder);
+				return false;
+			}
+		}
+
+		// Ensure Month Folder
+		if (!wxDirExists(monthFolder)) 
+		{
+			if (!wxMkdir(monthFolder)) 
+			{
+				wxLogError("Failed to create month folder: %s", monthFolder);
+				return false;
+			}
+		}
+
+		targetFolder = monthFolder; // Set the final target folder path
+		return true;
+	}
+
+	auto UploadReportToDestinationFolder(const wxString& report, const wxString& destinationFolder) -> void
+	{
+		if (!wxFileExists(report)) 
+		{
+			wxLogError("Source file does not exist: %s", report);
+			return;
+		}
+
+		wxFileName source(report);
+		wxString destination = destinationFolder.EndsWith("\\") ? destinationFolder : destinationFolder + wxFileName::GetPathSeparator();
+		destination += source.GetFullName();
+
+		if (!wxCopyFile(report, destination, true)) { // true = overwrite if exists
+			wxLogError("Failed to copy file to: %s", destination);
+			return;
+		}
+		//wxLogMessage("File successfully copied to: %s", destination);
 	}
 
 private:

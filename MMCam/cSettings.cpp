@@ -807,6 +807,11 @@ auto cSettings::ReadInitializationFile() -> void
 	if (element)
 		m_PixelSizeUM = std::atof(element->first_node()->value());
 
+	element = SettingsVariables::FindNode(app_node, "upload_report_folder");
+	if (element)
+		m_UploadReportFolder = element->first_node()->value();
+
+
 	element = SettingsVariables::FindNode(app_node, "work_station");
 	if (element)
 		m_WorkStations->initialized_work_station = wxString(element->first_node()->value());

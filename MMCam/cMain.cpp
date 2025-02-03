@@ -2565,8 +2565,9 @@ auto cMain::GeneratePDFReportUsingLatex
 	wxString folderContainingTEXFile, 
 	wxString folderWithData,
 	const MainFrameVariables::ImagesFilePaths& imageFilePaths,
-	const GenerateReportVariables::ReportParameters& reportParameters
-) -> void
+	const GenerateReportVariables::ReportParameters& reportParameters,
+	const wxString timeStamp
+) -> wxString
 {
 	constexpr auto raise_exception_msg = [](int code) 
 	{
@@ -2588,12 +2589,12 @@ auto cMain::GeneratePDFReportUsingLatex
 		if (!dir.IsOpened())
 		{
 			wxPuts("Failed to open source directory.");
-			return;
+			return "";
 		}
 
 		bool found = dir.GetFirst(&filename, "*.tex", wxDIR_FILES); // Find first .tex file
 
-		if (!found) return;
+		if (!found) return "";
 
 		sourceFilePath = folderContainingTEXFile;
 		sourceFilePath += folderContainingTEXFile.EndsWith("\\") ? filename : "\\" + filename;
@@ -2601,7 +2602,11 @@ auto cMain::GeneratePDFReportUsingLatex
 		destinationFilePath = folderWithData;
 		destinationFilePath += folderWithData.EndsWith("\\") ? filename : "\\" + filename;
 
-		if (!wxCopyFile(sourceFilePath, destinationFilePath, true)) return; // Overwrite if exists
+		wxFileName file(destinationFilePath);
+		file.SetName(wxString("Report_") + timeStamp);
+		destinationFilePath = file.GetFullPath();
+
+		if (!wxCopyFile(sourceFilePath, destinationFilePath, true)) return ""; // Overwrite if exists
 	}
 
 	// Replace Content inside the TEX file
@@ -2768,6 +2773,8 @@ auto cMain::GeneratePDFReportUsingLatex
 	file.SetExt("pdf");
 
 	wxLaunchDefaultApplication(file.GetFullPath());
+
+	return file.GetFullPath();
 }
 
 auto cMain::RemoveAllUnnecessaryFilesFromFolder(const wxString& folder, wxArrayString removeExtensions) -> void
@@ -2871,6 +2878,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	inputParameters.pixelSizeUM = m_Settings->GetPixelSizeUM();
 	inputParameters.widthROIMM = m_Settings->GetCropSizeMM();
 	inputParameters.widthCircleROIMM = m_Settings->GetCropCircleSizeMM();
+	auto uploadReportFolder = m_Settings->GetUploadReportFolder();
 
 	auto cropWindowSize = static_cast<int>(std::ceil(inputParameters.widthROIMM / (inputParameters.pixelSizeUM / 1000.0)));
 	auto cropCircleWindowSize = static_cast<int>(std::ceil(inputParameters.widthCircleROIMM / (inputParameters.pixelSizeUM / 1000.0)));
@@ -3448,12 +3456,13 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			reportParameters.optimalPositionsArray[i] = reportParameters.focus;
 	}
 
-	GeneratePDFReportUsingLatex
+	auto reportFilePath = GeneratePDFReportUsingLatex
 	(
 		reportGeneratorPath, 
 		tempFolder.GetFullPath(),
 		imageFilePaths,
-		reportParameters
+		reportParameters,
+		timestamp
 	);
 
 	// Remove all unnecessary files from the destination folder
@@ -3465,6 +3474,10 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 		RemoveAllUnnecessaryFilesFromFolder(tempFolder.GetFullPath(), extensionsToRemove);
 	}
+
+	wxString targetFolder{};
+	if (EnsureFolderHierarchy(uploadReportFolder, targetFolder)) 
+		UploadReportToDestinationFolder(reportFilePath, targetFolder);
 }
 
 auto cMain::IsPythonInstalledOnTheCurrentMachine() -> bool
