@@ -2635,20 +2635,6 @@ auto cMain::GeneratePDFReportUsingLatex
 			wxString::Format(wxT("%.3f"), reportParameters.step)
 		);
 
-		// Optimal Positions Images
-		for (auto i{ 0 }; i < imageFilePaths.optimalPositionArray.GetCount(); ++i)
-		{
-			placeholder = "{#OptimalPosition" + wxString::Format(wxT("%i"), i + 1) + "}";
-			auto isPositiveNumber = reportParameters.optimalPositionsArray[i] > 0.0 ? true : false;
-			auto outSign = reportParameters.optimalPositionsArray[i] == reportParameters.focus ? wxString("= ") : (isPositiveNumber ? wxString("+") : wxString(""));
-			ReplacePlaceholderInTexFile
-			(
-				destinationFilePath, 
-				placeholder, 
-				outSign + FormatNumber(reportParameters.optimalPositionsArray[i])
-			);
-		}
-
 	}
 
 	// Int Parameters
@@ -2680,17 +2666,24 @@ auto cMain::GeneratePDFReportUsingLatex
 	placeholder = "{#GainDiagram}";
 	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.gainPath));
 
+	wxArrayString texBlocks;
+	int generateBlockCalls{};
 	// Optimal Position Images
 	for (auto i{ 0 }; i < imageFilePaths.optimalPositionArray.GetCount(); ++i)
 	{
-		placeholder = "{#OptimalPositionImg" + wxString::Format(wxT("%i"), i + 1) + "}";
-		ReplacePlaceholderInTexFile
+		auto isPositiveNumber = reportParameters.optimalPositionsArray[i] > 0.0 ? true : false;
+		auto outSign = reportParameters.optimalPositionsArray[i] == reportParameters.focus ? wxString("= ") : (isPositiveNumber ? wxString("+") : wxString(""));
+
+		texBlocks.Add(GenerateLatexBlock
 		(
-			destinationFilePath, 
-			placeholder, 
-			ConvertToForwardSlashes(imageFilePaths.optimalPositionArray[i])
-		);
+			ConvertToForwardSlashes(imageFilePaths.optimalPositionArray[i]), 
+			outSign + FormatNumber(reportParameters.optimalPositionsArray[i]),
+			reportParameters.optimalPositionsArray[i] == reportParameters.focus || generateBlockCalls == 2
+		));
+
+		generateBlockCalls = generateBlockCalls == 2 || reportParameters.optimalPositionsArray[i] == reportParameters.focus ? 0 : ++generateBlockCalls;
 	}
+	InsertLatexAtMarker(destinationFilePath, texBlocks);
 
 	// Best Position
 	placeholder = "{#Best2DImage}";

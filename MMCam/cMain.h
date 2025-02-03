@@ -1130,6 +1130,67 @@ private:
 
 	auto RemoveAllUnnecessaryFilesFromFolder(const wxString& folder, wxArrayString removeExtensions) -> void;
 
+	wxString GenerateLatexBlock(const wxString& imgTag, const wxString& positionTag, bool isBestPosition) 
+	{
+		wxString latex;
+
+		latex << "\t\\begin{minipage}[b]{0.22\\textwidth}\n"
+			<< "\t\t\\includegraphics[width=\\textwidth]{" << imgTag << "}\n"
+			<< "\t\t\\centering\n"
+			<< "\t\t\\text{Z " << positionTag << " [mm]}\n"
+			<< "\t\\end{minipage} \\hfill";
+
+		if (isBestPosition) 
+		{
+			latex << " \\\\[1ex]"; // Add line break if it's the best position
+		}
+
+		return latex;
+	}
+
+	void InsertLatexAtMarker
+	(
+		const wxString& filePath, 
+		const wxArrayString& generatedBlocks
+	) 
+	{
+		wxTextFile file(filePath);
+
+		if (!file.Open()) 
+		{
+			wxLogError("Failed to open LaTeX file: %s", filePath);
+			return;
+		}
+
+		wxString marker = "% BEGIN_FOCUSIMAGES";
+		bool markerFound = false;
+
+		for (size_t i = 0; i < file.GetLineCount(); ++i) 
+		{
+			if (file[i].Contains(marker)) 
+			{
+				markerFound = true;
+
+				// Insert generated LaTeX blocks after the marker
+				for (auto k{0}; k < generatedBlocks.GetCount(); ++k)
+					file.InsertLine(generatedBlocks[generatedBlocks.GetCount() - k - 1], i + 1);
+				break;
+			}
+		}
+
+		if (!markerFound) 
+		{
+			wxLogError("Marker not found: %s", marker);
+		}
+		else 
+		{
+			file.Write();
+			//wxLogMessage("Successfully inserted LaTeX blocks into: %s", filePath);
+		}
+
+		file.Close();
+	}
+
 private:
 	/* Settings Menu */
 	std::unique_ptr<cSettings> m_Settings{};
