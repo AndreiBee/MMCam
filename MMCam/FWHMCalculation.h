@@ -117,15 +117,6 @@ namespace FWHM
 					calculateSum(dataPtr, imageWidth, imageHeight, i, &results[i]);
 				}
 				});
-			//auto data_start = &dataPtr[i];
-			//threads.emplace_back
-			//(
-			//	calculateSum,
-			//	dataPtr,
-			//	imageSize,
-			//	i,
-			//	results
-			//);
 		}
 
 		for (auto& t : threads)
@@ -176,37 +167,24 @@ namespace FWHM
 		int leftIndex = -1, rightIndex = -1;
 
 		// Looking for the left index
-		for (auto i = bestPosition; i >= 0; --i)
+		for (auto i = 0; i < bestPosition; ++i)
 		{
-			if (leftIndex == -1 && array[i] < halfMax)
+			if (leftIndex == -1 && array[i] >= halfMax) 
 			{
-				leftIndex = static_cast<int>(i + 1);
+				leftIndex = static_cast<int>(i);
 				break;
 			}
 		}
 
 		// Looking for the right index
-		for (auto i = bestPosition; i < size; ++i)
+		for (auto i = size - 1; i >= bestPosition; --i)
 		{
-			if (leftIndex != -1 && array[i] < halfMax)
+			if (leftIndex != -1 && array[i] >= halfMax) 
 			{
-				rightIndex = static_cast<int>(i - 1);
+				rightIndex = static_cast<int>(i);
 				break;
 			}
 		}
-
-		//for (auto i = 0; i < size; ++i) 
-		//{
-		//	if (leftIndex == -1 && array[i] >= halfMax) 
-		//	{
-		//		leftIndex = static_cast<int>(i);
-		//	}
-		//	if (leftIndex != -1 && array[i] < halfMax) 
-		//	{
-		//		rightIndex = static_cast<int>(i - 1);
-		//		break;
-		//	}
-		//}
 
 		// Handle edge cases where the full width is not well-defined
 		if (leftIndex == -1 || rightIndex == -1 || rightIndex <= leftIndex) return -1.0;

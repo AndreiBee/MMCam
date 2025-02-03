@@ -2308,8 +2308,7 @@ auto cMain::FindSpotCenterCoordinates
 (
 	const cv::Mat& signal, 
 	int* bestX, 
-	int* bestY,
-	bool circleAnalyzing
+	int* bestY
 ) -> void
 {
 	auto findCenterFWHM = []
@@ -2318,58 +2317,30 @@ auto cMain::FindSpotCenterCoordinates
 		const int maxI, 
 		const double hMax, 
 		int* left, 
-		int* right,
-		bool startCalculationFromTheBeginningAndEndOfTheData
+		int* right
 		) 
 		{
 			auto leftFWHM = -1, rightFWHM = -1;
 
-			if (startCalculationFromTheBeginningAndEndOfTheData)
+			// Looking for the left FWHM value
+			for (auto i = 0; i <= maxI; ++i) 
 			{
-				// Looking for the left FWHM value
-				for (auto i = 0; i <= maxI; ++i) 
+				auto value = data1D.at<float>(i);
+				if (leftFWHM == -1 && value >= hMax)
 				{
-					auto value = data1D.at<float>(i);
-					if (leftFWHM == -1 && value >= hMax)
-					{
-						leftFWHM = i;
-						break;
-					}
-				}
-
-				// Looking for the right FWHM value
-				for (auto i = data1D.total() - 1; i > maxI; --i) 
-				{
-					auto value = data1D.at<float>(i);
-					if (leftFWHM != -1 && value >= hMax)
-					{
-						rightFWHM = i + 1;
-						break;
-					}
+					leftFWHM = i;
+					break;
 				}
 			}
-			else
-			{
-				// Looking for the left FWHM value
-				for (int i = maxI; i >= 0; --i) 
-				{
-					auto value = data1D.at<float>(i);
-					if (leftFWHM == -1 && value < hMax)
-					{
-						leftFWHM = i + 1;
-						break;
-					}
-				}
 
-				// Looking for the right FWHM value
-				for (int i = maxI; i < data1D.total(); ++i) 
+			// Looking for the right FWHM value
+			for (auto i = data1D.total() - 1; i > maxI; --i) 
+			{
+				auto value = data1D.at<float>(i);
+				if (leftFWHM != -1 && value >= hMax)
 				{
-					auto value = data1D.at<float>(i);
-					if (leftFWHM != -1 && value < hMax)
-					{
-						rightFWHM = i - 1;
-						break;
-					}
+					rightFWHM = i + 1;
+					break;
 				}
 			}
 
@@ -2398,8 +2369,7 @@ auto cMain::FindSpotCenterCoordinates
 			maxIndex, 
 			halfMax, 
 			&leftFWHM, 
-			&rightFWHM,
-			circleAnalyzing
+			&rightFWHM
 		);
 
 		*bestY = (rightFWHM - leftFWHM) / 2 + leftFWHM;
@@ -2425,8 +2395,7 @@ auto cMain::FindSpotCenterCoordinates
 			maxIndex, 
 			halfMax, 
 			&leftFWHM, 
-			&rightFWHM,
-			circleAnalyzing
+			&rightFWHM
 		);
 
 		*bestX = (rightFWHM - leftFWHM) / 2 + leftFWHM;
@@ -2809,6 +2778,39 @@ auto cMain::GeneratePDFReportUsingLatex
 	wxLaunchDefaultApplication(file.GetFullPath());
 }
 
+auto cMain::RemoveAllUnnecessaryFilesFromFolder(const wxString& folder, wxArrayString removeExtensions) -> void
+{
+	if (!wxDir::Exists(folder)) {
+		wxLogError("Folder does not exist: %s", folder);
+		return;
+	}
+
+	wxDir dir(folder);
+	if (!dir.IsOpened()) {
+		wxLogError("Failed to open directory: %s", folder);
+		return;
+	}
+
+	wxString filename;
+	bool cont = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES);
+
+	while (cont) 
+	{
+		wxFileName filePath(folder, filename);
+		wxString ext = filePath.GetExt().Lower();
+
+		if (removeExtensions.Index(ext, /*caseSensitive=*/false) != wxNOT_FOUND) 
+		{
+			if (!wxRemoveFile(filePath.GetFullPath())) 
+			{
+				wxLogError("Failed to delete: %s", filePath.GetFullPath());
+			}
+		}
+
+		cont = dir.GetNext(&filename);
+	}
+}
+
 bool cMain::Cancelled()
 {
 	wxCriticalSectionLocker lock(m_CSCancelled);
@@ -2870,6 +2872,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	{
 		if (!IsPythonInstalledOnTheCurrentMachine()) return;
 		if (!CreateVirtualEnvironment(venvPath, requirementsPath)) return;
+		if (!CheckLatexPresence()) return;
 	}
 
 	auto inputParameters = GenerateReportVariables::InputParameters();
@@ -3375,7 +3378,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		cv::Mat rawImage = cv::imread(filePath.ToStdString(), cv::IMREAD_UNCHANGED);
 		if (rawImage.size() != circleBlackImage.size() || rawImage.type() != circleBlackImage.type()) continue;
 
-		FindSpotCenterCoordinates(rawImage, &bestXPos, &bestYPos, true);
+		FindSpotCenterCoordinates(rawImage, &bestXPos, &bestYPos);
 		if (bestXPos - cropCircleWindowSize / 2 < 0 || bestXPos + cropCircleWindowSize / 2 >= rawImage.cols
 			|| bestYPos - cropCircleWindowSize / 2 < 0 || bestYPos + cropCircleWindowSize / 2 >= rawImage.rows) continue;
 
@@ -3460,6 +3463,16 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		imageFilePaths,
 		reportParameters
 	);
+
+	// Remove all unnecessary files from the destination folder
+	{
+		wxArrayString extensionsToRemove{};
+		extensionsToRemove.Add("txt");
+		extensionsToRemove.Add("aux");
+		extensionsToRemove.Add("log");
+
+		RemoveAllUnnecessaryFilesFromFolder(tempFolder.GetFullPath(), extensionsToRemove);
+	}
 }
 
 auto cMain::IsPythonInstalledOnTheCurrentMachine() -> bool

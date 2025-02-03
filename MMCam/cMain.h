@@ -695,8 +695,7 @@ private:
 	(
 		const cv::Mat& signal, 
 		int* bestX, 
-		int* bestY,
-		bool circleAnalyzing = false
+		int* bestY
 	) -> void;
 
 	auto CropDataIntoArray
@@ -1113,6 +1112,23 @@ private:
 
 		return wxString(str);
 	}
+
+	bool CheckLatexPresence() 
+	{
+		wxString latexCommand = "xelatex --version"; // You can also use "pdflatex --version"
+
+		// Execute the command silently and capture the return code
+		int exitCode = wxExecute(latexCommand, wxEXEC_NODISABLE | wxEXEC_SYNC);
+
+		if (exitCode != 0) 
+		{
+			wxLogError("LaTeX is not installed on this system. Please install a LaTeX distribution (such as TeX Live or MiKTeX) and ensure it's added to the system PATH.");
+			return false;
+		}
+		return true;
+	}
+
+	auto RemoveAllUnnecessaryFilesFromFolder(const wxString& folder, wxArrayString removeExtensions) -> void;
 
 private:
 	/* Settings Menu */
