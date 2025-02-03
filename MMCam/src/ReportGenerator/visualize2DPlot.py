@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import math
 
 
 def visualize(data, width, height, pixelSize, colormap, filePath):
@@ -14,6 +15,7 @@ def visualize(data, width, height, pixelSize, colormap, filePath):
     image_width_mm = width * pixel_size_mm
     image_height_mm = height * pixel_size_mm
 
+    # fig, ax = plt.subplots()
     # 2D Colormap Graph
     plt.figure()
     plt.imshow(array, cmap=colormap)
@@ -22,6 +24,10 @@ def visualize(data, width, height, pixelSize, colormap, filePath):
     plt.xlabel('Distance [mm]', fontsize=12)
     plt.ylabel('Distance [mm]', fontsize=12)
 
+    # M = 4
+    # axisticks = ticker.MaxNLocator(M)
+    # ax.set_yticks(axisticks)
+    # ax.set_xticks(axisticks)
     # Set custom tick labels in mm
     # Get default tick positions (in pixels)
     xticks_pixels = plt.xticks()[0]
@@ -36,9 +42,11 @@ def visualize(data, width, height, pixelSize, colormap, filePath):
 
     # Apply new tick labels
     # Set X-axis tick labels in mm
-    plt.xticks(xticks_pixels, [f"{tick:.2f}" for tick in xticks_mm])
+    plt.xticks(xticks_pixels, [
+               f"{tick:.2f}" for tick in xticks_mm])
     # Set Y-axis tick labels in mm
-    plt.yticks(yticks_pixels, [f"{tick:.2f}" for tick in yticks_mm])
+    plt.yticks(yticks_pixels, [
+               f"{tick:.2f}" for tick in yticks_mm])
 
     # plt.title("2D Colormap Representation")
     plt.savefig(filePath, dpi=300)  # Save image as a file

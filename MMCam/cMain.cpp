@@ -3313,7 +3313,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 			verticalFWHM.get(),
 			"Vertical",
 			"g",
-			"FWHM [mm]",
+			"FWHM [um]",
 			imagesForCalculationPath.GetCount(),
 			reportParameters.start,
 			reportParameters.step,

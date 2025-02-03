@@ -11,6 +11,8 @@
 \usepackage{siunitx} %number rounding
 \usepackage{numprint}
 \usepackage{url}
+\usepackage{array}
+\usepackage{colortbl} % Required for \rowcolor
 
 \begin{document}
 
@@ -23,6 +25,7 @@
 \setlength{\footskip}{1cm} % Set footer height
 \fancyfoot[R]{\large{\textbf{\textcolor{red}{Rigaku confidential}}}}
 \fancyfoot[C]{\thepage} % Align page number to the page center
+\renewcommand{\footrulewidth}{0.4pt} % Thickness of the footer line
 
 % Define variable parameters 
 \newcommand{\SerialNumber}{\text{{#SerialNumber}}}
@@ -42,7 +45,8 @@
 \title{\textbf{\textcolor{ultramarine}{\OpticsProductNumber{} (\OpticsType{})}}}
 \date{\textbf{\textcolor{ultramarine}{\ReportName{}}}}
 
-
+\definecolor{headercolor}{HTML}{199BD7} % Dark blue for headers
+\definecolor{tableborder}{HTML}{CCCCCC} % Light gray for table borders
 
 \maketitle
 \thispagestyle{fancy} % Přidáváme fancy styl na titulní stranu
@@ -50,30 +54,23 @@
 
 \begin{figure}[ht]
     \begin{center}
-    \includegraphics[width= 7 cm]{{#OpticsScheme}}
+    \includegraphics[width=0.7\textwidth]{{#OpticsScheme}}
     \end{center}
     \label{fig:optika}
 \end{figure}
 
-%{\textcolor{red}{Bóďa - lépe to nešlo}}
-
-\textbf{\textcolor{ultramarine}{General:}}\\
+\noindent
+\section{General Information:}
 \begin{center}
-    	\renewcommand{\arraystretch}{1.15} % Násobek výchozí výšky řádků
-    \begin{tabular}{|p{7cm}|p{7cm}|}
-\hline
-Tested by:&			\Author{}\\	\hline
-Date:&				\today\\	\hline
-Serial number:&		\SerialNumber{}\\	\hline
-Product number:&	\OpticsProductNumber{}\\	\hline
-Customer:&			\Customer{}\\
-&						\\
-&						\\
-&						\\
-&						\\
-&						\\
-&						\\
-	\hline
+    \setlength{\extrarowheight}{4pt} % Add extra spacing between rows
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{0.25\textwidth}|>{\raggedright\arraybackslash}p{0.4\textwidth}|}
+        \hline
+        \rowcolor{headercolor!15} Tested by: & \textbf{\Author{}} \\ \hline
+        \rowcolor{headercolor!5} Date: & \textbf{\today} \\ \hline
+        \rowcolor{headercolor!15} Serial Number: & \textbf{\SerialNumber{}} \\ \hline
+        \rowcolor{headercolor!5} Product Number: & \textbf{\OpticsProductNumber{}} \\ \hline
+        \rowcolor{headercolor!15} Customer: & \textbf{\Customer{}} \\ 
+        \hline
     \end{tabular}
 \end{center}
 
@@ -120,7 +117,7 @@ Customer:&			\Customer{}\\
 
 \clearpage
 \newpage
-\section{Finding the optimal position - step \Step{} mm}
+\section{Searching for the optimal position - step \Step{} mm}
 
 \begin{figure}[h!]
 \centering
@@ -171,7 +168,7 @@ Customer:&			\Customer{}\\
 
 \clearpage
 
-\section{Images in front and behind of the focus}
+\section{Images in front of and behind the focus}
 
 \begin{figure}[h!]
 \centering
@@ -252,7 +249,7 @@ Customer:&			\Customer{}\\
     \\[1ex] % Line break for the next row
 
 \bigskip
-\caption{Images of focus (Z - distance from the end the optics to the detector).}
+\caption{Images of the focus (Z – distance from the end of the optics to the detector).}
 \end{figure}
 
 % START_REMOVE

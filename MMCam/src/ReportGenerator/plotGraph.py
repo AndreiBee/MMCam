@@ -7,17 +7,18 @@ def visualize(firstData, firstSmallLabel, firstColor, xLabel, secondData, second
     # Reshape data to 2D array
     firstArray = np.array(firstData, dtype=np.double)
     max_index_in_first_array = np.argmax(firstArray)
-    print(firstArray)
+    # print(firstArray)
 
     secondArray = np.array(secondData, dtype=np.double)
     max_index_in_second_array = np.argmax(secondArray)
-    print(secondArray)
+    # print(secondArray)
 
     npStart = float(startX)
     npStep = float(step)
-    npFinish = npStart + float(dataSize) * npStep
+    npFinish = npStart + float(dataSize - 1) * npStep
 
     x = np.linspace(npStart, npFinish, int(dataSize))
+    print(x)
 
     plt.plot(x, firstArray, color=firstColor, label=firstSmallLabel)
     plt.plot(x, secondArray, color=secondColor, label=secondSmallLabel)
