@@ -2634,7 +2634,6 @@ auto cMain::GeneratePDFReportUsingLatex
 			placeholder,
 			wxString::Format(wxT("%.3f"), reportParameters.step)
 		);
-
 	}
 
 	// Int Parameters
