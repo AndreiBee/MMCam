@@ -50,12 +50,21 @@ namespace GenerateReportVariables {
         ID_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL,
         ID_OPEN_CIRCLE_IMAGES_FOR_CALCULATION_BTN,
         ID_CIRCLE_IMAGES_FOR_CALCULATION_PATHS_TXT_CTRL,
-        ID_MEASURED_SPECTRUM_PATH_TXT_CTRL,
-        ID_OPEN_MEASURED_SPECTRUM_BTN,
-        ID_FIRST_GAIN_PATH_TXT_CTRL,
-        ID_OPEN_FIRST_GAIN_BTN,
-        ID_SECOND_GAIN_PATH_TXT_CTRL,
-        ID_OPEN_SECOND_GAIN_BTN
+        ID_XRAY_IMAGE_1_PATH_TXT_CTRL,
+        ID_OPEN_XRAY_IMAGE_1_BTN,
+        ID_XRAY_IMAGE_1_CAPTION_TXT_CTRL,
+        ID_XRAY_IMAGE_2_PATH_TXT_CTRL,
+        ID_OPEN_XRAY_IMAGE_2_BTN,
+        ID_XRAY_IMAGE_2_CAPTION_TXT_CTRL,
+        ID_XRAY_IMAGE_3_PATH_TXT_CTRL,
+        ID_OPEN_XRAY_IMAGE_3_BTN,
+        ID_XRAY_IMAGE_3_CAPTION_TXT_CTRL,
+        ID_XRAY_IMAGE_4_PATH_TXT_CTRL,
+        ID_OPEN_XRAY_IMAGE_4_BTN,
+        ID_XRAY_IMAGE_4_CAPTION_TXT_CTRL,
+        ID_XRAY_IMAGE_5_PATH_TXT_CTRL,
+        ID_OPEN_XRAY_IMAGE_5_BTN,
+        ID_XRAY_IMAGE_5_CAPTION_TXT_CTRL,
     };
 
     struct InputParameters
@@ -70,6 +79,7 @@ namespace GenerateReportVariables {
         double start{}, step{}, focus{};
         std::unique_ptr<double[]> optimalPositionsArray{};
         int focusExposure, circleExposure{};
+        wxArrayString xRayImagesCaption{};
     };
 }
 
@@ -164,9 +174,11 @@ private:
     auto OnOpenImagesForCalculationBtn(wxCommandEvent& evt) -> void;
     auto OnOpenCircleImagesForCalculationBtn(wxCommandEvent& evt) -> void;
 
-    auto OnOpenMeasuredSpectrumBtn(wxCommandEvent& evt) -> void;
-    auto OnOpenFirstGainBtn(wxCommandEvent& evt) -> void;
-    auto OnOpenSecondGainBtn(wxCommandEvent& evt) -> void;
+    auto OnOpenXRayImage1Btn(wxCommandEvent& evt) -> void;
+    auto OnOpenXRayImage2Btn(wxCommandEvent& evt) -> void;
+    auto OnOpenXRayImage3Btn(wxCommandEvent& evt) -> void;
+    auto OnOpenXRayImage4Btn(wxCommandEvent& evt) -> void;
+    auto OnOpenXRayImage5Btn(wxCommandEvent& evt) -> void;
 
     auto CheckIfImageIsCorrect
     (
@@ -234,9 +246,10 @@ protected:
     bool m_IsOpenImagesForCalculationToggled{}, m_IsOpenCircleImagesForCalculationToggled{};
 
     // X-ray test
-    std::unique_ptr<wxTextCtrl> m_MeasuredSpectrumPath{}, m_FirstGainPath{}, m_SecondGainPath{};
-    std::unique_ptr<wxBitmapButton> m_OpenMeasuredSpectrumBtn{}, m_OpenFirstGainBtn{}, m_OpenSecondGainBtn{};
-    bool m_IsOpenMeasuredSpectrumToggled{}, m_IsOpenFirstGainToggled{}, m_IsOpenSecondGainToggled{};
+    std::unique_ptr<wxTextCtrl> m_XRayImage1Path{}, m_XRayImage2Path{}, m_XRayImage3Path{}, m_XRayImage4Path{}, m_XRayImage5Path{};
+    std::unique_ptr<wxTextCtrl> m_XRayImage1Caption{}, m_XRayImage2Caption{}, m_XRayImage3Caption{}, m_XRayImage4Caption{}, m_XRayImage5Caption{};
+    std::unique_ptr<wxBitmapButton> m_OpenXRayImage1Btn{}, m_OpenXRayImage2Btn{}, m_OpenXRayImage3Btn{}, m_OpenXRayImage4Btn{}, m_OpenXRayImage5Btn{};
+    bool m_IsOpenXRayImage1Toggled{}, m_IsOpenXRayImage2Toggled{}, m_IsOpenXRayImage3Toggled{}, m_IsOpenXRayImage4Toggled{}, m_IsOpenXRayImage5Toggled{};
 
     //bool m_IsOriginalBlackImageLoadedSucc{}, m_IsOriginalWhiteImageLoadedSucc{}, m_IsCircleBlackImageLoadedSucc{};
 

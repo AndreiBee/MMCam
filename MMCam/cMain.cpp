@@ -2670,24 +2670,27 @@ auto cMain::GeneratePDFReportUsingLatex
 	placeholder = "{#GainDiagram}";
 	ReplacePlaceholderInTexFile(destinationFilePath, placeholder, ConvertToForwardSlashes(imageFilePaths.gainPath));
 
-	wxArrayString texBlocks;
-	int generateBlockCalls{};
-	// Optimal Position Images
-	for (auto i{ 0 }; i < imageFilePaths.optimalPositionArray.GetCount(); ++i)
 	{
-		auto isPositiveNumber = reportParameters.optimalPositionsArray[i] > 0.0 ? true : false;
-		auto outSign = reportParameters.optimalPositionsArray[i] == reportParameters.focus ? wxString("= ") : (isPositiveNumber ? wxString("+") : wxString(""));
+		wxArrayString texBlocks;
+		int generateBlockCalls{};
+		// Optimal Position Images
+		for (auto i{ 0 }; i < imageFilePaths.optimalPositionArray.GetCount(); ++i)
+		{
+			auto isPositiveNumber = reportParameters.optimalPositionsArray[i] > 0.0 ? true : false;
+			auto outSign = reportParameters.optimalPositionsArray[i] == reportParameters.focus ? wxString("= ") : (isPositiveNumber ? wxString("+") : wxString(""));
 
-		texBlocks.Add(GenerateLatexBlock
-		(
-			ConvertToForwardSlashes(imageFilePaths.optimalPositionArray[i]), 
-			outSign + FormatNumber(reportParameters.optimalPositionsArray[i]),
-			reportParameters.optimalPositionsArray[i] == reportParameters.focus || generateBlockCalls == 2
-		));
+			texBlocks.Add(GenerateLatexSmallImageBlock
+			(
+				ConvertToForwardSlashes(imageFilePaths.optimalPositionArray[i]),
+				outSign + FormatNumber(reportParameters.optimalPositionsArray[i]),
+				reportParameters.optimalPositionsArray[i] == reportParameters.focus || generateBlockCalls == 2
+			));
 
-		generateBlockCalls = generateBlockCalls == 2 || reportParameters.optimalPositionsArray[i] == reportParameters.focus ? 0 : ++generateBlockCalls;
+			generateBlockCalls = generateBlockCalls == 2 || reportParameters.optimalPositionsArray[i] == reportParameters.focus ? 0 : ++generateBlockCalls;
+		}
+		wxString marker = "% BEGIN_FOCUSIMAGES";
+		InsertLatexAtMarker(destinationFilePath, marker, texBlocks);
 	}
-	InsertLatexAtMarker(destinationFilePath, texBlocks);
 
 	// Best Position
 	placeholder = "{#Best2DImage}";
@@ -2748,23 +2751,46 @@ auto cMain::GeneratePDFReportUsingLatex
 	for (const auto& str : imageFilePaths.xRayArray)
 		isXRayArrayEmpty = str.IsEmpty();
 
-	if (isXRayArrayEmpty)
+	if (!isXRayArrayEmpty)
 	{
-		RemoveSectionFromFile(destinationFilePath, "% START_REMOVE", "% END_REMOVE");
-	}
-	else
-	{
+		wxArrayString texBlocks;
+		wxString latex{};
+		latex << "\\newpage" << "\n";
+		latex << "\\section{X-Ray Test}" << "\n";
+		texBlocks.Add(latex);
+
 		for (auto i{ 0 }; i < imageFilePaths.xRayArray.GetCount(); ++i)
 		{
-			placeholder = "{#XRayImage" + wxString::Format(wxT("%i"), i + 1) + "}";
-			ReplacePlaceholderInTexFile
+			if (i == 3)
+				texBlocks.Add("\\newpage");
+
+			texBlocks.Add(GenerateLatexBigImageBlock
 			(
-				destinationFilePath, 
-				placeholder, 
-				ConvertToForwardSlashes(imageFilePaths.xRayArray[i])
-			);
+				ConvertToForwardSlashes(imageFilePaths.xRayArray[i]), 
+				reportParameters.xRayImagesCaption[i]
+			));
 		}
+		wxString marker = "% BEGIN_XRAYIMAGES";
+		InsertLatexAtMarker(destinationFilePath, marker, texBlocks);
 	}
+
+	//if (isXRayArrayEmpty)
+	//{
+	//	RemoveSectionFromFile(destinationFilePath, "% START_REMOVE", "% END_REMOVE");
+	//}
+	//else
+	//{
+	//	for (auto i{ 0 }; i < imageFilePaths.xRayArray.GetCount(); ++i)
+	//	{
+	//		placeholder = "{#XRayImage" + wxString::Format(wxT("%i"), i + 1) + "}";
+	//		ReplacePlaceholderInTexFile
+	//		(
+	//			destinationFilePath, 
+	//			placeholder, 
+	//			ConvertToForwardSlashes(imageFilePaths.xRayArray[i])
+	//		);
+	//	}
+	//}
 
 	ExecuteLatex(destinationFilePath);
 

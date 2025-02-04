@@ -1131,7 +1131,7 @@ private:
 
 	auto RemoveAllUnnecessaryFilesFromFolder(const wxString& folder, wxArrayString removeExtensions) -> void;
 
-	wxString GenerateLatexBlock(const wxString& imgTag, const wxString& positionTag, bool isBestPosition) 
+	wxString GenerateLatexSmallImageBlock(const wxString& imgTag, const wxString& positionTag, bool isBestPosition) 
 	{
 		wxString latex;
 
@@ -1149,9 +1149,27 @@ private:
 		return latex;
 	}
 
+	wxString GenerateLatexBigImageBlock(const wxString& imgTag, const wxString& caption) 
+	{
+		wxString latex;
+
+		latex << "\t\\begin{figure}[h]\n"
+			<< "\t\t\\centering" << "}\n"
+			<< "\t\t\\begin{subfigure}[b]{0.65\\textwidth}" << "}\n"
+			<< "\t\t\t\\centering" << "}\n"
+			<< "\t\t\t\\includegraphics[width=\\textwidth]{" << imgTag << "}\n"
+			<< "\t\t\\end{subfigure}" << "}\n"
+			<< "\t\t\\caption{" << caption << "}\n"
+			<< "\t\\end{figure}";
+
+		return latex;
+	}
+
+
 	void InsertLatexAtMarker
 	(
 		const wxString& filePath, 
+		const wxString& marker, 
 		const wxArrayString& generatedBlocks
 	) 
 	{
@@ -1163,7 +1181,6 @@ private:
 			return;
 		}
 
-		wxString marker = "% BEGIN_FOCUSIMAGES";
 		bool markerFound = false;
 
 		for (size_t i = 0; i < file.GetLineCount(); ++i) 
