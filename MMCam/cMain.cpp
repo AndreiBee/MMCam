@@ -3475,9 +3475,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		RemoveAllUnnecessaryFilesFromFolder(tempFolder.GetFullPath(), extensionsToRemove);
 	}
 
-	wxString targetFolder{};
-	if (EnsureFolderHierarchy(uploadReportFolder, targetFolder)) 
-		UploadReportToDestinationFolder(reportFilePath, targetFolder);
+	if (!uploadReportFolder.IsEmpty())
+	{
+		wxString targetFolder{};
+		if (EnsureFolderHierarchy(uploadReportFolder, targetFolder))
+			UploadReportToDestinationFolder(reportFilePath, targetFolder);
+	}
 }
 
 auto cMain::IsPythonInstalledOnTheCurrentMachine() -> bool

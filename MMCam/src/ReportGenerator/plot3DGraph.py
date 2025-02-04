@@ -22,13 +22,21 @@ def visualize(imgData, width, height, pixelSize, colormap, filePath):
     ax.set_ylabel("Distance [mm]")
     ax.set_zlabel("Intensity [a.u.]")
 
+    tickSize = 5
     # Set custom tick labels in mm
     # Get default tick positions (in pixels)
     xticks_pixels = plt.xticks()[0]
     xticks_pixels = xticks_pixels[1:-1]
+    xticks_pixels = xticks_pixels[:tickSize]
+    for i in range(tickSize):
+        xticks_pixels[i] = i * width / len(xticks_pixels)
+
     # print(xticks_pixels)
     yticks_pixels = plt.yticks()[0]
     yticks_pixels = yticks_pixels[1:-1]    # Convert pixel ticks to mm
+    yticks_pixels = yticks_pixels[:5]
+    for i in range(tickSize):
+        yticks_pixels[i] = i * width / len(yticks_pixels)
 
     xticks_mm = xticks_pixels * pixel_size_mm
     yticks_mm = yticks_pixels * pixel_size_mm

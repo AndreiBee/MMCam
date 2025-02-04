@@ -796,24 +796,24 @@ auto cSettings::ReadInitializationFile() -> void
 	rapidxml::xml_node<>* app_node = document->first_node("MMCam");
 
 	auto element = SettingsVariables::FindNode(app_node, "crop_size_mm");
-	if (element)
+	if (element && element->first_node())
 		m_CropSizeMM = std::atof(element->first_node()->value());
 
 	element = SettingsVariables::FindNode(app_node, "crop_size_circle_mm");
-	if (element)
+	if (element && element->first_node())
 		m_CropCircleSizeMM = std::atof(element->first_node()->value());
 
 	element = SettingsVariables::FindNode(app_node, "pixel_size_um");
-	if (element)
+	if (element && element->first_node())
 		m_PixelSizeUM = std::atof(element->first_node()->value());
 
 	element = SettingsVariables::FindNode(app_node, "upload_report_folder");
-	if (element)
+	if (element && element->first_node())
 		m_UploadReportFolder = element->first_node()->value();
 
 
 	element = SettingsVariables::FindNode(app_node, "work_station");
-	if (element)
+	if (element && element->first_node())
 		m_WorkStations->initialized_work_station = wxString(element->first_node()->value());
 }
 
