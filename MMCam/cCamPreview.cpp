@@ -166,6 +166,7 @@ void cCamPreview::UpdateImageParameters()
 			m_ImageSize.GetHeight(), 
 			m_HorizontalSumArray.get()
 		);
+
 		m_HorizontalFWHM_PX = FWHM::CalculateFWHM
 		(
 			m_HorizontalSumArray.get(), 
@@ -620,6 +621,7 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 
 		DrawSpotCroppedWindow(gc);
 		DrawSumLines(gc);
+
 		/* FWHM */
 		DrawFWHMValues(gc);
 
@@ -871,6 +873,7 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 	wxDouble offset_x{ m_Zoom / m_ZoomOnOriginalSizeImage }, max_height{ (wxDouble)m_ImageOnCanvasSize.GetHeight() / 4 };
 	wxDouble current_x{}, current_y{}, start_x{ start_draw.x }, start_y{}, current_length{ m_Zoom / m_ZoomOnOriginalSizeImage };
 	auto max_value = m_HorizonalBestPosSum.second - m_HorizontalWorstPosSum.second;
+	max_value = max_value == 0 ? 1 : max_value;
 	auto multiplicator = (double)max_height / max_value;
 
 	for (auto i = 0; i < m_ImageSize.GetWidth() - 1; ++i)
@@ -901,6 +904,7 @@ auto cCamPreview::DrawVerticalSumLine(wxGraphicsContext* gc_) -> void
 	wxDouble offset_y{ m_Zoom / m_ZoomOnOriginalSizeImage }, max_height{ (wxDouble)m_ImageOnCanvasSize.GetWidth() / 4 };
 	wxDouble current_x{}, current_y{}, start_x{}, start_y{ start_draw.y }, current_length{ m_Zoom / m_ZoomOnOriginalSizeImage };
 	auto max_value = m_VerticalBestPosSum.second - m_VerticalWorstPosSum.second;
+	max_value = max_value == 0 ? 1 : max_value;
 	auto multiplicator = (double)max_height / max_value;
 
 	for (auto i = 0; i < m_ImageSize.GetHeight() - 1; ++i)

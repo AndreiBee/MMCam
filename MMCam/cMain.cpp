@@ -122,10 +122,10 @@ cMain::cMain(const wxString& title_)
 		ProcessEvent(artEvt);
 	}
 	// Press Generate Button
-	{
-		wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN);
-		ProcessEvent(artEvt);
-	}
+	//{
+	//	wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN);
+	//	ProcessEvent(artEvt);
+	//}
 #endif // _DEBUG
 	{
 		//m_StartStopLiveCapturingTglBtn->SetValue(true);
@@ -1320,7 +1320,6 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 
 		mmt_static_box_sizer->Add(directions_static_box_sizer, 0, wxEXPAND);
 	}
-
 
 	{
 		wxSizer* const horizontal_sizer = new wxBoxSizer(wxHORIZONTAL);

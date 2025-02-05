@@ -19,7 +19,8 @@ $platform = "x64"
 & $msbuildPath $solutionPath `
     /p:Configuration=$buildConfiguration `
     /p:Platform=$platform `
-    /t:Build
+    /t:Rebuild
+	/m  # Enables multi-core compilation for faster builds
 	
 Write-Output "Finished building the ${repository_name} in Release mode [$(Get-Date)]" >> "${path_to_repository}\log.txt"
 
