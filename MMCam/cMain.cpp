@@ -3830,7 +3830,7 @@ wxThread::ExitCode LiveCapturing::Entry()
 	//auto short_data_ptr = m_CamPreviewWindow->GetDataPtr();
 
 
-	constexpr auto interval = std::chrono::microseconds(333'333);  // 1/3 second = 333'333 us
+	constexpr auto interval = std::chrono::microseconds(3 * 333'333);  // 1/3 second = 333'333 us
 
 	m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(false);
 
