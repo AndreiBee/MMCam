@@ -1335,10 +1335,6 @@ void cMain::CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_
 			);
 		report_sizer->Add(m_GenerateReportBtn.get());
 		horizontal_sizer->Add(report_sizer);
-#ifndef _DEBUG
-		m_GenerateReportBtn->Disable();
-#endif // !_DEBUG
-
 
 		/* Start/Stop Capturing */
 		wxSizer* const capturing_sizer = new wxStaticBoxSizer(wxHORIZONTAL, right_side_panel, "&Capturing");
