@@ -543,7 +543,8 @@ void cCamPreview::OnPreviewMouseLeftPressed(wxMouseEvent& evt)
 		m_ParentArguments->set_pos_tgl_btn->SetValue(false);
 		m_CrossHairTool->ActivateSetPositionFromParentWindow(false);
 	}
-	else if (m_Zoom > 1.0 && m_IsCursorInsideImage && m_CrossHairTool->CanProcessPanning())
+	//else if (m_Zoom > 1.0 && m_IsCursorInsideImage && m_CrossHairTool->CanProcessPanning())
+	else if (m_Zoom > 1.0 && m_IsCursorInsideImage)
 	{
 		m_Panning = true;
 		m_PanStartPoint = m_CursorPosOnCanvas;
