@@ -997,7 +997,7 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 					right_side_panel, 
 					MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TE_CTL, 
 #ifdef _DEBUG
-					wxT("200"), 
+					wxT("10"), 
 #else
 					wxT("10"), 
 #endif // _DEBUG
@@ -2105,10 +2105,14 @@ auto cMain::LiveCapturingThread(wxThreadEvent& evt) -> void
 		auto imgPtr = evt.GetPayload<unsigned short*>();
 		if (!imgPtr) return;
 		LOG("Set camera captured image");
-		m_CamPreview->SetCameraCapturedImage
-		(
-			imgPtr
-		);
+
+		if (m_CamPreview->IsExecutionFinished())
+		{
+			m_CamPreview->SetCameraCapturedImage
+			(
+				imgPtr
+			);
+		}
 		delete[] imgPtr;
 	}
 	// -1 == Camera is disconnected
@@ -3826,6 +3830,8 @@ wxThread::ExitCode LiveCapturing::Entry()
 	//auto short_data_ptr = m_CamPreviewWindow->GetDataPtr();
 
 
+	constexpr auto interval = std::chrono::microseconds(333'333);  // 1/3 second = 333'333 us
+
 	m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(false);
 
 	while (m_MainFrame && m_XimeaControl->GetThreadState(m_ThreadID))
@@ -3840,6 +3846,11 @@ wxThread::ExitCode LiveCapturing::Entry()
 				exit_thread();
 				return (wxThread::ExitCode)0;
 			}
+			auto start = std::chrono::steady_clock::now();
+			
+			// Here we limit the frame count (just to be sure that the application will process the captured amount of data)
+			if (interval.count() > m_ExposureUS)
+				std::this_thread::sleep_until(start + interval - std::chrono::microseconds(m_ExposureUS));
 
 			auto dataPtr = std::make_unique<unsigned short[]>(m_ImageSize.GetWidth() * m_ImageSize.GetHeight());
 			if (CaptureImage(dataPtr.get()))

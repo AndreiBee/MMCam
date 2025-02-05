@@ -112,6 +112,8 @@ public:
 			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / (m_PixelSizeUM / 1000.0)));
 	};
 
+	auto IsExecutionFinished() const -> bool { return m_ExecutionFinished; };
+
 
 private:
 	void InitDefaultComponents();
@@ -162,6 +164,7 @@ private:
 	void DrawCrossHair(wxGraphicsContext* graphics_context);
 
 private:
+	bool m_ExecutionFinished{ true };
 	int m_Width{}, m_Height{};
 	bool m_IsGraphicsBitmapSet{}, m_IsImageSet{};
 	wxGraphicsBitmap m_GraphicsBitmapImage{};

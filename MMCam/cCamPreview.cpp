@@ -211,6 +211,7 @@ auto cCamPreview::SetCameraCapturedImage
 	if (!data_ptr) return;
 	if (!m_ImageSize.GetWidth() || !m_ImageSize.GetHeight()) return;
 
+	m_ExecutionFinished = false;
 	unsigned long long readDataSize = m_ImageSize.GetWidth() * m_ImageSize.GetHeight();
 	if (!m_ImageData)
 	{
@@ -224,6 +225,7 @@ auto cCamPreview::SetCameraCapturedImage
 
 	UpdateImageParameters();
 	LOG("Image was updated: " + wxString(__FUNCSIG__))
+	m_ExecutionFinished = true;
 }
 
 void cCamPreview::CaptureAndSaveDataFromCamera
@@ -875,8 +877,9 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 	auto max_value = m_HorizonalBestPosSum.second - m_HorizontalWorstPosSum.second;
 	max_value = max_value == 0 ? 1 : max_value;
 	auto multiplicator = (double)max_height / max_value;
+	LOGF("H Multiplicator: ", multiplicator);
 
-	for (auto i = 0; i < m_ImageSize.GetWidth() - 1; ++i)
+	for (auto i = 0; i < m_ImageSize.GetWidth() - 2; ++i)
 	{
 		start_y = start_draw.y - std::floor((m_HorizontalSumArray[i] - m_HorizontalWorstPosSum.second) * multiplicator);
 		current_y = start_draw.y - std::floor((m_HorizontalSumArray[i + 1] - m_HorizontalWorstPosSum.second) * multiplicator);
@@ -906,8 +909,9 @@ auto cCamPreview::DrawVerticalSumLine(wxGraphicsContext* gc_) -> void
 	auto max_value = m_VerticalBestPosSum.second - m_VerticalWorstPosSum.second;
 	max_value = max_value == 0 ? 1 : max_value;
 	auto multiplicator = (double)max_height / max_value;
+	LOGF("V Multiplicator: ", multiplicator);
 
-	for (auto i = 0; i < m_ImageSize.GetHeight() - 1; ++i)
+	for (auto i = 0; i < m_ImageSize.GetHeight() - 2; ++i)
 	{
 		start_x = start_draw.x - std::floor((m_VerticalSumArray[i] - m_VerticalWorstPosSum.second) * multiplicator);
 		current_x = start_draw.x - std::floor((m_VerticalSumArray[i + 1] - m_VerticalWorstPosSum.second) * multiplicator);
