@@ -868,9 +868,9 @@ wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
                         (
                             panel,
                             GenerateReportVariables::ID_XRAY_IMAGE_1_CAPTION_TXT_CTRL,
-                            wxT("X-Ray Image 1 Caption"),
+                            m_InputParameters->xRayImagesDefaultCaption[0],
                             wxDefaultPosition, wxDefaultSize,
-                            wxTE_LEFT | wxTE_READONLY
+                            wxTE_LEFT
                         );
                     m_XRayImage1Caption->Disable();
                     staticBoxSizer->AddSpacer(2);
@@ -927,9 +927,9 @@ wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
                         (
                             panel,
                             GenerateReportVariables::ID_XRAY_IMAGE_2_CAPTION_TXT_CTRL,
-                            wxT("X-Ray Image 2 Caption"),
+                            m_InputParameters->xRayImagesDefaultCaption[1],
                             wxDefaultPosition, wxDefaultSize,
-                            wxTE_LEFT | wxTE_READONLY
+                            wxTE_LEFT
                         );
                     m_XRayImage2Caption->Disable();
                     staticBoxSizer->AddSpacer(2);
@@ -985,9 +985,9 @@ wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
                         (
                             panel,
                             GenerateReportVariables::ID_XRAY_IMAGE_3_CAPTION_TXT_CTRL,
-                            wxT("X-Ray Image 3 Caption"),
+                            m_InputParameters->xRayImagesDefaultCaption[2],
                             wxDefaultPosition, wxDefaultSize,
-                            wxTE_LEFT | wxTE_READONLY
+                            wxTE_LEFT
                         );
                     m_XRayImage3Caption->Disable();
                     staticBoxSizer->AddSpacer(2);
@@ -1043,9 +1043,9 @@ wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
                         (
                             panel,
                             GenerateReportVariables::ID_XRAY_IMAGE_4_CAPTION_TXT_CTRL,
-                            wxT("X-Ray Image 4 Caption"),
+                            m_InputParameters->xRayImagesDefaultCaption[3],
                             wxDefaultPosition, wxDefaultSize,
-                            wxTE_LEFT | wxTE_READONLY
+                            wxTE_LEFT
                         );
                     m_XRayImage4Caption->Disable();
                     staticBoxSizer->AddSpacer(2);
@@ -1101,9 +1101,9 @@ wxPanel* cGenerateReportDialog::CreateInputImagesPage(wxWindow* parent)
                         (
                             panel,
                             GenerateReportVariables::ID_XRAY_IMAGE_5_CAPTION_TXT_CTRL,
-                            wxT("X-Ray Image 5 Caption"),
+                            m_InputParameters->xRayImagesDefaultCaption[4],
                             wxDefaultPosition, wxDefaultSize,
-                            wxTE_LEFT | wxTE_READONLY
+                            wxTE_LEFT
                         );
                     m_XRayImage5Caption->Disable();
                     staticBoxSizer->AddSpacer(2);
@@ -1737,50 +1737,10 @@ auto cGenerateReportDialog::OnOpenCircleImagesForCalculationBtn(wxCommandEvent& 
 
 auto cGenerateReportDialog::OnOpenXRayImage1Btn(wxCommandEvent& evt) -> void
 {
-	constexpr auto empty_field_exception_msg = [](wxString type)
-	{
-		wxString title = "Empty settings field";
-		wxMessageBox(
-			wxT
-			(
-				"It seems that you don't have any value inside the \"" + type.Capitalize() + "\" settings field"
-				"\nPlease, enter value inside the \"" + type.Capitalize() + "\" field and try again"
-			),
-			title,
-			wxICON_ERROR);
-	};
-
-	constexpr auto loading_image_exception_msg = []()
-	{
-		wxString title = "Error image reading";
-		wxMessageBox(
-			wxT
-			(
-				"The image that you've selected can't be loaded."
-				"\nPlease, select another image."
-			),
-			title,
-			wxICON_ERROR);
-	};
-
-	constexpr auto different_image_sizes_exception_msg = []()
-	{
-		wxString title = "Error image reading";
-		wxMessageBox(
-			wxT
-			(
-				"The image that you've selected doesn't have the same size as the previously loaded image."
-				"\nPlease, select another image."
-			),
-			title,
-			wxICON_ERROR);
-	};
-
     auto bmp = wxBitmap();
 
     if (m_IsOpenXRayImage1Toggled)
     {
-        //m_BlackImageMat = cv::Mat();
         m_XRayImage1Path->ChangeValue(wxT("X-Ray 1 Image Path..."));
         
         m_IsOpenXRayImage1Toggled = false;
@@ -1816,7 +1776,6 @@ auto cGenerateReportDialog::OnOpenXRayImage1Btn(wxCommandEvent& evt) -> void
 
     m_XRayImage1Path->ChangeValue(file_path);
 
-    //m_IsOriginalBlackImageLoadedSucc = true;
     m_IsOpenXRayImage1Toggled = true;
 
 	bmp = wxMaterialDesignArtProvider::GetBitmap
@@ -1826,24 +1785,229 @@ auto cGenerateReportDialog::OnOpenXRayImage1Btn(wxCommandEvent& evt) -> void
 		wxSize(16, 16), 
 		wxColour(0, 255, 0)
 	);
+
 	m_OpenXRayImage1Btn->SetBitmap(bmp);
 	m_XRayImage1Caption->Enable();
 }
 
 auto cGenerateReportDialog::OnOpenXRayImage2Btn(wxCommandEvent& evt) -> void
 {
+    auto bmp = wxBitmap();
+
+    if (m_IsOpenXRayImage2Toggled)
+    {
+        m_XRayImage2Path->ChangeValue(wxT("X-Ray 2 Image Path..."));
+        
+        m_IsOpenXRayImage2Toggled = false;
+		bmp = wxMaterialDesignArtProvider::GetBitmap
+		(
+			wxART_TOGGLE_OFF, 
+			wxART_CLIENT_AWESOME_SOLID, 
+			wxSize(16, 16), 
+			wxColour(255, 0, 0)
+		);
+		m_OpenXRayImage2Btn->SetBitmap(bmp);
+		m_XRayImage2Caption->Disable();
+        return;
+    }
+
+	std::string file_path{};
+#ifdef _DEBUG
+	file_path = "D:\\Data_RIGAKU\\2025\\VM\\037-066\\Gain.png";
+#else
+    wxFileDialog dlg
+    (
+        this,
+        "Open an image",
+        wxEmptyString,
+        wxEmptyString,
+        "PNG Files (*.png)|*.png",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST
+    );
+
+    if (dlg.ShowModal() != wxID_OK) return;
+    file_path = std::string(dlg.GetPath().mbc_str());
+#endif // _DEBUG
+
+    m_XRayImage2Path->ChangeValue(file_path);
+
+    m_IsOpenXRayImage2Toggled = true;
+
+	bmp = wxMaterialDesignArtProvider::GetBitmap
+	(
+		wxART_TOGGLE_ON, 
+		wxART_CLIENT_AWESOME_SOLID, 
+		wxSize(16, 16), 
+		wxColour(0, 255, 0)
+	);
+
+	m_OpenXRayImage2Btn->SetBitmap(bmp);
+	m_XRayImage2Caption->Enable();
 }
 
 auto cGenerateReportDialog::OnOpenXRayImage3Btn(wxCommandEvent& evt) -> void
 {
+    auto bmp = wxBitmap();
+
+    if (m_IsOpenXRayImage3Toggled)
+    {
+        m_XRayImage3Path->ChangeValue(wxT("X-Ray 3 Image Path..."));
+        
+        m_IsOpenXRayImage3Toggled = false;
+		bmp = wxMaterialDesignArtProvider::GetBitmap
+		(
+			wxART_TOGGLE_OFF, 
+			wxART_CLIENT_AWESOME_SOLID, 
+			wxSize(16, 16), 
+			wxColour(255, 0, 0)
+		);
+		m_OpenXRayImage3Btn->SetBitmap(bmp);
+		m_XRayImage3Caption->Disable();
+        return;
+    }
+
+	std::string file_path{};
+#ifdef _DEBUG
+	file_path = "D:\\Data_RIGAKU\\2025\\VM\\037-066\\Gain_compare.png";
+#else
+    wxFileDialog dlg
+    (
+        this,
+        "Open an image",
+        wxEmptyString,
+        wxEmptyString,
+        "PNG Files (*.png)|*.png",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST
+    );
+
+    if (dlg.ShowModal() != wxID_OK) return;
+    file_path = std::string(dlg.GetPath().mbc_str());
+#endif // _DEBUG
+
+    m_XRayImage3Path->ChangeValue(file_path);
+
+    m_IsOpenXRayImage3Toggled = true;
+
+	bmp = wxMaterialDesignArtProvider::GetBitmap
+	(
+		wxART_TOGGLE_ON, 
+		wxART_CLIENT_AWESOME_SOLID, 
+		wxSize(16, 16), 
+		wxColour(0, 255, 0)
+	);
+
+	m_OpenXRayImage3Btn->SetBitmap(bmp);
+	m_XRayImage3Caption->Enable();
 }
 
 auto cGenerateReportDialog::OnOpenXRayImage4Btn(wxCommandEvent& evt) -> void
 {
+    auto bmp = wxBitmap();
+
+    if (m_IsOpenXRayImage4Toggled)
+    {
+        m_XRayImage4Path->ChangeValue(wxT("X-Ray 4 Image Path..."));
+        
+        m_IsOpenXRayImage4Toggled = false;
+		bmp = wxMaterialDesignArtProvider::GetBitmap
+		(
+			wxART_TOGGLE_OFF, 
+			wxART_CLIENT_AWESOME_SOLID, 
+			wxSize(16, 16), 
+			wxColour(255, 0, 0)
+		);
+		m_OpenXRayImage4Btn->SetBitmap(bmp);
+		m_XRayImage4Caption->Disable();
+        return;
+    }
+
+	std::string file_path{};
+#ifdef _DEBUG
+	file_path = "D:\\Data_RIGAKU\\2025\\VM\\037-066\\mca_graf.png";
+#else
+    wxFileDialog dlg
+    (
+        this,
+        "Open an image",
+        wxEmptyString,
+        wxEmptyString,
+        "PNG Files (*.png)|*.png",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST
+    );
+
+    if (dlg.ShowModal() != wxID_OK) return;
+    file_path = std::string(dlg.GetPath().mbc_str());
+#endif // _DEBUG
+
+    m_XRayImage4Path->ChangeValue(file_path);
+
+    m_IsOpenXRayImage4Toggled = true;
+
+	bmp = wxMaterialDesignArtProvider::GetBitmap
+	(
+		wxART_TOGGLE_ON, 
+		wxART_CLIENT_AWESOME_SOLID, 
+		wxSize(16, 16), 
+		wxColour(0, 255, 0)
+	);
+
+	m_OpenXRayImage4Btn->SetBitmap(bmp);
+	m_XRayImage4Caption->Enable();
 }
 
 auto cGenerateReportDialog::OnOpenXRayImage5Btn(wxCommandEvent& evt) -> void
 {
+    auto bmp = wxBitmap();
+
+    if (m_IsOpenXRayImage5Toggled)
+    {
+        m_XRayImage5Path->ChangeValue(wxT("X-Ray 5 Image Path..."));
+        
+        m_IsOpenXRayImage5Toggled = false;
+		bmp = wxMaterialDesignArtProvider::GetBitmap
+		(
+			wxART_TOGGLE_OFF, 
+			wxART_CLIENT_AWESOME_SOLID, 
+			wxSize(16, 16), 
+			wxColour(255, 0, 0)
+		);
+		m_OpenXRayImage5Btn->SetBitmap(bmp);
+		m_XRayImage5Caption->Disable();
+        return;
+    }
+
+	std::string file_path{};
+#ifdef _DEBUG
+	file_path = "D:\\Data_RIGAKU\\2025\\VM\\037-066\\mca_graf.png";
+#else
+    wxFileDialog dlg
+    (
+        this,
+        "Open an image",
+        wxEmptyString,
+        wxEmptyString,
+        "PNG Files (*.png)|*.png",
+        wxFD_OPEN | wxFD_FILE_MUST_EXIST
+    );
+
+    if (dlg.ShowModal() != wxID_OK) return;
+    file_path = std::string(dlg.GetPath().mbc_str());
+#endif // _DEBUG
+
+    m_XRayImage5Path->ChangeValue(file_path);
+
+    m_IsOpenXRayImage5Toggled = true;
+
+	bmp = wxMaterialDesignArtProvider::GetBitmap
+	(
+		wxART_TOGGLE_ON, 
+		wxART_CLIENT_AWESOME_SOLID, 
+		wxSize(16, 16), 
+		wxColour(0, 255, 0)
+	);
+
+	m_OpenXRayImage5Btn->SetBitmap(bmp);
+	m_XRayImage5Caption->Enable();
 }
 
 auto cGenerateReportDialog::OnDataTypeChoice(wxCommandEvent& evt) -> void

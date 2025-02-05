@@ -811,6 +811,16 @@ auto cSettings::ReadInitializationFile() -> void
 	if (element && element->first_node())
 		m_UploadReportFolder = element->first_node()->value();
 
+	m_XRayImagesCaptions.Clear();
+
+	for (auto i{ 0 }; i < 5; ++i)
+	{
+		m_XRayImagesCaptions.Add("");
+		std::string tag_name = "xrayImage" + std::to_string(i + 1) + "Caption";
+		element = SettingsVariables::FindNode(app_node, tag_name);
+		if (element && element->first_node())
+			m_XRayImagesCaptions[i] = element->first_node()->value();
+	}
 
 	element = SettingsVariables::FindNode(app_node, "work_station");
 	if (element && element->first_node())

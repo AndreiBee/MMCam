@@ -2,12 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import math
+import os
 
 
 def visualize(data, width, height, pixelSize, colormap, filePath):
     # Reshape data to 2D array
     array = np.array(data, dtype=np.uint16).reshape((height, width))
-    print(width)
+    # print(width)
 
     # Define pixel size in µm (e.g., 2 µm per pixel)
     pixel_size_mm = pixelSize / 1000  # Convert pixel size to millimeters
@@ -39,7 +40,7 @@ def visualize(data, width, height, pixelSize, colormap, filePath):
     for i in range(tickSize):
         xticks_pixels[i] = i * width / len(xticks_pixels)
 
-    print(xticks_pixels)
+    # print(xticks_pixels)
     yticks_pixels = plt.yticks()[0]
     yticks_pixels = yticks_pixels[1:-1]
     yticks_pixels = yticks_pixels[:tickSize]
@@ -60,7 +61,9 @@ def visualize(data, width, height, pixelSize, colormap, filePath):
 
     # plt.title("2D Colormap Representation")
     plt.savefig(filePath, dpi=300)  # Save image as a file
-    print('Focus Image Created Successfully')
+
+    filename_with_ext = os.path.basename(filePath)  # example.txt
+    print(f'{filename_with_ext} Created Successfully')
     # plt.show()
 
 

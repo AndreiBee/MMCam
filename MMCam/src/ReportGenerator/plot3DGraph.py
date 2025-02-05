@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import os
 
 
 def visualize(imgData, width, height, pixelSize, colormap, filePath):
@@ -49,7 +50,8 @@ def visualize(imgData, width, height, pixelSize, colormap, filePath):
 
     plt.savefig(filePath, dpi=300)
 
-    print('Plot of 3D Image Created Successfully')
+    filename_with_ext = os.path.basename(filePath)  # example.txt
+    print(f'{filename_with_ext} Created Successfully')
     # plt.show()
 
 

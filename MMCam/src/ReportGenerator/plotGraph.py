@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import os
 
 
 def visualize(firstData, firstSmallLabel, firstColor, xLabel, secondData, secondSmallLabel, secondColor, yLabel, startX, step, dataSize, bestInGain, filePath):
@@ -18,7 +19,7 @@ def visualize(firstData, firstSmallLabel, firstColor, xLabel, secondData, second
     npFinish = npStart + float(dataSize - 1) * npStep
 
     x = np.linspace(npStart, npFinish, int(dataSize))
-    print(x)
+    # print(x)
 
     plt.plot(x, firstArray, color=firstColor, label=firstSmallLabel)
     plt.plot(x, secondArray, color=secondColor, label=secondSmallLabel)
@@ -33,7 +34,9 @@ def visualize(firstData, firstSmallLabel, firstColor, xLabel, secondData, second
     plt.legend()
 
     plt.savefig(filePath, dpi=300)  # Save image as a file
-    print('Plot Image Created Successfully')
+
+    filename_with_ext = os.path.basename(filePath)  # example.txt
+    print(f'{filename_with_ext} Created Successfully')
     # plt.show()
 
 

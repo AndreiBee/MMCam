@@ -71,6 +71,7 @@ namespace GenerateReportVariables {
     {
         double pixelSizeUM{};
         double widthROIMM{}, widthCircleROIMM{};
+        wxArrayString xRayImagesDefaultCaption{};
     };
 
     struct ReportParameters
@@ -136,6 +137,7 @@ public:
         reportParameters.author = m_AuthorTxtCtrl->GetValue(); 
         reportParameters.customer = m_CustomerTxtCtrl->GetValue(); 
         reportParameters.reportName = m_ReportNameTxtCtrl->GetValue(); 
+        reportParameters.xRayImagesCaption = GetXRayImagesCaptions();
 
         // Double Parameters
         {
@@ -159,6 +161,33 @@ public:
 
         return reportParameters; 
     };
+
+    auto GetXRayImagesPaths() const -> wxArrayString
+    {
+        wxArrayString returnArray{};
+
+        if (m_IsOpenXRayImage1Toggled) returnArray.Add(m_XRayImage1Path->GetValue());
+        if (m_IsOpenXRayImage2Toggled) returnArray.Add(m_XRayImage2Path->GetValue());
+        if (m_IsOpenXRayImage3Toggled) returnArray.Add(m_XRayImage3Path->GetValue());
+        if (m_IsOpenXRayImage4Toggled) returnArray.Add(m_XRayImage4Path->GetValue());
+        if (m_IsOpenXRayImage5Toggled) returnArray.Add(m_XRayImage5Path->GetValue());
+
+        return returnArray;
+    }
+
+    auto GetXRayImagesCaptions() const -> wxArrayString
+    {
+        wxArrayString returnArray{};
+
+        if (m_IsOpenXRayImage1Toggled) returnArray.Add(m_XRayImage1Caption->GetValue());
+        if (m_IsOpenXRayImage2Toggled) returnArray.Add(m_XRayImage2Caption->GetValue());
+        if (m_IsOpenXRayImage3Toggled) returnArray.Add(m_XRayImage3Caption->GetValue());
+        if (m_IsOpenXRayImage4Toggled) returnArray.Add(m_XRayImage4Caption->GetValue());
+        if (m_IsOpenXRayImage5Toggled) returnArray.Add(m_XRayImage5Caption->GetValue());
+
+        return returnArray;
+    }
+
 
 private:
     wxPanel* CreateReportVariablesPage(wxWindow* parent);

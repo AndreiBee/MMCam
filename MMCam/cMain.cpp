@@ -2564,6 +2564,7 @@ auto cMain::GeneratePDFReportUsingLatex
 (
 	wxString folderContainingTEXFile, 
 	wxString folderWithData,
+	wxString pdfFileName,
 	const MainFrameVariables::ImagesFilePaths& imageFilePaths,
 	const GenerateReportVariables::ReportParameters& reportParameters,
 	const wxString timeStamp
@@ -2761,8 +2762,8 @@ auto cMain::GeneratePDFReportUsingLatex
 
 		for (auto i{ 0 }; i < imageFilePaths.xRayArray.GetCount(); ++i)
 		{
-			if (i == 3)
-				texBlocks.Add("\\newpage");
+			//if (i % 3 == 0)
+				//texBlocks.Add("\\newpage");
 
 			texBlocks.Add(GenerateLatexBigImageBlock
 			(
@@ -2798,9 +2799,11 @@ auto cMain::GeneratePDFReportUsingLatex
 	wxFileName file(destinationFilePath);
 	file.SetExt("pdf");
 
-	wxLaunchDefaultApplication(file.GetFullPath());
+	wxRenameFile(file.GetFullPath(), pdfFileName, true);
 
-	return file.GetFullPath();
+	wxLaunchDefaultApplication(pdfFileName);
+
+	return pdfFileName;
 }
 
 auto cMain::RemoveAllUnnecessaryFilesFromFolder(const wxString& folder, wxArrayString removeExtensions) -> void
@@ -2890,9 +2893,15 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 {
 	wxString venvFolderName = ".venv";
-	wxString reportGeneratorPath = wxGetCwd() + "\\" + "src\\ReportGenerator";
-	wxString requirementsPath = reportGeneratorPath + "\\" + "requirements.txt";
-	wxString venvPath = reportGeneratorPath + "\\" + venvFolderName;
+	wxString reportGeneratorPath = wxGetCwd();
+	auto reportGeneratorPathName = wxString("src\\ReportGenerator");
+	reportGeneratorPath += reportGeneratorPath.EndsWith("\\") ? reportGeneratorPathName : wxString("\\") + reportGeneratorPathName;
+	auto requirementsFileName = wxString("requirements.txt");
+	wxString requirementsPath = reportGeneratorPath;
+	requirementsPath += requirementsPath.EndsWith("\\") ? requirementsFileName : wxString("\\") + requirementsFileName;
+	wxString venvPath = reportGeneratorPath;
+	venvPath = venvPath.EndsWith("\\") ? venvFolderName : wxString("\\") + venvFolderName;
+
 	if (!IsVirtualEnvironmentAlreadyCreated(venvPath))
 	{
 		if (!IsPythonInstalledOnTheCurrentMachine()) return;
@@ -2904,6 +2913,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	inputParameters.pixelSizeUM = m_Settings->GetPixelSizeUM();
 	inputParameters.widthROIMM = m_Settings->GetCropSizeMM();
 	inputParameters.widthCircleROIMM = m_Settings->GetCropCircleSizeMM();
+	inputParameters.xRayImagesDefaultCaption = m_Settings->GetXRayImagesDefaultCaption();
 	auto uploadReportFolder = m_Settings->GetUploadReportFolder();
 
 	auto cropWindowSize = static_cast<int>(std::ceil(inputParameters.widthROIMM / (inputParameters.pixelSizeUM / 1000.0)));
@@ -2934,7 +2944,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	outDirName = wxString("D:\\Projects\\RIGAKU\\MMCam\\MMCam\\src\\dbg_fld");
 	outFileName = wxString("Test.pdf");
 	outDirWithFileName = outDirName;
-	outDirWithFileName += outFileName;
+	outDirWithFileName += outDirName.EndsWith("\\") ? outFileName : wxString("\\") + outFileName;
 #else
 	wxFileDialog save_dialog
 	(
@@ -2957,13 +2967,16 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 	// Logo Path
 	{
-		auto logoPath = reportGeneratorPath + "\\" + "logo.png";
+		auto logoPath = reportGeneratorPath;
+		auto logoName = wxString("logo.png");
+		logoPath += reportGeneratorPath.EndsWith("\\") ? logoName : wxString("\\") + logoName;
 		wxFileName file(logoPath);
 		imageFilePaths.logoPath = file.GetFullPath();
 	}
 
 	// Optics Scheme
 	imageFilePaths.opticsScheme = dialog.GetOpticsSchemePath();
+	imageFilePaths.xRayArray = dialog.GetXRayImagesPaths();
 
 	// Create outputImages folder
 	wxDateTime nowDateTime = wxDateTime::Now();
@@ -2971,7 +2984,8 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	auto outTempDirName = wxString("ReportGeneration_" + timestamp + "\\");
 
 	// Format the date and time
-	auto tempFolderPath = outDirName + "\\" + outTempDirName;
+	auto tempFolderPath = outDirName;
+	tempFolderPath += outDirName.EndsWith("\\") ? outTempDirName : wxString("\\") + outTempDirName;
 	wxFileName tempFolder(tempFolderPath);
 
 	// Check if the folder exists
@@ -3486,6 +3500,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	(
 		reportGeneratorPath, 
 		tempFolder.GetFullPath(),
+		outDirWithFileName,
 		imageFilePaths,
 		reportParameters,
 		timestamp

@@ -214,6 +214,7 @@ public:
 	auto GetCropSizeMM() const -> double { return m_CropSizeMM; };
 	auto GetCropCircleSizeMM() const -> double { return m_CropCircleSizeMM; };
 	auto GetUploadReportFolder() const -> wxString { return m_UploadReportFolder; };
+	auto GetXRayImagesDefaultCaption() const -> wxArrayString { return m_XRayImagesCaptions; };
 
 private:
 	void CreateMainFrame();
@@ -257,6 +258,7 @@ private:
 	const wxString initialization_file_path = "src\\init.ini";
 	const wxString work_stations_path = "src\\";
 	double m_PixelSizeUM{}, m_CropSizeMM{}, m_CropCircleSizeMM{};
+	wxArrayString m_XRayImagesCaptions{};
 	wxString m_UploadReportFolder{};
 	//const wxString xml_file_path = "src\\old_xml\\mtrs.xml";
 	std::unique_ptr<SettingsVariables::WorkStations> m_WorkStations{};

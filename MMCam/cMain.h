@@ -1009,6 +1009,7 @@ private:
 	(
 		wxString folderContainingTEXFile, 
 		wxString folderWithData,
+		wxString pdfFileName,
 		const MainFrameVariables::ImagesFilePaths& imageFilePaths,
 		const GenerateReportVariables::ReportParameters& reportParameters,
 		const wxString timeStamp
@@ -1153,14 +1154,12 @@ private:
 	{
 		wxString latex;
 
-		latex << "\t\\begin{figure}[h]\n"
-			<< "\t\t\\centering" << "}\n"
-			<< "\t\t\\begin{subfigure}[b]{0.65\\textwidth}" << "}\n"
-			<< "\t\t\t\\centering" << "}\n"
-			<< "\t\t\t\\includegraphics[width=\\textwidth]{" << imgTag << "}\n"
-			<< "\t\t\\end{subfigure}" << "}\n"
+		latex 
+			<< "\t\\begin{figure}[H]" << "\n"
+			<< "\t\t\\centering" << "\n"
+			<< "\t\t\\includegraphics[width=0.7\\textwidth]{" << imgTag << "}\n"
 			<< "\t\t\\caption{" << caption << "}\n"
-			<< "\t\\end{figure}";
+			<< "\t\\end{figure}" << "\n";
 
 		return latex;
 	}
