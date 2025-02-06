@@ -125,6 +125,46 @@ namespace FWHM
 
 	};
 
+	static auto StoreArrayDataWithTabulator
+	(
+		const unsigned int* const array,
+		size_t size,
+		const std::string& filename
+	) -> bool
+	{
+		// Check for valid array pointer
+		if (!array || size == 0)
+		{
+			std::cerr << "Invalid array or size." << std::endl;
+			return false;
+		}
+
+		// Open the output file for writing
+		std::ofstream outFile(filename);
+		if (!outFile.is_open())
+		{
+			std::cerr << "Failed to open file for writing." << std::endl;
+			return false;
+		}
+
+		// Iterate over the array and write each element with a tab separator
+		for (size_t i = 0; i < size; ++i)
+		{
+			outFile << array[i];
+			if (i != size - 1)  // No tab after the last element
+				outFile << '\t';
+		}
+
+		outFile.close();
+		if (!outFile.good())
+		{
+			std::cerr << "Failed to write to file." << std::endl;
+			return false;
+		}
+
+		std::cout << "Data successfully written to " << filename << std::endl;
+		return true;
+	}
 
 	static auto CalculateFWHM
 	(
@@ -167,7 +207,7 @@ namespace FWHM
 		int leftIndex = -1, rightIndex = -1;
 
 		// Looking for the left index
-		for (auto i = 0; i < bestPosition; ++i)
+		for (auto i = 0; i < size; ++i)
 		{
 			if (leftIndex == -1 && array[i] >= halfMax) 
 			{
@@ -176,12 +216,25 @@ namespace FWHM
 			}
 		}
 
+#ifdef _DEBUG
+		if (leftIndex == -1)
+			StoreArrayDataWithTabulator
+			(
+				array, 
+				size, 
+				"D:\\Projects\\RIGAKU\\MMCam\\MMCam\\src\\dbg_fld\\data.txt"
+			);
+#endif // _DEBUG
+
+
+		if (leftIndex == -1) return -1.0;
+
 		// Looking for the right index
-		for (auto i = size - 1; i >= bestPosition; --i)
+		for (auto j = size - 1; j >= leftIndex; --j)
 		{
-			if (leftIndex != -1 && array[i] >= halfMax) 
+			if (leftIndex != -1 && array[j] >= halfMax) 
 			{
-				rightIndex = static_cast<int>(i);
+				rightIndex = static_cast<int>(j);
 				break;
 			}
 		}

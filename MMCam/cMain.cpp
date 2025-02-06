@@ -57,7 +57,9 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	/* Camera */
 	EVT_CHOICE(MainFrameVariables::ID_RIGHT_CAM_MANUFACTURER_CHOICE, cMain::ChangeCameraManufacturerChoice)
 	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_CAM_EXPOSURE_TE_CTL, cMain::ExposureValueChanged)
+
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnSingleShotCameraImage)
+
 	EVT_TEXT(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL, cMain::OnXPosCrossHairTextCtrl)
 	EVT_TEXT(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL, cMain::OnYPosCrossHairTextCtrl)
 	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_SET_POS_TGL_BTN, cMain::OnSetPosCrossHairTglBtn)
@@ -1409,6 +1411,8 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 			wxICON_ERROR);
 	};
 
+	LOG("Started: " + wxString(__FUNCSIG__));
+
 	wxBusyCursor busy_cursor{};
 	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
 		? wxString("1") 
@@ -1466,24 +1470,28 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 			(
 				cv::Size(imageSize.GetWidth(), imageSize.GetHeight()),
 				CV_16U,
-				imgPtr,
+				dataPtr.get(),
 				cv::Mat::AUTO_STEP
 			);
 			cv::imwrite(file_name, cv_img);
 
 			m_CamPreview->SetCameraCapturedImage
 			(
-				dataPtr.get()
+				imgPtr
 			);
 		}
 	}
+
 	/* Only if user has already started Live Capturing, continue Live Capturing */
 	if (start_live_capturing_after_ss)
 	{
+		LOG("Start Live Capturing");
 		m_StartStopLiveCapturingTglBtn->SetValue(!m_StartStopLiveCapturingTglBtn->GetValue());
 		// Start/Stop the acquisition
 		ProcessEvent(artStartStopLiveCapturing);
 	}
+
+	LOG("Finished: " + wxString(__FUNCSIG__));
 }
 
 void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
@@ -2135,10 +2143,12 @@ auto cMain::LiveCapturingThread(wxThreadEvent& evt) -> void
 		if (!imgPtr) return;
 		LOG("Set camera captured image");
 
-		m_CamPreview->SetCameraCapturedImage
-		(
-			imgPtr
-		);
+		if (*m_CamPreview->GetExecutionFinishedPtr())
+			m_CamPreview->SetCameraCapturedImage
+			(
+				imgPtr
+			);
+
 		delete[] imgPtr;
 	}
 	// -1 == Camera is disconnected
@@ -3883,7 +3893,12 @@ wxThread::ExitCode LiveCapturing::Entry()
 			auto dataPtr = std::make_unique<unsigned short[]>(m_ImageSize.GetWidth() * m_ImageSize.GetHeight());
 			if (CaptureImage(dataPtr.get()))
 			{
-				//m_CamPreviewWindow->SetCameraCapturedImage();
+				while (*m_AliveOrDeadThread && !*drawingExecutionFinishedPtr)
+				{
+					LOG("Waiting for the Execution finishing.");
+					std::this_thread::sleep_for(interval);
+				}
+
 				evt.SetInt(0);
 				evt.SetPayload(dataPtr.release());
 				wxQueueEvent(m_MainFrame, evt.Clone());
@@ -3898,8 +3913,6 @@ wxThread::ExitCode LiveCapturing::Entry()
 				return (wxThread::ExitCode)0;
 			}
 
-			while (*m_AliveOrDeadThread && !*drawingExecutionFinishedPtr)
-				std::this_thread::sleep_for(interval);
 		}
 		else
 			wxThread::This()->Sleep(500);
