@@ -2830,8 +2830,8 @@ auto cMain::GeneratePDFReportUsingLatex
 
 	ExecuteLatex(destinationFilePath);
 
-	// Replacing *.tex extension to *.pdf
 	wxFileName file(destinationFilePath);
+	// Replacing *.tex extension to *.pdf
 	file.SetExt("pdf");
 
 	wxRenameFile(file.GetFullPath(), pdfFileName, true);
