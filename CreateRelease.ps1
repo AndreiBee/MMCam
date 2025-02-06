@@ -91,9 +91,12 @@ Copy-Item -Path "${other_files_folder}\src\init.ini" -Destination "${src_folder}
 
 # Check if the ReportGenerator folder exists, and create it if not
 $report_generator_folder = "${release_folder}\src\ReportGenerator"
-# Check if the temp folder exists, and create it if not
-if (-not (Test-Path -Path $report_generator_folder)) 
-{
+# Check if the ReportGenerator folder exists
+if (Test-Path -Path $report_generator_folder) {
+    # Remove all items inside the folder
+    Remove-Item -Path "$report_generator_folder\*" -Recurse -Force
+} else {
+    # Create the folder if it does not exist
     New-Item -Path $report_generator_folder -ItemType Directory
 }
 

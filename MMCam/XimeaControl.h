@@ -29,10 +29,10 @@ public:
 	auto IsCameraConnected() -> bool;
 	auto TryToReconnectLastSelectedCamera() -> bool;
 
-	auto AppendThread() -> int; // Returns the ID
-	auto GetThreadState(int id) -> bool;
-	auto TurnOffLastThread() -> bool;
-	auto ClearAllThreads() -> void;
+	//auto AppendThread() -> int; // Returns the ID
+	//auto GetThreadState(int id) -> bool;
+	//auto TurnOffLastThread() -> bool;
+	//auto ClearAllThreads() -> void;
 	~XimeaControl();
 private:
 	bool m_IsCameraOpen{};
@@ -46,7 +46,7 @@ private:
 	bool m_WasAcquisitionStopped{};
 
 	// Threads
-	std::vector<bool> m_Threads{};
+	//std::vector<bool> m_Threads{};
 };
 
 #endif // !XIMEA_CONTROL_H

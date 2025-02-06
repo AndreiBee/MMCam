@@ -112,7 +112,7 @@ public:
 			m_ROIWindowWidth = static_cast<int>(std::ceil(m_CropSizeMM / (m_PixelSizeUM / 1000.0)));
 	};
 
-	auto IsExecutionFinished() const -> bool { return m_ExecutionFinished; };
+	auto GetExecutionFinishedPtr() -> bool* { return &m_ExecutionFinished; };
 
 
 private:

@@ -1411,33 +1411,20 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 
 	wxBusyCursor busy_cursor{};
 	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-		? wxString("0") 
+		? wxString("1") 
 		: m_CamExposure->GetValue();
 	int exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate exposure time to [us]
 
 	auto start_live_capturing_after_ss = m_StartStopLiveCapturingTglBtn->GetValue();
 
-	if (m_StartStopLiveCapturingTglBtn->GetValue())
+	wxCommandEvent artStartStopLiveCapturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+	if (start_live_capturing_after_ss)
 	{
-		m_XimeaControl->StopAcquisition();
-		m_XimeaControl->TurnOffLastThread();
-		wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-			? wxString("0") 
-			: m_CamExposure->GetValue();
-		unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-		wxThread::This()->Sleep(exposure_time);
+		m_StartStopLiveCapturingTglBtn->SetValue(!m_StartStopLiveCapturingTglBtn->GetValue());
+		// Start/Stop the acquisition
+		ProcessEvent(artStartStopLiveCapturing);
 	}
-	//m_StopLiveCapturing = true;
 	{
-		//while (!m_LiveCapturingEndedDrawingOnCamPreview)
-		//{
-		//	wxThread::This()->Sleep(10);
-		//}
-		wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-			? wxString("0") 
-			: m_CamExposure->GetValue();
-		unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
-
 		auto now = std::chrono::system_clock::now();
 		auto cur_time = std::chrono::system_clock::to_time_t(now);
 		auto str_time = std::string(std::ctime(&cur_time)).substr(11, 8);
@@ -1456,11 +1443,7 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 
 		/* Camera */
 		{
-			//auto ximea_control = std::make_unique<XimeaControl>();
-			//auto curr_cam = m_Settings->GetSelectedCamera();
-			//ximea_control->InitializeCameraBySN(curr_cam.ToStdString());
 			m_XimeaControl->SetExposureTime(exposure_time);
-			//ximea_control->SetExposureTime(exposure_time);
 			auto imageSize = wxSize{ (int)m_XimeaControl->GetImageWidth(), (int)m_XimeaControl->GetImageHeight() };
 
 			auto dataPtr = std::make_unique<unsigned short[]>(imageSize.GetWidth() * imageSize.GetHeight());
@@ -1497,8 +1480,9 @@ void cMain::OnSingleShotCameraImage(wxCommandEvent& evt)
 	/* Only if user has already started Live Capturing, continue Live Capturing */
 	if (start_live_capturing_after_ss)
 	{
-		//m_StopLiveCapturing = false;
-		StartLiveCapturing();
+		m_StartStopLiveCapturingTglBtn->SetValue(!m_StartStopLiveCapturingTglBtn->GetValue());
+		// Start/Stop the acquisition
+		ProcessEvent(artStartStopLiveCapturing);
 	}
 }
 
@@ -1618,18 +1602,22 @@ void cMain::OnExit(wxCloseEvent& evt)
 		}
 	}
 #endif // !_DEBUG
-	if (m_XimeaControl->IsCameraConnected() && m_StartStopLiveCapturingTglBtn->GetValue())
+	if (m_XimeaControl->IsCameraConnected())
 	{
-		//m_XimeaControl->StopAcquisition();
-		m_XimeaControl->TurnOffLastThread();
+		if (m_StartStopLiveCapturingTglBtn->GetValue())
 		{
-			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-				? wxString("0") 
-				: m_CamExposure->GetValue();
-			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-			wxThread::This()->Sleep(exposure_time);
+			m_StartStopLiveCapturingTglBtn->SetValue(!m_StartStopLiveCapturingTglBtn->GetValue());
+			wxCommandEvent artStopLiveCapturing(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+			ProcessEvent(artStopLiveCapturing);
 		}
-		m_XimeaControl->ClearAllThreads();
+
+		if (m_StartStopMeasurementTglBtn->GetValue())
+		{
+
+			m_StartStopMeasurementTglBtn->SetValue(!m_StartStopMeasurementTglBtn->GetValue());
+			wxCommandEvent artStopMeasurement(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT);
+			ProcessEvent(artStopMeasurement);
+		}
 	}
 
 	Destroy();  // you may also do:  event.Skip();
@@ -1888,17 +1876,41 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 			wxICON_ERROR);
 	};
 
+	auto timePointToWxString = []()
+		{
+			auto now = std::chrono::system_clock::now().time_since_epoch().count();
+			wxString formattedTime = wxString::Format(wxT("%lld"), now);
+			return formattedTime;
+		};
+
+
 	if (!m_StartStopMeasurementTglBtn->GetValue())
 	{
-		m_XimeaControl->TurnOffLastThread();
+		if (m_StartedThreads.size())
 		{
-			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-				? wxString("0") 
-				: m_CamExposure->GetValue();
-			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-			wxThread::This()->Sleep(exposure_time);
+			LOGI("StartedThreads.size(): ", (int)m_StartedThreads.size());
+			m_StartedThreads.back().second = false;
+			LOG("StartedThreads.back(): " + m_StartedThreads.back().first);
+
+			{
+				m_StartStopLiveCapturingTglBtn->Disable();
+				m_StartStopMeasurementTglBtn->Disable();
+				m_CamExposure->Disable();
+				m_SingleShotBtn->Disable();
+			}
+
+			while (!m_StartedThreads.back().first.empty())
+				wxThread::This()->Sleep(100);
+
+			m_StartedThreads.pop_back();
+
+			{
+				m_StartStopLiveCapturingTglBtn->Enable();
+				m_StartStopMeasurementTglBtn->Enable();
+				m_CamExposure->Enable();
+				m_SingleShotBtn->Enable();
+			}
 		}
-		//m_XimeaControl->ClearAllThreads();
 
 		m_ProgressBar->Hide();
 		m_ProgressBar->UpdateProgressWithMessage("", 0);
@@ -1978,6 +1990,9 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 		//m_StartMeasurement->Disable();
 	}
 
+	auto currThreadTimeStamp = timePointToWxString();
+	m_StartedThreads.push_back(std::make_pair(currThreadTimeStamp, true));
+
 	/* Worker and Progress Threads */
 	{
 		auto out_dir = m_OutDirTextCtrl->GetValue();
@@ -1990,6 +2005,8 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 		WorkerThread* worker_thread = new WorkerThread
 		(
 			this,
+			&m_StartedThreads.back().first,
+			&m_StartedThreads.back().second,
 			m_Settings.get(),
 			m_CamPreview.get(),
 			m_XimeaControl.get(),
@@ -2032,10 +2049,20 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 
 void cMain::StartLiveCapturing()
 {
+	auto timePointToWxString = []()
+		{
+			auto now = std::chrono::system_clock::now().time_since_epoch().count();
+			wxString formattedTime = wxString::Format(wxT("%lld"), now);
+			return formattedTime;
+		};
+
 	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
 		? wxString("0") 
 		: m_CamExposure->GetValue();
 	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)) * 1000; // Because user input is in [ms], we need to recalculate the value to [us]
+
+	auto currThreadTimeStamp = timePointToWxString();
+	m_StartedThreads.push_back(std::make_pair(currThreadTimeStamp, true));
 	//m_XimeaControl->SetExposureTime(exposure_time);
 
 	//auto curr_camera = m_Settings->GetSelectedCamera();
@@ -2043,6 +2070,8 @@ void cMain::StartLiveCapturing()
 	LiveCapturing* live_capturing = new LiveCapturing
 	(
 		this, 
+		&m_StartedThreads.back().first,
+		&m_StartedThreads.back().second,
 		m_CamPreview.get(), 
 		m_XimeaControl.get(),
 		//curr_camera.ToStdString(),
@@ -2106,21 +2135,18 @@ auto cMain::LiveCapturingThread(wxThreadEvent& evt) -> void
 		if (!imgPtr) return;
 		LOG("Set camera captured image");
 
-		if (m_CamPreview->IsExecutionFinished())
-		{
-			m_CamPreview->SetCameraCapturedImage
-			(
-				imgPtr
-			);
-		}
+		m_CamPreview->SetCameraCapturedImage
+		(
+			imgPtr
+		);
 		delete[] imgPtr;
 	}
 	// -1 == Camera is disconnected
 	else if (curr_code == -1)
 	{
-		//m_StartStopLiveCapturingTglBtn->SetValue(false);
-		//wxCommandEvent live_capturing_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
-		//ProcessEvent(live_capturing_evt);
+		m_StartStopLiveCapturingTglBtn->SetValue(false);
+		wxCommandEvent live_capturing_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+		ProcessEvent(live_capturing_evt);
 	}
 }
 
@@ -2866,27 +2892,14 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 {
 	if (!m_StartStopLiveCapturingTglBtn->GetValue()) return;
 
-	wxCommandEvent artStopLiveCapturingPressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
-	ProcessEvent(artStopLiveCapturingPressed);
+	// Stop acquisition
+	m_StartStopLiveCapturingTglBtn->SetValue(!m_StartStopLiveCapturingTglBtn->GetValue());
+	wxCommandEvent artStartStopLiveCapturingPressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+	ProcessEvent(artStartStopLiveCapturingPressed);
 
-	wxCommandEvent artStartLiveCapturingPressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
-	ProcessEvent(artStartLiveCapturingPressed);
-
-	//if (!m_XimeaControl || !m_XimeaControl->IsCameraConnected()) return;
-	////m_XimeaControl->StopAcquisition();
-	//m_XimeaControl->TurnOffLastThread();
-	////m_StopLiveCapturing = true;
-	////if (m_XimeaControl->IsCameraInitialized()) m_XimeaControl->StopAcquisition();	
-
-	//{
-	//	wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-	//		? wxString("0") 
-	//		: m_CamExposure->GetValue();
-	//	unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-	//	wxThread::This()->Sleep(exposure_time);
-	//}
-	////m_StopLiveCapturing = false;
-	//StartLiveCapturing();
+	// Start acquisition
+	m_StartStopLiveCapturingTglBtn->SetValue(!m_StartStopLiveCapturingTglBtn->GetValue());
+	ProcessEvent(artStartStopLiveCapturingPressed);
 }
 
 auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
@@ -3720,17 +3733,31 @@ void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
 	}
 	else
 	{	
-		//m_XimeaControl->StopAcquisition();
-		m_XimeaControl->TurnOffLastThread();
-
+		if (m_StartedThreads.size())
 		{
-			wxString exposure_time_str = m_CamExposure->GetValue().IsEmpty() 
-				? wxString("0") 
-				: m_CamExposure->GetValue();
-			unsigned long exposure_time = abs(wxAtoi(exposure_time_str)); // Because user input is in [ms], we need to recalculate the value to [us]
-			wxThread::This()->Sleep(exposure_time);
+			LOGI("StartedThreads.size(): ", (int)m_StartedThreads.size());
+			m_StartedThreads.back().second = false;
+			LOG("StartedThreads.back(): " + m_StartedThreads.back().first);
+
+			{
+				m_StartStopLiveCapturingTglBtn->Disable();
+				m_StartStopMeasurementTglBtn->Disable();
+				m_CamExposure->Disable();
+				m_SingleShotBtn->Disable();
+			}
+
+			while (!m_StartedThreads.back().first.empty())
+				wxThread::This()->Sleep(100);
+
+			m_StartedThreads.pop_back();
+
+			{
+				m_StartStopLiveCapturingTglBtn->Enable();
+				m_StartStopMeasurementTglBtn->Enable();
+				m_CamExposure->Enable();
+				m_SingleShotBtn->Enable();
+			}
 		}
-		//m_XimeaControl->ClearAllThreads();
 
 		m_StartStopLiveCapturingTglBtn->SetLabel(wxT("Start Live (L)"));
 		if (m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN))
@@ -3768,15 +3795,17 @@ auto cMain::OnSetPosCrossHairTglBtn(wxCommandEvent& evt) -> void
 LiveCapturing::LiveCapturing
 (
 	cMain* main_frame,
+	wxString* uniqueThreadKey,
+	bool* aliveOrDeadThread,
 	cCamPreview* cam_preview_window,
 	XimeaControl* ximea_control,
-	//const std::string& selected_camera,
 	const int exposure_us
 ) 
 	: m_MainFrame(main_frame), 
+	m_UniqueThreadKey(uniqueThreadKey),
+	m_AliveOrDeadThread(aliveOrDeadThread),
 	m_CamPreviewWindow(cam_preview_window), 
 	m_XimeaControl(ximea_control),
-	//m_SelectedCameraSN(selected_camera),
 	m_ExposureUS(exposure_us) {}
 
 wxThread::ExitCode LiveCapturing::Entry()
@@ -3793,8 +3822,10 @@ wxThread::ExitCode LiveCapturing::Entry()
 			title,
 			wxICON_ERROR);
 	};
+
 	auto exit_thread = [&]()
 	{
+		*m_UniqueThreadKey = "";
 		//m_XimeaCameraControl.release();
 		m_XimeaControl = nullptr;
 		//m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(true);
@@ -3805,9 +3836,9 @@ wxThread::ExitCode LiveCapturing::Entry()
 	//evt.SetInt(0);
 	//wxQueueEvent(m_MainFrame, evt.Clone());
 
-	m_ThreadID = m_XimeaControl->AppendThread();
-	auto text_id = "ID: " + wxString::Format(wxT("%i"), m_ThreadID);
-	wxLogDebug(text_id);
+	//m_ThreadID = m_XimeaControl->AppendThread();
+	auto text_id = "LiveCapturing ID: " + *m_UniqueThreadKey;
+	LOG(text_id);
 
 	if (!m_XimeaControl->IsCameraConnected())
 	{	
@@ -3829,12 +3860,14 @@ wxThread::ExitCode LiveCapturing::Entry()
 	//auto image_ptr = m_CamPreviewWindow->GetImagePtr();
 	//auto short_data_ptr = m_CamPreviewWindow->GetDataPtr();
 
+	auto drawingExecutionFinishedPtr = m_CamPreviewWindow->GetExecutionFinishedPtr();
 
-	constexpr auto interval = std::chrono::microseconds(3 * 333'333);  // 1/3 second = 333'333 us
+	const auto checkingInterval = m_ExposureUS / 3;
+	const auto interval = std::chrono::microseconds(checkingInterval);  
 
 	m_MainFrame->LiveCapturingFinishedCapturingAndDrawing(false);
 
-	while (m_MainFrame && m_XimeaControl->GetThreadState(m_ThreadID))
+	while (m_MainFrame && *m_AliveOrDeadThread)
 	{
 		if (m_XimeaControl->IsCameraInitialized())
 		{
@@ -3846,11 +3879,6 @@ wxThread::ExitCode LiveCapturing::Entry()
 				exit_thread();
 				return (wxThread::ExitCode)0;
 			}
-			auto start = std::chrono::steady_clock::now();
-			
-			// Here we limit the frame count (just to be sure that the application will process the captured amount of data)
-			if (interval.count() > m_ExposureUS)
-				std::this_thread::sleep_until(start + interval - std::chrono::microseconds(m_ExposureUS));
 
 			auto dataPtr = std::make_unique<unsigned short[]>(m_ImageSize.GetWidth() * m_ImageSize.GetHeight());
 			if (CaptureImage(dataPtr.get()))
@@ -3869,6 +3897,9 @@ wxThread::ExitCode LiveCapturing::Entry()
 				exit_thread();
 				return (wxThread::ExitCode)0;
 			}
+
+			while (*m_AliveOrDeadThread && !*drawingExecutionFinishedPtr)
+				std::this_thread::sleep_for(interval);
 		}
 		else
 			wxThread::This()->Sleep(500);
@@ -3893,27 +3924,6 @@ auto LiveCapturing::CaptureImage
 		imgPtr, 
 		sizeof(unsigned short) * m_ImageSize.GetWidth() * m_ImageSize.GetHeight()
 	);
-
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
-
-#ifdef USE_MULTITHREAD
-	//UpdatePixelsMultithread(data_ptr, image_ptr);
-#else
-	//unsigned short current_value{};
-	//unsigned char red{}, green{}, blue{};
-	//for (auto y{ 0 }; y < m_ImageSize.GetHeight(); ++y)
-	//{
-	//	for (auto x{ 0 }; x < m_ImageSize.GetWidth(); ++x)
-	//	{
-	//		current_value = data_ptr[y * m_ImageSize.GetWidth() + x];
-	//		//short_data_ptr[y * m_ImageSize.GetWidth() + x] = current_value;
-	//		/* Matlab implementation of JetColormap */
-	//		/* Because XIMEA camera can produce 12-bit per pixel maximum, we use RGB12bit converter */
-	//		m_CamPreviewWindow->CalculateMatlabJetColormapPixelRGB12bit(current_value, red, green, blue);
-	//		image_ptr->SetRGB(x, y, red, green, blue);
-	//	}
-	//}
-#endif
 
 	return true;
 }
@@ -4000,6 +4010,8 @@ LiveCapturing::~LiveCapturing()
 WorkerThread::WorkerThread
 (
 	cMain* main_frame,
+	wxString* uniqueThreadKey,
+	bool* aliveOrDeadThread,
 	cSettings* settings, 
 	cCamPreview* camera_preview_panel,
 	XimeaControl* ximea_control,
@@ -4011,6 +4023,8 @@ WorkerThread::WorkerThread
 ) 
 	: 
 	m_MainFrame(main_frame),
+	m_UniqueThreadKey(uniqueThreadKey),
+	m_AliveOrDeadThread(aliveOrDeadThread),
 	m_Settings(settings), 
 	m_CameraPreview(camera_preview_panel), 
 	m_XimeaControl(ximea_control),
@@ -4049,6 +4063,7 @@ wxThread::ExitCode WorkerThread::Entry()
 	};
 	auto exit_thread = [&]()
 	{
+		*m_UniqueThreadKey = "";
 		m_Settings->SetCurrentProgress(1, 1);
 		//cam_control = nullptr;
 		//m_MainFrame->WorkerThreadFinished(true);
@@ -4081,8 +4096,6 @@ wxThread::ExitCode WorkerThread::Entry()
 		return (wxThread::ExitCode)0;
 	}
 
-	m_ThreadID = m_XimeaControl->AppendThread();
-
 	m_XimeaControl->SetExposureTime(m_ExposureTimeUS);
 	m_HorizontalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
 	m_VerticalFWHMData = std::make_unique<double[]>(m_FirstAxis->step_number);
@@ -4092,7 +4105,7 @@ wxThread::ExitCode WorkerThread::Entry()
 	float first_axis_position{}, second_axis_position{};
 	for (auto i{ 0 }; i < m_FirstAxis->step_number; ++i)
 	{
-		if (!m_XimeaControl->GetThreadState(m_ThreadID))
+		if (!*m_AliveOrDeadThread)
 		{
 			exit_thread();
 			return (wxThread::ExitCode)0;
@@ -4274,11 +4287,11 @@ auto WorkerThread::MoveFirstStage(const float position) -> float
 
 auto WorkerThread::CaptureImage(unsigned short* const dataPtr, const wxSize& imageSize) -> bool
 {
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
+	if (!*m_AliveOrDeadThread) return false;
 	auto imgPtr = m_XimeaControl->GetImage();
 	if (!imgPtr) return false;
 
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
+	if (!*m_AliveOrDeadThread) return false;
 
 	LOG("MEMCPY Start");
 	memcpy
@@ -4300,7 +4313,7 @@ auto WorkerThread::SaveImage
 	const std::string& fileName
 ) -> bool
 {
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
+	if (!*m_AliveOrDeadThread) return false;
 	cv::Mat cv_img
 	(
 		cv::Size(imgWidth, imgHeight),
@@ -4322,7 +4335,7 @@ auto WorkerThread::CalculateFWHM
 	const int& stepNumber
 ) -> bool
 {
-	if (!m_XimeaControl->GetThreadState(m_ThreadID)) return false;
+	if (!m_AliveOrDeadThread) return false;
 	auto horizontalSumArray = std::make_unique<unsigned int[]>(imgWidth);
 	auto verticalSumArray = std::make_unique<unsigned int[]>(imgHeight);
 

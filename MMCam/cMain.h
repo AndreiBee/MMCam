@@ -1315,6 +1315,8 @@ private:
 	/* wxPanels */
 	wxPanel* m_RightSidePanel{};
 
+	std::vector<std::pair<wxString, bool>> m_StartedThreads{};
+
 	wxDECLARE_EVENT_TABLE();
 };
 /* ___ End cMain ___ */
@@ -1326,6 +1328,8 @@ public:
 	LiveCapturing
 	(
 		cMain* main_frame,
+		wxString* uniqueThreadKey,
+		bool* aliveOrDeadThread,
 		cCamPreview* cam_preview_window,
 		XimeaControl* ximea_control,
 		//const std::string& selected_camera,
@@ -1365,7 +1369,10 @@ private:
 	int m_ExposureUS{};
 	//std::unique_ptr<XimeaControl> m_XimeaCameraControl{};
 	wxSize m_ImageSize{};
-	int m_ThreadID{ -1 };
+
+	// Thread
+	wxString* m_UniqueThreadKey{};
+	bool* m_AliveOrDeadThread{};
 };
 /* ___ End Worker Thread ___ */
 
@@ -1376,6 +1383,8 @@ public:
 	WorkerThread
 	(
 		cMain* main_frame,
+		wxString* uniqueThreadKey,
+		bool* aliveOrDeadThread,
 		cSettings* settings, 
 		cCamPreview* camera_preview_panel,
 		XimeaControl* ximea_control,
@@ -1495,6 +1504,10 @@ private:
 	std::unique_ptr<double[]> m_HorizontalFWHMData{}, m_VerticalFWHMData{};
 	std::unique_ptr<float[]> m_FirstAxisPositionsData{};
 	double m_PixelSizeUM{};
+
+	// Thread
+	wxString* m_UniqueThreadKey{};
+	bool* m_AliveOrDeadThread{};
 };
 /* ___ End Worker Thread ___ */
 

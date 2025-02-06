@@ -158,44 +158,54 @@ void cCamPreview::UpdateImageParameters()
 	// FWHM
 	if (m_DisplayFWHM)
 	{
-		// Horizontal
-		FWHM::CalculateSumVertically
-		(
-			m_ImageData.get(), 
-			m_ImageSize.GetWidth(), 
-			m_ImageSize.GetHeight(), 
-			m_HorizontalSumArray.get()
-		);
+		// Create threads for horizontal and vertical calculations
+		std::thread horizontalThread([&]()
+			{
+				FWHM::CalculateSumVertically
+				(
+					m_ImageData.get(),
+					m_ImageSize.GetWidth(),
+					m_ImageSize.GetHeight(),
+					m_HorizontalSumArray.get()
+				);
 
-		m_HorizontalFWHM_PX = FWHM::CalculateFWHM
-		(
-			m_HorizontalSumArray.get(), 
-			m_ImageSize.GetWidth(), 
-			&m_HorizonalBestPosSum.first, 
-			&m_HorizonalBestPosSum.second,
-			&m_HorizontalWorstPosSum.first,
-			&m_HorizontalWorstPosSum.second,
-			&m_HorizontalMiddleFWHMPosPixel
-		);
+				m_HorizontalFWHM_PX = FWHM::CalculateFWHM
+				(
+					m_HorizontalSumArray.get(),
+					m_ImageSize.GetWidth(),
+					&m_HorizonalBestPosSum.first,
+					&m_HorizonalBestPosSum.second,
+					&m_HorizontalWorstPosSum.first,
+					&m_HorizontalWorstPosSum.second,
+					&m_HorizontalMiddleFWHMPosPixel
+				);
+			});
 
-		// Vertical
-		FWHM::CalculateSumHorizontally
-		(
-			m_ImageData.get(), 
-			m_ImageSize.GetWidth(), 
-			m_ImageSize.GetHeight(), 
-			m_VerticalSumArray.get()
-		);
-		m_VerticalFWHM_PX = FWHM::CalculateFWHM
-		(
-			m_VerticalSumArray.get(), 
-			m_ImageSize.GetHeight(), 
-			&m_VerticalBestPosSum.first, 
-			&m_VerticalBestPosSum.second,
-			&m_VerticalWorstPosSum.first,
-			&m_VerticalWorstPosSum.second,
-			&m_VerticalMiddleFWHMPosPixel
-		);
+		std::thread verticalThread([&]()
+			{
+				FWHM::CalculateSumHorizontally
+				(
+					m_ImageData.get(),
+					m_ImageSize.GetWidth(),
+					m_ImageSize.GetHeight(),
+					m_VerticalSumArray.get()
+				);
+
+				m_VerticalFWHM_PX = FWHM::CalculateFWHM
+				(
+					m_VerticalSumArray.get(),
+					m_ImageSize.GetHeight(),
+					&m_VerticalBestPosSum.first,
+					&m_VerticalBestPosSum.second,
+					&m_VerticalWorstPosSum.first,
+					&m_VerticalWorstPosSum.second,
+					&m_VerticalMiddleFWHMPosPixel
+				);
+			});
+
+		// Wait for both threads to complete execution
+		horizontalThread.join();
+		verticalThread.join();
 	}
 
 	m_IsImageSet = true;
@@ -603,6 +613,8 @@ void cCamPreview::PaintEvent(wxPaintEvent& evt)
 
 void cCamPreview::Render(wxBufferedPaintDC& dc)
 {
+	m_ExecutionFinished = false;
+
 	dc.Clear();
 
 	{
@@ -613,12 +625,21 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 		delete gc;
 	}
 
-	if (!m_IsImageSet) return;
+	if (!m_IsImageSet)
+	{
+		m_ExecutionFinished = true;
+		return;
+	}
 
 	{
 		/* CrossHair */
 		auto gc = wxGraphicsContext::Create(dc);
-		if (!gc) return;
+		if (!gc)
+		{
+			m_ExecutionFinished = true;
+			return;
+		}
+
 		DrawCrossHair(gc);
 
 		DrawSpotCroppedWindow(gc);
@@ -628,7 +649,9 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 		DrawFWHMValues(gc);
 
 		delete gc;
+
 	}
+	m_ExecutionFinished = true;
 }
 
 auto cCamPreview::UpdateWXImage() -> void
@@ -879,7 +902,7 @@ auto cCamPreview::DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void
 	auto multiplicator = (double)max_height / max_value;
 	LOGF("H Multiplicator: ", multiplicator);
 
-	for (auto i = 0; i < m_ImageSize.GetWidth() - 2; ++i)
+	for (auto i = 0; i < m_ImageSize.GetWidth() - 1; ++i)
 	{
 		start_y = start_draw.y - std::floor((m_HorizontalSumArray[i] - m_HorizontalWorstPosSum.second) * multiplicator);
 		current_y = start_draw.y - std::floor((m_HorizontalSumArray[i + 1] - m_HorizontalWorstPosSum.second) * multiplicator);
@@ -911,7 +934,7 @@ auto cCamPreview::DrawVerticalSumLine(wxGraphicsContext* gc_) -> void
 	auto multiplicator = (double)max_height / max_value;
 	LOGF("V Multiplicator: ", multiplicator);
 
-	for (auto i = 0; i < m_ImageSize.GetHeight() - 2; ++i)
+	for (auto i = 0; i < m_ImageSize.GetHeight() - 1; ++i)
 	{
 		start_x = start_draw.x - std::floor((m_VerticalSumArray[i] - m_VerticalWorstPosSum.second) * multiplicator);
 		current_x = start_draw.x - std::floor((m_VerticalSumArray[i + 1] - m_VerticalWorstPosSum.second) * multiplicator);
