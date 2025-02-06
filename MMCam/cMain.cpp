@@ -2912,7 +2912,7 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	wxString requirementsPath = reportGeneratorPath;
 	requirementsPath += requirementsPath.EndsWith("\\") ? requirementsFileName : wxString("\\") + requirementsFileName;
 	wxString venvPath = reportGeneratorPath;
-	venvPath = venvPath.EndsWith("\\") ? venvFolderName : wxString("\\") + venvFolderName;
+	venvPath += venvPath.EndsWith("\\") ? venvFolderName : wxString("\\") + venvFolderName;
 
 	if (!IsVirtualEnvironmentAlreadyCreated(venvPath))
 	{

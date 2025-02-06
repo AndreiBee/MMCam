@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-import math
 import os
 
 
@@ -27,12 +26,7 @@ def visualize(data, width, height, pixelSize, colormap, filePath):
     plt.ylabel('Distance [mm]', fontsize=12)
 
     tickSize = 5
-    # M = 4
-    # axisticks = ticker.MaxNLocator(M)
-    # ax.set_yticks(axisticks)
-    # ax.set_xticks(axisticks)
-    # Set custom tick labels in mm
-    # Get default tick positions (in pixels)
+
     xticks_pixels = plt.xticks()[0]
     xticks_pixels = xticks_pixels[1:-1]
     xticks_pixels = xticks_pixels[:tickSize]
@@ -59,12 +53,10 @@ def visualize(data, width, height, pixelSize, colormap, filePath):
     plt.yticks(yticks_pixels, [
                f"{tick:.2f}" for tick in yticks_mm])
 
-    # plt.title("2D Colormap Representation")
     plt.savefig(filePath, dpi=300)  # Save image as a file
 
     filename_with_ext = os.path.basename(filePath)  # example.txt
     print(f'{filename_with_ext} Created Successfully')
-    # plt.show()
 
 
 if __name__ == "__main__":
