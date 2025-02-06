@@ -930,10 +930,10 @@ private:
 
 
 		wxFileName file(latexFilePath);
-		std::string command = "cmd /c \"cd " + file.GetPath().ToStdString() + " && pdflatex ";
+		std::string command = "cmd /c \"cd \"" + file.GetPath().ToStdString() + "\" && pdflatex \"";
 
 		command += file.GetFullName();
-		command += "\"";
+		command += "\"\"";
 
 		// Execute the CMD script
 		int result{};
