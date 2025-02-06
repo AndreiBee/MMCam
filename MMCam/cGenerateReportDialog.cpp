@@ -1360,7 +1360,7 @@ auto cGenerateReportDialog::OnOpenOriginalWhiteImageBtn(wxCommandEvent& evt) -> 
         "Open an image",
         wxEmptyString,
         wxEmptyString,
-        "TIF Files (*.tif)|*.titif",
+        "TIF Files (*.tif)|*.tif",
         wxFD_OPEN | wxFD_FILE_MUST_EXIST
     );
 
