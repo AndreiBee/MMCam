@@ -26,7 +26,7 @@
 #include "src/img/logo.xpm"
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 13
+#define MINOR_VERSION 14
 
 namespace MainFrameVariables
 {
@@ -854,21 +854,22 @@ private:
 		WriteJSONDataToFile(fileName.GetFullPath().ToStdString(), jsonString);
 	};
 
+	auto RaisePythonExceptionMSG(const std::string& command, int code) -> void
+	{
+		wxString title = "Python execution error";
+		wxMessageBox(
+			wxT
+			(
+				"Failed to run Python script.\n" 
+				+ wxString(command)
+				+ "\nError code: " + wxString::Format(wxT("%i"), code)
+			),
+			title,
+			wxICON_ERROR);
+	};
+
 	auto Invoke2DPlotsCreation( wxArrayString filePaths) -> bool
 	{
-		constexpr auto raise_exception_msg = [](int code) 
-		{
-			wxString title = "Python execution error";
-			wxMessageBox(
-				wxT
-				(
-					"Failed to run Python script. Error code: " + wxString::Format(wxT("%i"), code)
-				),
-				title,
-				wxICON_ERROR);
-		};
-
-
 		std::string command = "cmd /c \"src\\ReportGenerator\\.venv\\Scripts\\activate && ";
 
 		for (const auto& filePath : filePaths)
@@ -885,7 +886,7 @@ private:
 		result = std::system(command.c_str());
 		if (result != 0)
 		{
-			raise_exception_msg(result);
+			RaisePythonExceptionMSG(command, result);
 			return false;
 		}
 
@@ -894,19 +895,6 @@ private:
 
 	auto InvokePlotGraphCreation(wxString pythonFileName, wxString filePath) -> bool
 	{
-		constexpr auto raise_exception_msg = [](int code) 
-		{
-			wxString title = "Python execution error";
-			wxMessageBox(
-				wxT
-				(
-					"Failed to run Python script. Error code: " + wxString::Format(wxT("%i"), code)
-				),
-				title,
-				wxICON_ERROR);
-		};
-
-
 		std::string command = "cmd /c \"src\\ReportGenerator\\.venv\\Scripts\\activate && ";
 
 		//command += "py.exe src\\ReportGenerator\\plotGraph.py \"" + filePath.ToStdString() + "\" && ";
@@ -919,7 +907,7 @@ private:
 		result = std::system(command.c_str());
 		if (result != 0)
 		{
-			raise_exception_msg(result);
+			RaisePythonExceptionMSG(command, result);
 			return false;
 		}
 

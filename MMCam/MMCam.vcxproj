@@ -115,6 +115,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)MaterialDesign;$(WXWIN_LATEST)\include;$(WXWIN_LATEST)\include\msvc;$(OPENCV_LATEST)\..\..\include;$(XIMEA_LATEST);$(LIBXIMC_LATEST);$(SolutionDir)include;$(SolutionDir)include\rapidxml</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -134,6 +135,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)MaterialDesign;$(WXWIN_LATEST)\include;$(WXWIN_LATEST)\include\msvc;$(OPENCV_LATEST)\..\..\include;$(XIMEA_LATEST);$(LIBXIMC_LATEST);$(SolutionDir)include;$(SolutionDir)include\rapidxml</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

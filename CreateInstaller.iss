@@ -32,6 +32,9 @@ Source: "D:\Projects\RIGAKU\{#RepoName}\bin\x64\Release\xiapi64.dll"; DestDir: "
 Source: "D:\Projects\RIGAKU\{#RepoName}\bin\x64\Release\xiwrapper.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\Projects\RIGAKU\{#RepoName}\{#RepoName}\src\img\logo.ico"; DestDir: "{app}"; Flags: ignoreversion
 
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\src\ReportGenerator\.venv"
+
 [Icons]
 Name: "{group}\{#RepoName}"; Filename: "{app}\{#RepoName}.exe"; IconFilename: "{app}\logo.ico"
 Name: "{commondesktop}\{#RepoName}"; Filename: "{app}\{#RepoName}.exe"; IconFilename: "{app}\logo.ico"

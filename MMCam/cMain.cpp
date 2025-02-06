@@ -3613,19 +3613,7 @@ auto cMain::IsVirtualEnvironmentAlreadyCreated(wxString pathToVenv) -> bool
 
 auto cMain::CreateVirtualEnvironment(wxString pathToVenv, wxString pathToRequirements) -> bool
 {
-	constexpr auto raise_exception_msg = [](int code) 
-	{
-		wxString title = "Python execution error";
-		wxMessageBox(
-			wxT
-			(
-				"Failed to run Python script. Error code: " + wxString::Format(wxT("%i"), code)
-			),
-			title,
-			wxICON_ERROR);
-	};
-
-	std::string command = "cmd /c \"py -m venv \"" + pathToVenv.ToStdString() + " &&";
+	std::string command = "cmd /c \"py.exe -m venv \"" + pathToVenv.ToStdString() + " && ";
 	command += "src\\ReportGenerator\\.venv\\Scripts\\activate && ";
 	command += "pip install -r " + pathToRequirements + " && ";
 	command += "deactivate\"";
@@ -3636,7 +3624,7 @@ auto cMain::CreateVirtualEnvironment(wxString pathToVenv, wxString pathToRequire
 	result = std::system(command.c_str());
 	if (result != 0)
 	{
-		raise_exception_msg(result);
+		RaisePythonExceptionMSG(command, result);
 		return false;
 	}
 
