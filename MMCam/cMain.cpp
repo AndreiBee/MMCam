@@ -124,10 +124,10 @@ cMain::cMain(const wxString& title_)
 		ProcessEvent(artEvt);
 	}
 	// Press Generate Button
-	//{
-	//	wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN);
-	//	ProcessEvent(artEvt);
-	//}
+	{
+		wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN);
+		ProcessEvent(artEvt);
+	}
 #endif // _DEBUG
 	{
 		//m_StartStopLiveCapturingTglBtn->SetValue(true);
@@ -1388,10 +1388,16 @@ void cMain::CreateProgressBar()
 	wxSize size_of_progress_bar{ 400, 190 };
 	wxPoint start_point_progress_bar
 	{ 
-		this->GetPosition().x + this->GetSize().x - size_of_progress_bar.x, 
-		this->GetPosition().y + this->GetSize().y - size_of_progress_bar.y 
+		0, 0
+		//this->GetPosition().x + this->GetSize().x - size_of_progress_bar.x, 
+		//this->GetPosition().y + this->GetSize().y - size_of_progress_bar.y 
 	};
 	m_ProgressBar = std::make_unique<ProgressBar>(this, start_point_progress_bar, size_of_progress_bar);
+
+#ifdef _DEBUG
+	//m_ProgressBar->Show();
+#endif // _DEBUG
+
 	//m_ProgressBar = new ProgressBar(this, start_point_progress_bar, size_of_progress_bar);
 	//m_ProgressBar->SetIcon(logo_xpm);
 }
@@ -2914,6 +2920,34 @@ void cMain::ExposureValueChanged(wxCommandEvent& evt)
 
 auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 {
+	constexpr auto raise_exception_msg = [](wxString disallowedCharacters) 
+		{
+			wxString title = "File path error";
+			wxMessageBox(
+				wxT
+				(
+					"Directory path contains disallowed characters: " + disallowedCharacters
+				),
+				title,
+				wxICON_ERROR);
+		};
+
+	if (m_StartStopLiveCapturingTglBtn->GetValue())
+	{
+		// Stop acquisition
+		m_StartStopLiveCapturingTglBtn->SetValue(!m_StartStopLiveCapturingTglBtn->GetValue());
+		wxCommandEvent artStartStopLiveCapturingPressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN);
+		ProcessEvent(artStartStopLiveCapturingPressed);
+	}
+
+	if (m_StartStopMeasurementTglBtn->GetValue())
+	{
+		// Stop acquisition
+		m_StartStopMeasurementTglBtn->SetValue(!m_StartStopMeasurementTglBtn->GetValue());
+		wxCommandEvent artStartStopMeasurementPressed(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT);
+		ProcessEvent(artStartStopMeasurementPressed);
+	}
+
 	wxString venvFolderName = ".venv";
 	wxString reportGeneratorPath = wxGetCwd();
 	auto reportGeneratorPathName = wxString("src\\ReportGenerator");
@@ -2952,9 +2986,6 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 
 	auto reportParameters = dialog.GetReportParameters();
 
-	//auto startPositionMM = 22.5;
-	//auto stepMM = 0.025;
-
 	wxString outDirName{}, outFileName{};;
 	wxString outDirWithFileName{};
 
@@ -2984,6 +3015,13 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	wxFileName fileName(outDirWithFileName);
 	outDirName = fileName.GetPath();
 #endif // _DEBUG
+
+	auto disallowedCharacters = CheckForDisallowedCharacters(outDirName);
+	if (!disallowedCharacters.IsEmpty())
+	{
+		raise_exception_msg(disallowedCharacters);
+		return;
+	}
 
 	MainFrameVariables::ImagesFilePaths imageFilePaths{};
 
@@ -4857,7 +4895,7 @@ void ProgressBar::CreateProgressBar()
 	wxSizer* const main_sizer = new wxBoxSizer(wxVERTICAL);
 	m_ProgressPanel = new ProgressPanel(this, m_MainSize);
 	main_sizer->Add(m_ProgressPanel, wxSizerFlags(1).Expand().Border());
-	this->SetBackgroundColour(wxColour(255, 255, 255));
+	SetBackgroundColour(wxColour(255, 255, 255));
 	SetSizerAndFit(main_sizer);
 }
 
@@ -4869,18 +4907,18 @@ ProgressBar::~ProgressBar()
 
 /* ___ Start ProgressPanel ___ */
 BEGIN_EVENT_TABLE(ProgressPanel, wxPanel)
-EVT_PAINT(ProgressPanel::PaintEvent)
-EVT_SIZE(ProgressPanel::OnSize)
+	EVT_PAINT(ProgressPanel::PaintEvent)
+	EVT_SIZE(ProgressPanel::OnSize)
 END_EVENT_TABLE()
 
 ProgressPanel::ProgressPanel(
 	wxFrame* parent, const wxSize& size)
 	: wxPanel(parent)
 {
-	this->SetDoubleBuffered(true);
-	this->SetBackgroundColour(wxColour(*wxWHITE));
+	SetDoubleBuffered(true);
+	SetBackgroundColour(wxColour(*wxWHITE));
 
-	this->SetMinSize(size);
+	SetMinSize(size);
 	//SetSize(size);
 	//Refresh();
 }

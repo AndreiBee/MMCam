@@ -64,8 +64,14 @@ if __name__ == "__main__":
     import json
 
     # Read arguments passed from C++
-    data_file = sys.argv[1]  # First argument is file path
-    with open(data_file, 'r') as file:
+    # First argument is file path
+    data_file = os.fsdecode(sys.argv[1])
+    # Verify if file exists
+    if not os.path.exists(data_file):
+        print(f"Error: File '{data_file}' not found.")
+        sys.exit(1)
+
+    with open(data_file, 'r', encoding='utf-8') as file:
         params = json.load(file)
 
     data = params["data"]
@@ -73,7 +79,7 @@ if __name__ == "__main__":
     height = params["height"]
     colormap = params["colormap"]
     pixelSize = params["pixelSizeUM"]
-    filePath = params["filePath"]
+    filePath = os.fsdecode(params["filePath"])
 
     visualize(data=data, width=width, height=height,
               pixelSize=pixelSize, colormap=colormap, filePath=filePath)

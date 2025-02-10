@@ -756,7 +756,7 @@ private:
 		j["height"] = height;
 		j["colormap"] = colormap;
 		j["pixelSizeUM"] = pixelSizeUM;
-		j["filePath"] = filePath;
+		j["filePath"] = std::string(filePath.utf8_string());
 
 		std::string jsonString = j.dump();
 
@@ -805,7 +805,7 @@ private:
 		j["startX"] = startX;
 		j["step"] = step;
 		j["bestInGain"] = bestInGain;
-		j["filePath"] = filePath;
+		j["filePath"] = std::string(filePath.utf8_string());
 
 		std::string jsonString = j.dump();
 
@@ -841,7 +841,7 @@ private:
 		j["xLabel"] = xLabel;
 		j["yLabel"] = yLabel;
 		j["lineColour"] = lineColour;
-		j["filePath"] = filePath;
+		j["filePath"] = std::string(filePath.utf8_string());
 
 		std::string jsonString = j.dump();
 
@@ -868,17 +868,73 @@ private:
 			wxICON_ERROR);
 	};
 
+	std::string EscapeSpecialChars(const std::string& str) 
+	{
+		std::unordered_map<char, std::string> replacements = 
+		{
+			{'&', "^&"},
+			{'%', "^%"},
+			{'(', "^("},
+			{')', "^)"}
+		};
+
+		std::string result;
+		for (char ch : str) 
+		{
+			if (replacements.find(ch) != replacements.end()) 
+			{
+				result += replacements[ch];  // Replace special character
+			}
+			else 
+			{
+				result += ch;  // Keep normal character
+			}
+		}
+		return result;
+	};
+
+	wxString CheckForDisallowedCharacters(const wxString& dirPath)
+	{
+		// Convert wxString to std::string for easier manipulation
+		std::string path = dirPath.ToStdString();
+
+		const std::vector<char> disallowedChars = { ' ', '&', '#', '%', '$', '^', '(', ')', '@', '!', '+', '=', ';', '<', '>', '?', '[', ']', '{', '}', '`' };
+
+		wxString retChars{};
+		// Loop through the list of disallowed characters
+		for (char ch : disallowedChars)
+		{
+			if (path.find(ch) != std::string::npos)
+				retChars += wxString(ch) + " ";
+		}
+
+		// If no disallowed characters are found
+		return retChars;
+	}
+
 	auto Invoke2DPlotsCreation( wxArrayString filePaths) -> bool
 	{
-		std::string command = "cmd /c \"src\\ReportGenerator\\.venv\\Scripts\\activate && ";
+		std::string command = "cmd /c"; 
+
+		command += " \"src\\ReportGenerator\\.venv\\Scripts\\activate && ";
 
 		for (const auto& filePath : filePaths)
 		{
 			wxFileName fileName(filePath);
 			fileName.SetExt("txt");
-			command += "py.exe src\\ReportGenerator\\visualize2DPlot.py \"" + fileName.GetFullPath().ToStdString() + "\" && ";
+			//std::string fileNameString = "R(" + fileName.GetFullPath().ToStdString() + ")";
+			command += "py.exe -X utf8 src\\ReportGenerator\\visualize2DPlot.py \"" 
+				//+ EscapeSpecialChars(fileName.GetFullPath().ToStdString()) 
+				+ fileName.GetFullPath().ToStdString()
+				+ "\" && ";
 		}
-		command += "deactivate\"";
+		command += "deactivate";
+
+#ifdef _DEBUG
+		//command += " && pause";
+#endif // _DEBUG
+
+		command += "\"";
 
 		// Execute the Python script
 		int result{};
