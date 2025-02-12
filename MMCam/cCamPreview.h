@@ -6,6 +6,7 @@
 #include "wx/dcbuffer.h"
 #include "wx/graphics.h"
 #include "wx/tglbtn.h"
+#include "wxMaterialDesignArtProvider.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -31,16 +32,16 @@ namespace CameraPreviewVariables
 	struct InputPreviewPanelArgs
 	{
 		wxTextCtrl* x_pos_crosshair{}, * y_pos_crosshair{};
-		wxToggleButton* set_pos_tgl_btn{};
+		//wxToggleButton* set_pos_tgl_btn{};
 		InputPreviewPanelArgs() {};
 		InputPreviewPanelArgs
 		(
 			wxTextCtrl* par_x_pos_crosshair,
-			wxTextCtrl* par_y_pos_crosshair,
-			wxToggleButton* par_pos_crosshair_tgl_btn
+			wxTextCtrl* par_y_pos_crosshair
+			//wxToggleButton* par_pos_crosshair_tgl_btn
 		) : x_pos_crosshair(par_x_pos_crosshair),
-			y_pos_crosshair(par_y_pos_crosshair), 
-			set_pos_tgl_btn(par_pos_crosshair_tgl_btn) {};
+			y_pos_crosshair(par_y_pos_crosshair) {};
+			//set_pos_tgl_btn(par_pos_crosshair_tgl_btn) {};
 	};
 }
 
@@ -139,6 +140,7 @@ private:
 	auto DrawSumLines(wxGraphicsContext* gc_) -> void;
 	auto DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void;
 	auto DrawVerticalSumLine(wxGraphicsContext* gc_) -> void;
+	auto DrawActualImageSize(wxGraphicsContext* gc_) -> void;
 	void OnSize(wxSizeEvent& evt);
 	void ChangeSizeOfImageInDependenceOnCanvasSize();
 	auto UpdateCrossHairOnSize() -> void;
@@ -163,7 +165,14 @@ private:
 	/* CrossHair */
 	void DrawCrossHair(wxGraphicsContext* graphics_context);
 
+	/* Key Events */
+	auto OnKeyPressed(wxKeyEvent& evt) -> void;
+	auto OnKeyReleased(wxKeyEvent& evt) -> void;
+
 private:
+	/* Buttons on keyboard */
+	bool m_CTRLPressed{};
+
 	bool m_ExecutionFinished{ true };
 	int m_Width{}, m_Height{};
 	bool m_IsGraphicsBitmapSet{}, m_IsImageSet{};

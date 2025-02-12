@@ -687,7 +687,7 @@ private:
 	/* CrossHair */
 	void OnXPosCrossHairTextCtrl(wxCommandEvent& evt);
 	void OnYPosCrossHairTextCtrl(wxCommandEvent& evt);
-	auto OnSetPosCrossHairTglBtn(wxCommandEvent& evt) -> void;
+	//auto OnSetPosCrossHairTglBtn(wxCommandEvent& evt) -> void;
 
 	auto CreateMetadataFile() -> void;
 
@@ -1321,7 +1321,7 @@ private:
 	std::unique_ptr<wxButton> m_SingleShotBtn{};
 	std::unique_ptr<wxToggleButton> m_StartStopLiveCapturingTglBtn{};
 	std::unique_ptr<wxTextCtrl> m_CrossHairPosXTxtCtrl{}, m_CrossHairPosYTxtCtrl{};
-	std::unique_ptr<wxToggleButton> m_SetCrossHairPosTglBtn{};
+	//std::unique_ptr<wxToggleButton> m_SetCrossHairPosTglBtn{};
 
 	/* Measurement */
 	std::unique_ptr<wxTextCtrl> m_OutDirTextCtrl{};

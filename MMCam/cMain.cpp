@@ -62,7 +62,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 
 	EVT_TEXT(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_X_TXT_CTRL, cMain::OnXPosCrossHairTextCtrl)
 	EVT_TEXT(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_POS_Y_TXT_CTRL, cMain::OnYPosCrossHairTextCtrl)
-	EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_SET_POS_TGL_BTN, cMain::OnSetPosCrossHairTglBtn)
+	//EVT_TOGGLEBUTTON(MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_SET_POS_TGL_BTN, cMain::OnSetPosCrossHairTglBtn)
 	/* Set Out Folder */
 	EVT_BUTTON(MainFrameVariables::ID_RIGHT_MT_OUT_FLD_BTN, cMain::OnSetOutDirectoryBtn)
 	/* First Stage */
@@ -125,8 +125,8 @@ cMain::cMain(const wxString& title_)
 	}
 	// Press Generate Button
 	{
-		wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN);
-		ProcessEvent(artEvt);
+		//wxCommandEvent artEvt(wxEVT_BUTTON, MainFrameVariables::ID_RIGHT_MY_GENERATE_REPORT_BTN);
+		//ProcessEvent(artEvt);
 	}
 #endif // _DEBUG
 	{
@@ -151,12 +151,21 @@ void cMain::CreateMainFrame()
 
 void cMain::InitComponents()
 {
-	/* Settings Frame */
-	m_Settings = std::make_unique<cSettings>(this);
-	m_Settings->SetIcon(logo_xpm);
-	/* Measurement */
-	m_FirstStage = std::make_unique<MainFrameVariables::MeasurementStage>();
-	//m_SecondStage = std::make_unique<MainFrameVariables::MeasurementStage>();
+	auto hProcess = GetCurrentProcess();
+	auto oldContext = GetDpiAwarenessContextForProcess(hProcess);
+
+	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_UNAWARE);
+	{
+		/* Settings Frame */
+		m_Settings = std::make_unique<cSettings>(this);
+		m_Settings->SetIcon(logo_xpm);
+		/* Measurement */
+		m_FirstStage = std::make_unique<MainFrameVariables::MeasurementStage>();
+		//m_SecondStage = std::make_unique<MainFrameVariables::MeasurementStage>();
+	}
+
+	// Restore the previous DPI awareness
+	SetProcessDpiAwarenessContext(oldContext);
 }
 
 void cMain::CreateMenuBarOnFrame()
@@ -303,8 +312,8 @@ void cMain::CreateLeftSide(wxSizer* left_side_sizer)
 	auto input_args = std::make_unique<CameraPreviewVariables::InputPreviewPanelArgs>
 		(
 			m_CrossHairPosXTxtCtrl.get(),
-			m_CrossHairPosYTxtCtrl.get(),
-			m_SetCrossHairPosTglBtn.get()
+			m_CrossHairPosYTxtCtrl.get()
+			//m_SetCrossHairPosTglBtn.get()
 			);
 
 	m_CamPreview = std::make_unique<cCamPreview>
@@ -1094,20 +1103,20 @@ void cMain::CreateCameraControls(wxPanel* right_side_panel, wxBoxSizer* right_si
 		}
 
 		/* Set Postion */
-		{
-			m_SetCrossHairPosTglBtn = std::make_unique<wxToggleButton>
-				(
-					right_side_panel,
-					MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_SET_POS_TGL_BTN,
-					wxT("Set"),
-					wxDefaultPosition,
-					btn_size
-				);
-			m_SetCrossHairPosTglBtn->Disable();
+		//{
+		//	m_SetCrossHairPosTglBtn = std::make_unique<wxToggleButton>
+		//		(
+		//			right_side_panel,
+		//			MainFrameVariables::ID_RIGHT_CAM_CROSS_HAIR_SET_POS_TGL_BTN,
+		//			wxT("Set"),
+		//			wxDefaultPosition,
+		//			btn_size
+		//		);
+		//	m_SetCrossHairPosTglBtn->Disable();
 
-			cross_hair_sizer->AddSpacer(5);
-			cross_hair_sizer->Add(m_SetCrossHairPosTglBtn.get(), 0, wxALIGN_CENTER);
-		}
+		//	cross_hair_sizer->AddSpacer(5);
+		//	cross_hair_sizer->Add(m_SetCrossHairPosTglBtn.get(), 0, wxALIGN_CENTER);
+		//}
 		second_row_sizer->Add(cross_hair_sizer, 0, wxALIGN_CENTER);
 	}
 	cam_static_box_sizer->Add(second_row_sizer, 0, wxALIGN_CENTER);
@@ -1770,7 +1779,7 @@ void cMain::UnCheckAllTools()
 	m_CamPreview->SetCrossHairButtonActive(false);
 	m_CrossHairPosXTxtCtrl->Disable();
 	m_CrossHairPosYTxtCtrl->Disable();
-	m_SetCrossHairPosTglBtn->Disable();
+	//m_SetCrossHairPosTglBtn->Disable();
 }
 
 void cMain::OnFirstStageChoice(wxCommandEvent& evt)
@@ -2123,13 +2132,17 @@ void cMain::OnCrossHairButton(wxCommandEvent& evt)
 		m_CamPreview->SetCrossHairButtonActive(true);
 		m_CrossHairPosXTxtCtrl->Enable();
 		m_CrossHairPosYTxtCtrl->Enable();
-		m_SetCrossHairPosTglBtn->Enable();
+		//m_SetCrossHairPosTglBtn->Enable();
 		{
-			auto img_size = m_CamPreview->GetImageSize();
-			//m_CamPreview->SetXCrossHairPosFromParentWindow(img_size.GetWidth() / 2);
-			//m_CamPreview->SetYCrossHairPosFromParentWindow(img_size.GetHeight() / 2);
-			m_CrossHairPosXTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetWidth() / 2));
-			m_CrossHairPosYTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetHeight() / 2));
+			auto xPos = 1, yPos = 1;
+			m_CrossHairPosXTxtCtrl->GetValue().ToInt(&xPos);
+			m_CrossHairPosYTxtCtrl->GetValue().ToInt(&yPos);
+			if (xPos == 1 && yPos == 1)
+			{
+				auto img_size = m_CamPreview->GetImageSize();
+				m_CrossHairPosXTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetWidth() / 2));
+				m_CrossHairPosYTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetHeight() / 2));
+			}
 		}
 	}
 	else
@@ -3690,7 +3703,7 @@ auto cMain::EnableControlsAfterCapturing() -> void
 		m_CrossHairPosXTxtCtrl->Enable();
 		m_CrossHairPosYTxtCtrl->Enable();
 	}
-	m_SetCrossHairPosTglBtn->Enable();
+	//m_SetCrossHairPosTglBtn->Enable();
 
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
@@ -3719,7 +3732,7 @@ auto cMain::DisableControlsBeforeCapturing() -> void
 	m_VerticalToolBar->tool_bar->EnableTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
 	m_CrossHairPosXTxtCtrl->Disable();
 	m_CrossHairPosYTxtCtrl->Disable();
-	m_SetCrossHairPosTglBtn->Disable();
+	//m_SetCrossHairPosTglBtn->Disable();
 
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
@@ -3815,17 +3828,17 @@ void cMain::OnYPosCrossHairTextCtrl(wxCommandEvent& evt)
 	m_CamPreview->SetYCrossHairPosFromParentWindow(y_pos);
 }
 
-auto cMain::OnSetPosCrossHairTglBtn(wxCommandEvent& evt) -> void
-{
-	if (m_SetCrossHairPosTglBtn->GetValue())
-	{
-		m_CamPreview->SettingCrossHairPosFromParentWindow(true);
-	}
-	else
-	{	
-		m_CamPreview->SettingCrossHairPosFromParentWindow(false);
-	}
-}
+//auto cMain::OnSetPosCrossHairTglBtn(wxCommandEvent& evt) -> void
+//{
+//	if (m_SetCrossHairPosTglBtn->GetValue())
+//	{
+//		m_CamPreview->SettingCrossHairPosFromParentWindow(true);
+//	}
+//	else
+//	{	
+//		m_CamPreview->SettingCrossHairPosFromParentWindow(false);
+//	}
+//}
 
 /* ___ Start Live Capturing Thread ___ */
 LiveCapturing::LiveCapturing

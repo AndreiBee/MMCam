@@ -7,6 +7,8 @@ BEGIN_EVENT_TABLE(cCamPreview, wxPanel)
 	EVT_MOUSEWHEEL(cCamPreview::OnMouseWheelMoved)
 	EVT_LEFT_DOWN(cCamPreview::OnPreviewMouseLeftPressed)
 	EVT_LEFT_UP(cCamPreview::OnPreviewMouseLeftReleased)
+	EVT_KEY_DOWN(cCamPreview::OnKeyPressed)
+	EVT_KEY_UP(cCamPreview::OnKeyReleased)
 END_EVENT_TABLE()
 
 cCamPreview::cCamPreview
@@ -17,6 +19,8 @@ cCamPreview::cCamPreview
 ) 
 	: wxPanel(parent_frame)
 {
+	wxArtProvider::Push(new wxMaterialDesignArtProvider);
+
 	m_ParentArguments.reset(input_preview_panel_args.release());
 
 	//m_XimeaCameraControl = std::make_unique<XimeaControl>();
@@ -570,21 +574,21 @@ void cCamPreview::CalculatePositionOnImage()
 
 void cCamPreview::OnPreviewMouseLeftPressed(wxMouseEvent& evt)
 {
-	if (m_ParentArguments->set_pos_tgl_btn->GetValue())
-	{
-		//m_CrossHairTool->SetXPosFromParent(m_CheckedCursorPosOnImage.x);
-		//m_CrossHairTool->SetYPosFromParent(m_CheckedCursorPosOnImage.y);
-		m_ParentArguments->x_pos_crosshair->SetValue(wxString::Format(wxT("%i"), (int)(m_CheckedCursorPosOnImage.x + 1)));
-		m_ParentArguments->y_pos_crosshair->SetValue(wxString::Format(wxT("%i"), (int)(m_CheckedCursorPosOnImage.y + 1)));
-		m_ParentArguments->set_pos_tgl_btn->SetValue(false);
-		m_CrossHairTool->ActivateSetPositionFromParentWindow(false);
-	}
-	//else if (m_Zoom > 1.0 && m_IsCursorInsideImage && m_CrossHairTool->CanProcessPanning())
-	else if (m_Zoom > 1.0 && m_IsCursorInsideImage)
+	if (m_Zoom > 1.0 && m_IsCursorInsideImage)
 	{
 		m_Panning = true;
 		m_PanStartPoint = m_CursorPosOnCanvas;
 		ChangeCursorInDependenceOfCurrentParameters();
+	}
+
+	if (m_CTRLPressed && m_CrossHairTool->IsToolButtonActive())
+	{
+		m_ParentArguments->x_pos_crosshair->SetValue(wxString::Format(wxT("%i"), (int)(m_CheckedCursorPosOnImage.x + 1)));
+		m_ParentArguments->y_pos_crosshair->SetValue(wxString::Format(wxT("%i"), (int)(m_CheckedCursorPosOnImage.y + 1)));
+		//m_CrossHairTool->SetXPosFromParent(m_CheckedCursorPosOnImage.x);
+		//m_CrossHairTool->SetYPosFromParent(m_CheckedCursorPosOnImage.y);
+		//LOG2I("X: ", m_CheckedCursorPosOnImage.x, " Y: ", m_CheckedCursorPosOnImage.y);
+		Refresh();
 	}
 }
 
@@ -614,6 +618,33 @@ void cCamPreview::DrawCrossHair(wxGraphicsContext* graphics_context)
 	m_CrossHairTool->DrawCrossHair(graphics_context, m_ImageData.get());
 	if (m_DisplayPixelValues)
 		m_CrossHairTool->DrawPixelValues(graphics_context, m_ImageData.get());
+}
+
+auto cCamPreview::OnKeyPressed(wxKeyEvent& evt) -> void
+{
+	/* Ctrl */
+	if (evt.ControlDown() && !evt.AltDown() && !evt.ShiftDown() && evt.GetKeyCode() == WXK_CONTROL)
+	{
+		LOG("CTRL DOWN");
+		m_CTRLPressed = true;
+		//ChangeCursorInDependenceOfCurrentParameters();
+	}
+	else
+		evt.Skip();
+}
+
+auto cCamPreview::OnKeyReleased(wxKeyEvent& evt) -> void
+{
+	/* Ctrl */
+	if (!evt.ControlDown() && evt.GetKeyCode() == WXK_CONTROL)
+	{
+		LOG("CTRL UP");
+		// Ctrl key is released
+		m_CTRLPressed = false;
+		//ChangeCursorInDependenceOfCurrentParameters();
+	}
+	else
+		evt.Skip(); // Allow other event handlers to process the event
 }
 
 void cCamPreview::InitDefaultComponents()
@@ -655,7 +686,6 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 	}
 
 	{
-		/* CrossHair */
 		auto gc = wxGraphicsContext::Create(dc);
 		if (!gc)
 		{
@@ -672,7 +702,18 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 		DrawFWHMValues(gc);
 
 		delete gc;
+	}
 
+	{
+		auto gc = wxGraphicsContext::Create(dc);
+		if (!gc)
+		{
+			m_ExecutionFinished = true;
+			return;
+		}
+
+		DrawActualImageSize(gc);
+		delete gc;
 	}
 	m_ExecutionFinished = true;
 }
@@ -974,6 +1015,108 @@ auto cCamPreview::DrawVerticalSumLine(wxGraphicsContext* gc_) -> void
 	}
 
 	LOG("Finished: " + wxString(__FUNCSIG__))
+}
+
+auto cCamPreview::DrawActualImageSize(wxGraphicsContext* gc_) -> void
+{
+	if (m_Zoom > 1.0) return;
+	if (!m_Image.IsOk()) return;
+	if (m_DisplayFWHM) return;
+
+	wxDouble offset_x{ 10.0 }, offset_y{ 10.0 };
+	// Drawing image size below it's lower and left sides
+	{
+		// Setting up the current font
+		wxColour fontColour(255, 87, 51, 100);
+		wxFont font = wxFont(22, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD);
+		gc_->SetFont(font, fontColour);
+
+		wxString curr_value{};
+		wxDouble widthText{}, heightText{};
+
+		auto image_start_draw = wxRealPoint
+		(
+			m_StartDrawPos.x * m_Zoom / m_ZoomOnOriginalSizeImage,
+			m_StartDrawPos.y * m_Zoom / m_ZoomOnOriginalSizeImage
+		);
+
+		// Draw Value of the Bottom side of the image
+		{
+			curr_value = wxString::Format(wxT("%i"), m_ImageSize.GetWidth());
+			gc_->GetTextExtent(curr_value, &widthText, &heightText);
+			wxRealPoint draw_point =
+			{
+				image_start_draw.x + m_ImageOnCanvasSize.GetWidth() / 2.0 - widthText / 2.0,
+				image_start_draw.y + m_ImageOnCanvasSize.GetHeight() + offset_y
+				//image_start_draw.y - offset_y - heightText
+			};
+
+			if (GetSize().GetHeight() < m_ImageOnCanvasSize.GetHeight() + 2 * offset_y + 2 * heightText)
+				draw_point.y = image_start_draw.y + m_ImageOnCanvasSize.GetHeight() - offset_y - heightText;
+
+			gc_->DrawText(curr_value, draw_point.x, draw_point.y);
+
+			// Draw the Icon
+			{
+				auto bmpWidth = 24;
+				auto bmp = wxMaterialDesignArtProvider::GetBitmap
+				(
+					wxART_AUTO_FIT_WIDTH,
+					wxART_CLIENT_FLUENTUI_FILLED,
+					wxSize(bmpWidth, bmpWidth),
+					fontColour
+				);
+				draw_point =
+				{
+					draw_point.x - bmpWidth - offset_x,
+					draw_point.y + (heightText - bmpWidth) / 2.0
+				};
+
+				gc_->DrawBitmap(bmp, draw_point.x, draw_point.y, bmp.GetWidth(), bmp.GetHeight());
+			}
+		}
+
+		// Draw Value on the Left side of the image
+		{
+			curr_value = wxString::Format(wxT("%i"), m_ImageSize.GetHeight());
+			gc_->GetTextExtent(curr_value, &widthText, &heightText);
+			wxRealPoint draw_point =
+			{
+				image_start_draw.x - offset_x - heightText,
+				image_start_draw.y + m_ImageOnCanvasSize.GetHeight() / 2 + widthText / 2.0
+			};
+
+			if (GetSize().GetWidth() < m_ImageOnCanvasSize.GetWidth() + 2 * offset_x + 2 * heightText)
+				draw_point.x = image_start_draw.x + offset_x;
+
+			// Draw the Icon
+			{
+				auto bmpWidth = 24;
+				wxRealPoint icon_draw_point =
+				{
+					draw_point.x + (heightText - bmpWidth) / 2.0,
+					draw_point.y + offset_y
+				};
+
+				auto bmp = wxMaterialDesignArtProvider::GetBitmap
+				(
+					wxART_AUTO_FIT_HEIGHT,
+					wxART_CLIENT_FLUENTUI_FILLED,
+					wxSize(bmpWidth, bmpWidth),
+					fontColour
+				);
+
+				gc_->DrawBitmap(bmp, icon_draw_point.x, icon_draw_point.y, bmp.GetWidth(), bmp.GetHeight());
+			}
+
+
+			// Set up the transformation matrix for a 90-degree counterclockwise rotation
+			gc_->Translate(draw_point.x, draw_point.y);
+			gc_->Rotate(-M_PI / 2.0); // Rotate 90 degrees counterclockwise (pi/2 radians)
+			gc_->Translate(-draw_point.x, -draw_point.y);
+			gc_->DrawText(curr_value, draw_point.x, draw_point.y);
+		}
+	}
 }
 
 void cCamPreview::OnSize(wxSizeEvent& evt)
