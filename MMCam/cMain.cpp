@@ -3029,12 +3029,12 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 	outDirName = fileName.GetPath();
 #endif // _DEBUG
 
-	auto disallowedCharacters = CheckForDisallowedCharacters(outDirName);
-	if (!disallowedCharacters.IsEmpty())
-	{
-		raise_exception_msg(disallowedCharacters);
-		return;
-	}
+	//auto disallowedCharacters = CheckForDisallowedCharacters(outDirName);
+	//if (!disallowedCharacters.IsEmpty())
+	//{
+	//	raise_exception_msg(disallowedCharacters);
+	//	return;
+	//}
 
 	MainFrameVariables::ImagesFilePaths imageFilePaths{};
 
