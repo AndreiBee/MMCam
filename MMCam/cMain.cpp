@@ -4510,7 +4510,7 @@ wxBitmap WorkerThread::CreateGraph
 		{
 			dc.SetPen(wxPen(cellColour, 1, wxPENSTYLE_LONG_DASH));
 			dc.SetTextForeground(cellColour);
-			for (auto i{ 0 }; i <= dataSize; ++i)
+			for (auto i{ 0 }; i < dataSize; ++i)
 			{
 
 				currTextValue = wxString::Format(wxT("%.3f"), positionsData[i]);
@@ -4550,7 +4550,7 @@ wxBitmap WorkerThread::CreateGraph
 		dc.SetTextForeground(horizontalAxisColour);
 
 		// Draw vertical lines
-		for (auto i{ 0 }; i <= dataSize; ++i)
+		for (auto i{ 0 }; i < dataSize; ++i)
 		{
 			currTextValue = wxString::Format(wxT("%i"), i + 1);
 			auto textSize = dc.GetTextExtent(currTextValue);
