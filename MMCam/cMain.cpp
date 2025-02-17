@@ -2847,13 +2847,15 @@ auto cMain::GeneratePDFReportUsingLatex
 	//	}
 	//}
 
-	ExecuteLatex(destinationFilePath);
+	if (!ExecuteLatex(destinationFilePath))
+		return "";
 
 	wxFileName file(destinationFilePath);
 	// Replacing *.tex extension to *.pdf
 	file.SetExt("pdf");
 
-	wxRenameFile(file.GetFullPath(), pdfFileName, true);
+	if (!wxRenameFile(file.GetFullPath(), pdfFileName, true))
+		return "";
 
 	wxLaunchDefaultApplication(pdfFileName);
 
@@ -3589,11 +3591,20 @@ auto cMain::OnGenerateReportBtn(wxCommandEvent& evt) -> void
 		RemoveAllUnnecessaryFilesFromFolder(tempFolder.GetFullPath(), extensionsToRemove);
 	}
 
+	if (reportFilePath.IsEmpty()) return;
+
 	if (!uploadReportFolder.IsEmpty())
 	{
 		wxString targetFolder{};
 		if (EnsureFolderHierarchy(uploadReportFolder, targetFolder))
 			UploadReportToDestinationFolder(reportFilePath, targetFolder);
+	}
+
+	// Open Win Explorer
+	{
+		wxFileName file(reportFilePath);
+		wxString command = "explorer \"" + file.GetPath() + "\"";
+		wxExecute(command, wxEXEC_ASYNC);
 	}
 }
 
