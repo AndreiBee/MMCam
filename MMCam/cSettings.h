@@ -3,6 +3,7 @@
 #define CSETTINGS_H
 
 #include "wx/wx.h"
+#include "wx/valnum.h"
 
 #include <memory>
 #include <map>
@@ -46,6 +47,9 @@ namespace SettingsVariables
 		ID_MOT_OPT_Z_STEPS_PER_MM_ST_TEXT,
 		/* Cameras */
 		ID_CAM_TXT_CTRL,
+		/* Other Parameters */
+		ID_GRID_MESH_STEP_TXT_CTRL,
+		ID_CIRCLE_MESH_STEP_TXT_CTRL
 	};
 
 	enum MotorsNames 
@@ -216,10 +220,25 @@ public:
 	auto GetUploadReportFolder() const -> wxString { return m_UploadReportFolder; };
 	auto GetXRayImagesDefaultCaption() const -> wxArrayString { return m_XRayImagesCaptions; };
 
+	auto GetGridMeshStep() const -> unsigned int 
+	{ 
+		int step = 1;
+		m_GridMeshStepPXTxtCtrl->GetValue().ToInt(&step);
+		return (unsigned int)step; 
+	};
+	auto GetCircleMeshStep() const -> unsigned int 
+	{ 
+		int step = 1;
+		m_CircleMeshStepPXTxtCtrl->GetValue().ToInt(&step);
+		return (unsigned int)step; 
+	};
+
+
 private:
 	void CreateMainFrame();
 	void CreateSettings();
 	void CreateMotorsSelection(wxBoxSizer* panel_sizer);
+	auto CreateOtherSettings(wxBoxSizer* panel_sizer) -> void;
 	void InitDefaultStateWidgets();
 	void InitComponents();
 
@@ -268,6 +287,7 @@ private:
 	std::unique_ptr<SettingsVariables::Cameras> m_Cameras{};
 	const int m_MotorsCount{ 6 };
 	std::unique_ptr<SettingsVariables::ProgressValues> m_Progress = std::make_unique<SettingsVariables::ProgressValues>();
+	std::unique_ptr<wxTextCtrl> m_GridMeshStepPXTxtCtrl{}, m_CircleMeshStepPXTxtCtrl{};
 };
 
 #endif // !CSETTINGS_H

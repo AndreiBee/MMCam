@@ -73,6 +73,8 @@ void cSettings::CreateSettings()
 	wxBoxSizer* ms_sizer = new wxBoxSizer(wxVERTICAL);
 	
 	CreateMotorsSelection(ms_sizer);
+
+	CreateOtherSettings(ms_sizer);
 	
 	main_sizer->Add(ms_sizer, 1, wxEXPAND);
 	SetSizerAndFit(main_sizer);
@@ -417,6 +419,108 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 	UpdatePreviousStatesData();
 
+	main_panel->SetSizer(main_panel_sizer);
+	panel_sizer->Add(main_panel, 1, wxEXPAND);
+}
+
+auto cSettings::CreateOtherSettings(wxBoxSizer* panel_sizer) -> void
+{	
+	wxPanel* main_panel = new wxPanel(this);
+#ifdef _DEBUG
+	main_panel->SetBackgroundColour(wxColor(150, 190, 180));
+#else
+	main_panel->SetBackgroundColour(wxColor(255, 255, 255));
+#endif // _DEBUG
+	wxBoxSizer* main_panel_sizer = new wxBoxSizer(wxVERTICAL);
+
+	wxSizer* const settings_grid_sizer = new wxGridSizer(2);
+
+	// Grid Mesh Step
+	{
+		wxBoxSizer* horSizer = new wxBoxSizer(wxHORIZONTAL);
+
+		settings_grid_sizer->Add
+		(
+			new wxStaticText
+			(
+				main_panel,
+				wxID_ANY,
+				"&Grid Mesh Step:"
+			),
+			0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+		);
+
+		wxIntegerValidator<unsigned int> val(NULL, wxNUM_VAL_ZERO_AS_BLANK);
+		//val.SetMin(1);
+		m_GridMeshStepPXTxtCtrl = std::make_unique<wxTextCtrl>
+			(
+				main_panel,
+				SettingsVariables::ID_GRID_MESH_STEP_TXT_CTRL,
+				wxString("100"),
+				wxDefaultPosition,
+				wxDefaultSize,
+				wxTE_CENTRE
+			);
+		m_GridMeshStepPXTxtCtrl->SetValidator(val);
+
+		horSizer->Add(m_GridMeshStepPXTxtCtrl.get(), 0, wxALIGN_CENTER_VERTICAL);
+		horSizer->Add
+		(
+			new wxStaticText
+			(
+				main_panel,
+				wxID_ANY,
+				"[px]"
+			),
+			0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5
+		);
+		settings_grid_sizer->Add(horSizer, 0, wxEXPAND);
+	}
+
+	// Circle Mesh Step
+	{
+		wxBoxSizer* horSizer = new wxBoxSizer(wxHORIZONTAL);
+
+		settings_grid_sizer->Add
+		(
+			new wxStaticText
+			(
+				main_panel,
+				wxID_ANY,
+				"&Circle Mesh Step:"
+			),
+			0, wxALL | wxALIGN_CENTER_VERTICAL, 5
+		);
+
+		wxIntegerValidator<unsigned int> val(NULL, wxNUM_VAL_ZERO_AS_BLANK);
+		//val.SetMin(1);
+		m_CircleMeshStepPXTxtCtrl = std::make_unique<wxTextCtrl>
+			(
+				main_panel,
+				SettingsVariables::ID_CIRCLE_MESH_STEP_TXT_CTRL,
+				wxString("120"),
+				wxDefaultPosition,
+				wxDefaultSize,
+				wxTE_CENTRE
+			);
+		m_CircleMeshStepPXTxtCtrl->SetValidator(val);
+
+		horSizer->Add(m_CircleMeshStepPXTxtCtrl.get(), 0, wxALIGN_CENTER_VERTICAL);
+		horSizer->Add
+		(
+			new wxStaticText
+			(
+				main_panel,
+				wxID_ANY,
+				"[px]"
+			),
+			0, wxLEFT | wxALIGN_CENTER_VERTICAL, 5
+		);
+		settings_grid_sizer->Add(horSizer, 0, wxEXPAND);
+	}
+
+	main_panel_sizer->Add(settings_grid_sizer, 0, wxCENTER | wxALL, 5);
+
 	/* Control Buttons */
 	{
 		m_RefreshBtn = std::make_unique<wxButton>(main_panel, wxID_ANY, wxT("Refresh"));
@@ -434,8 +538,9 @@ void cSettings::CreateMotorsSelection(wxBoxSizer* panel_sizer)
 
 		main_panel_sizer->Add(btns_sizer, 0, wxEXPAND | wxALL, 2);
 	}
+
 	main_panel->SetSizer(main_panel_sizer);
-	panel_sizer->Add(main_panel, 1, wxEXPAND);
+	panel_sizer->Add(main_panel, 0, wxEXPAND);
 }
 
 void cSettings::InitDefaultStateWidgets()

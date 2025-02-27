@@ -120,6 +120,18 @@ public:
 
 	auto GetExecutionFinishedPtr() -> bool* { return &m_ExecutionFinished; };
 
+	auto SetGridMeshStepPX(const unsigned int step)
+	{
+		if (step < 1 || step > 10'000) return;
+		m_GridMeshStepPX = step;
+	}
+
+	auto SetCircleMeshStepPX(const unsigned int step)
+	{
+		if (step < 1 || step > 10'000) return;
+		m_CircleMeshStepPX = step;
+	}
+
 
 private:
 	void InitDefaultComponents();

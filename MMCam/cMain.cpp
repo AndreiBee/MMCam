@@ -1627,9 +1627,12 @@ void cMain::OnOpenSettings(wxCommandEvent& evt)
 	{
 		m_CamPreview->SetPixelSizeUM(m_Settings->GetPixelSizeUM());
 		m_CamPreview->SetCropSizeMM(m_Settings->GetCropSizeMM());
+		m_CamPreview->SetGridMeshStepPX(m_Settings->GetGridMeshStep());
+		m_CamPreview->SetCircleMeshStepPX(m_Settings->GetCircleMeshStep());
 		InitializeSelectedCamera();
 		UpdateStagePositions();
 		EnableUsedAndDisableNonUsedMotors();	
+		Refresh();
 	}
 }
 
