@@ -2241,6 +2241,7 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 		m_ProgressBar->SetPosition(start_point_progress_bar);
 		m_Settings->ResetCapturing();
 		m_ProgressBar->Show();
+		SetFocus();
 
 		//m_AppProgressIndicator = std::make_unique<wxAppProgressIndicator>(this, 100);
 
