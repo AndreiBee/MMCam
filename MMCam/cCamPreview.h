@@ -57,7 +57,11 @@ public:
 	auto SetBackgroundColor(wxColour bckg_colour) -> void;
 	auto SetCrossHairButtonActive(bool activate = false) -> void;
 	auto SetValueDisplayingActive(bool activate = false) -> void;
+	
 	auto ActivateFWHMDisplaying(bool activate = false) -> void;
+	auto ActivateGridMeshDisplaying(bool activate = false) -> void;
+	auto ActivateCircleMeshDisplaying(bool activate = false) -> void;
+
 	void SetXCrossHairPosFromParentWindow(const int& x_pos);
 	void SetYCrossHairPosFromParentWindow(const int& y_pos);
 	auto SettingCrossHairPosFromParentWindow(bool set = false) -> void;
@@ -136,6 +140,10 @@ private:
 	void CreateGraphicsBitmapImage(wxGraphicsContext* gc_);
 	void DrawCameraCapturedImage(wxGraphicsContext* gc_);
 	auto DrawFWHMValues(wxGraphicsContext* gc_) -> void;
+
+	auto DrawGridMesh(wxGraphicsContext* gc_) -> void;
+	auto DrawCircleMesh(wxGraphicsContext* gc_) -> void;
+	
 	auto DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void;
 	auto DrawSumLines(wxGraphicsContext* gc_) -> void;
 	auto DrawHorizontalSumLine(wxGraphicsContext* gc_) -> void;
@@ -146,6 +154,7 @@ private:
 	auto UpdateCrossHairOnSize() -> void;
 	void CalculateMatlabJetColormapPixelRGB16bit(const uint16_t& value, unsigned char& r, unsigned char& g, unsigned char& b);
 	void OnMouseMoved(wxMouseEvent& evt);
+	auto OnEnterPanel(wxMouseEvent& evt) -> void;
 	/* Zooming */
 	void OnMouseWheelMoved(wxMouseEvent& evt);
 	void AddZoom(const double& zoom, bool zoom_in_center_of_window = false);
@@ -212,6 +221,10 @@ private:
 	int m_HorizontalMiddleFWHMPosPixel{}, m_VerticalMiddleFWHMPosPixel{};
 	double m_PixelSizeUM{}, m_CropSizeMM{};
 	int m_ROIWindowWidth{};
+
+	bool m_DisplayGridMesh{}, m_DisplayCircleMesh{};
+	int m_GridMeshStepPX{ 100 };
+
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};
 

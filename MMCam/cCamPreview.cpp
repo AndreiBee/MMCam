@@ -9,6 +9,7 @@ BEGIN_EVENT_TABLE(cCamPreview, wxPanel)
 	EVT_LEFT_UP(cCamPreview::OnPreviewMouseLeftReleased)
 	EVT_KEY_DOWN(cCamPreview::OnKeyPressed)
 	EVT_KEY_UP(cCamPreview::OnKeyReleased)
+	EVT_ENTER_WINDOW(cCamPreview::OnEnterPanel)
 END_EVENT_TABLE()
 
 cCamPreview::cCamPreview
@@ -56,6 +57,18 @@ auto cCamPreview::SetValueDisplayingActive(bool activate) -> void
 auto cCamPreview::ActivateFWHMDisplaying(bool activate) -> void
 {
 	m_DisplayFWHM = activate;
+	Refresh();
+}
+
+auto cCamPreview::ActivateGridMeshDisplaying(bool activate) -> void
+{
+	m_DisplayGridMesh = activate;
+	Refresh();
+}
+
+auto cCamPreview::ActivateCircleMeshDisplaying(bool activate) -> void
+{
+	m_DisplayCircleMesh = activate;
 	Refresh();
 }
 
@@ -462,6 +475,11 @@ void cCamPreview::OnMouseMoved(wxMouseEvent& evt)
 	}
 }
 
+auto cCamPreview::OnEnterPanel(wxMouseEvent& evt) -> void
+{
+	SetFocus();
+}
+
 void cCamPreview::OnMouseWheelMoved(wxMouseEvent& evt)
 {
 	if (m_Zoom <= 1.0 && evt.GetWheelRotation() < 0)
@@ -695,6 +713,9 @@ void cCamPreview::Render(wxBufferedPaintDC& dc)
 
 		DrawCrossHair(gc);
 
+		DrawGridMesh(gc);
+		DrawCircleMesh(gc);
+
 		DrawSpotCroppedWindow(gc);
 		DrawSumLines(gc);
 
@@ -878,6 +899,110 @@ auto cCamPreview::DrawFWHMValues(wxGraphicsContext* gc_) -> void
 	}
 
 	LOG("Finished: " + wxString(__FUNCSIG__))
+}
+
+auto cCamPreview::DrawGridMesh(wxGraphicsContext* gc_) -> void
+{	
+	if (!m_Image.IsOk() || !m_DisplayGridMesh) return;
+
+	auto penColour = wxColour(195, 195, 195, 100);
+	auto penSize = 1;
+	auto penStyle = wxPENSTYLE_SOLID;
+	gc_->SetPen(wxPen(penColour, penSize, penStyle));
+
+	//wxDouble offsetX{ 5.0 }, offsetY{ 5.0 };
+	wxRealPoint drawPointStart{}, drawPointFinish{};
+
+	auto centerPoint = wxRealPoint();
+	centerPoint.x = (m_StartDrawPos.x + m_ImageSize.GetWidth() / 2 - 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage;
+	centerPoint.y = (m_StartDrawPos.y + m_ImageSize.GetHeight() / 2 - 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage;
+
+	auto rightBottomBoundary = wxRealPoint();
+	rightBottomBoundary.x = (m_StartDrawPos.x + m_ImageSize.GetWidth()) * m_Zoom / m_ZoomOnOriginalSizeImage;
+	rightBottomBoundary.y = (m_StartDrawPos.y + m_ImageSize.GetHeight()) * m_Zoom / m_ZoomOnOriginalSizeImage;
+	auto leftUpperBoundary = m_StartDrawPos;
+	leftUpperBoundary.x *= m_Zoom / m_ZoomOnOriginalSizeImage;
+	leftUpperBoundary.y *= m_Zoom / m_ZoomOnOriginalSizeImage;
+
+	/* Vertical Lines */
+	// Draw the right side from the center
+	{
+		drawPointStart.x = centerPoint.x;
+		drawPointStart.y = leftUpperBoundary.y;
+		while (drawPointStart.x <= rightBottomBoundary.x)
+		{
+			gc_->StrokeLine
+			(
+				drawPointStart.x,
+				drawPointStart.y,
+				drawPointStart.x,
+				rightBottomBoundary.y
+			);
+
+			drawPointStart.x += m_GridMeshStepPX / m_ZoomOnOriginalSizeImage;
+		}
+	}
+
+	// Draw the left side from the center
+	{
+		drawPointStart.x = centerPoint.x;
+		drawPointStart.x -= m_GridMeshStepPX / m_ZoomOnOriginalSizeImage;
+
+		while (drawPointStart.x >= leftUpperBoundary.x)
+		{
+			gc_->StrokeLine
+			(
+				drawPointStart.x,
+				drawPointStart.y,
+				drawPointStart.x,
+				rightBottomBoundary.y
+			);
+
+			drawPointStart.x -= m_GridMeshStepPX / m_ZoomOnOriginalSizeImage;
+		}
+	}
+
+	/* Horizontal Lines */
+	// Draw the bottom side from the center
+	{
+		drawPointStart.x = leftUpperBoundary.x;
+		drawPointStart.y = centerPoint.y;
+		while (drawPointStart.y <= rightBottomBoundary.y)
+		{
+			gc_->StrokeLine
+			(
+				drawPointStart.x,
+				drawPointStart.y,
+				rightBottomBoundary.x,
+				drawPointStart.y
+			);
+
+			drawPointStart.y += m_GridMeshStepPX / m_ZoomOnOriginalSizeImage;
+		}
+	}
+
+	// Draw the top side from the center
+	{
+		drawPointStart.x = leftUpperBoundary.x;
+		drawPointStart.y = centerPoint.y;
+		drawPointStart.y -= m_GridMeshStepPX / m_ZoomOnOriginalSizeImage;
+		while (drawPointStart.y >= leftUpperBoundary.y)
+		{
+			gc_->StrokeLine
+			(
+				drawPointStart.x,
+				drawPointStart.y,
+				rightBottomBoundary.x,
+				drawPointStart.y
+			);
+
+			drawPointStart.y -= m_GridMeshStepPX / m_ZoomOnOriginalSizeImage;
+		}
+	}
+}
+
+auto cCamPreview::DrawCircleMesh(wxGraphicsContext* gc_) -> void
+{
 }
 
 auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void

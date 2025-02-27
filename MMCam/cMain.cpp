@@ -11,6 +11,9 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, cMain::OnCrossHairButton)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, cMain::OnValueDisplayingCheck)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
+	EVT_MENU(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, cMain::OnStartStopCapturingMenuButton)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, cMain::OnEnableGridMeshDisplaying)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, cMain::OnEnableCircleMeshDisplaying)
 	EVT_MAXIMIZE(cMain::OnMaximizeButton)
 	/* Detector X */
 	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_SC_DET_X_ABS_TE_CTL, cMain::OnEnterTextCtrlDetectorXAbsPos)
@@ -184,9 +187,12 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, wxT("Start Live\tL"));
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
 	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, wxT("Dark Mode"));
-	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying\tF"));
-	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
+
 	m_MenuBar->menu_edit->Append(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, wxT("Settings\tCtrl+S"));
+
+	m_MenuBar->menu_edit->AppendCheckItem(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, wxT("Start Measurement\tM"));
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, false);
+
 	// Append Edit Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_edit, wxT("&Edit"));
 
@@ -197,6 +203,19 @@ void cMain::CreateMenuBarOnFrame()
 	m_MenuBar->menu_tools->Append(wxID_ANY, wxT("&Intensity Profile"), m_MenuBar->submenu_intensity_profile);
 	// Append Value Displaying Check
 	m_MenuBar->menu_tools->Append(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, wxT("Value Displaying\tV"), wxEmptyString, wxITEM_CHECK);
+
+
+	// Circle Mesh
+	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, wxT("Circle Mesh Displaying\tCtrl+O"));
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, false);
+	// FWHM
+	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying\tF"));
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
+	// Grid Mesh
+	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, wxT("Grid Mesh Displaying\tCtrl+G"));
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, false);
+	
+
 	// Append Tools Menu to the Menu Bar
 	m_MenuBar->menu_bar->Append(m_MenuBar->menu_tools, wxT("&Tools"));
 	// Window Menu
@@ -282,6 +301,7 @@ void cMain::InitDefaultStateWidgets()
 		}
 		/* Start Capturing */
 		m_StartStopMeasurementTglBtn->Disable();
+		m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, false);
 	}
 }
 
@@ -1388,7 +1408,23 @@ auto cMain::OnEnableFWHMDisplaying(wxCommandEvent& evt) -> void
 {
 	m_CamPreview->ActivateFWHMDisplaying
 	(
-		m_MenuBar->menu_edit->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING)
+		m_MenuBar->menu_tools->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING)
+	);
+}
+
+auto cMain::OnEnableGridMeshDisplaying(wxCommandEvent& evt) -> void
+{	
+	m_CamPreview->ActivateGridMeshDisplaying
+	(
+		m_MenuBar->menu_tools->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING)
+	);
+}
+
+auto cMain::OnEnableCircleMeshDisplaying(wxCommandEvent& evt) -> void
+{
+	m_CamPreview->ActivateCircleMeshDisplaying
+	(
+		m_MenuBar->menu_tools->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING)
 	);
 }
 
@@ -1532,6 +1568,7 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
 	m_SingleShotBtn->Enable();
 	m_StartStopMeasurementTglBtn->Enable();
+	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, true);
 }
 
 void cMain::OnOpenSettings(wxCommandEvent& evt)
@@ -1572,7 +1609,9 @@ auto cMain::InitializeSelectedCamera() -> void
 		m_StartStopLiveCapturingTglBtn->Enable();
 		m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
 		m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
-		m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, true);
+		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, true);
 		m_VerticalToolBar->tool_bar->Enable();
 	}
 
@@ -1918,6 +1957,7 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 			{
 				m_StartStopLiveCapturingTglBtn->Disable();
 				m_StartStopMeasurementTglBtn->Disable();
+				m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, false);
 				m_CamExposure->Disable();
 				m_SingleShotBtn->Disable();
 			}
@@ -1930,6 +1970,8 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 			{
 				m_StartStopLiveCapturingTglBtn->Enable();
 				m_StartStopMeasurementTglBtn->Enable();
+				m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, true);
+				m_MenuBar->menu_edit->Check(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, false);
 				m_CamExposure->Enable();
 				m_SingleShotBtn->Enable();
 			}
@@ -2068,6 +2110,14 @@ void cMain::OnStartStopCapturingTglButton(wxCommandEvent& evt)
 			return;
 		}
 	}
+}
+
+auto cMain::OnStartStopCapturingMenuButton(wxCommandEvent& evt) -> void
+{
+	m_StartStopMeasurementTglBtn->SetValue(!m_StartStopMeasurementTglBtn->GetValue());
+
+	wxCommandEvent art_evt(wxEVT_TOGGLEBUTTON, MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT);
+	ProcessEvent(art_evt);
 }
 
 void cMain::StartLiveCapturing()
@@ -3719,7 +3769,7 @@ auto cMain::EnableControlsAfterCapturing() -> void
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, true);
-	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, true);
 
 	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, true);
@@ -3740,7 +3790,7 @@ auto cMain::DisableControlsBeforeCapturing() -> void
 	m_SingleShotBtn->Disable();
 	m_StartStopLiveCapturingTglBtn->Disable();
 
-	m_VerticalToolBar->tool_bar->EnableTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
+	//m_VerticalToolBar->tool_bar->EnableTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
 	m_CrossHairPosXTxtCtrl->Disable();
 	m_CrossHairPosYTxtCtrl->Disable();
 	//m_SetCrossHairPosTglBtn->Disable();
@@ -3748,7 +3798,7 @@ auto cMain::DisableControlsBeforeCapturing() -> void
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, false);
-	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, false);
 	m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
 
@@ -3802,6 +3852,7 @@ void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
 			{
 				m_StartStopLiveCapturingTglBtn->Disable();
 				m_StartStopMeasurementTglBtn->Disable();
+				m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, false);
 				m_CamExposure->Disable();
 				m_SingleShotBtn->Disable();
 			}
@@ -3814,6 +3865,7 @@ void cMain::OnStartStopLiveCapturingTglBtn(wxCommandEvent& evt)
 			{
 				m_StartStopLiveCapturingTglBtn->Enable();
 				m_StartStopMeasurementTglBtn->Enable();
+				m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, true);
 				m_CamExposure->Enable();
 				m_SingleShotBtn->Enable();
 			}

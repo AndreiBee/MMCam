@@ -26,7 +26,7 @@
 #include "src/img/logo.xpm"
 
 #define MAJOR_VERSION 1
-#define MINOR_VERSION 14
+#define MINOR_VERSION 15
 
 namespace MainFrameVariables
 {
@@ -37,6 +37,8 @@ namespace MainFrameVariables
 		ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING,
 		ID_MENUBAR_EDIT_ENABLE_DARK_MODE,
 		ID_MENUBAR_EDIT_SETTINGS,
+		ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING,
+		ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING,
 		ID_MENUBAR_TOOLS_CROSSHAIR,
 		ID_MENUBAR_TOOLS_VALUE_DISPLAYING,
 		ID_MENUBAR_WINDOW_FULLSCREEN,
@@ -257,6 +259,8 @@ private:
 
 	auto OnEnableDarkMode(wxCommandEvent& evt) -> void;
 	auto OnEnableFWHMDisplaying(wxCommandEvent& evt) -> void;
+	auto OnEnableGridMeshDisplaying(wxCommandEvent& evt) -> void;
+	auto OnEnableCircleMeshDisplaying(wxCommandEvent& evt) -> void;
 
 	void UnCheckAllTools();
 	/* ProgressBar */
@@ -671,6 +675,7 @@ private:
 	auto CreateVirtualEnvironment(wxString pathToVenv, wxString pathToRequirements) -> bool;
 	/* Start Capturing */
 	void OnStartStopCapturingTglButton(wxCommandEvent& evt);
+	auto OnStartStopCapturingMenuButton(wxCommandEvent& evt) -> void;
 	auto EnableControlsAfterCapturing() -> void;
 	auto DisableControlsBeforeCapturing() -> void;
 	void OnStartStopLiveCapturingMenu(wxCommandEvent& evt);
