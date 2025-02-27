@@ -41,7 +41,7 @@ auto cCamPreview::SetBackgroundColor(wxColour bckg_colour) -> void
 	SetBackgroundColour(bckg_colour);
 }
 
-auto cCamPreview::SetCrossHairButtonActive(bool activate) -> void
+auto cCamPreview::ActivateCrossHairDisplaying(bool activate) -> void
 {
 	m_CrossHairTool->ActivateToolButton(activate, activate);
 	//m_CrossHairTool->SetCursorPosOnCanvas(m_CursorPosOnCanvas);
@@ -57,6 +57,12 @@ auto cCamPreview::SetValueDisplayingActive(bool activate) -> void
 auto cCamPreview::ActivateFWHMDisplaying(bool activate) -> void
 {
 	m_DisplayFWHM = activate;
+	Refresh();
+}
+
+auto cCamPreview::ActivateFocusCenterDisplaying(bool activate) -> void
+{
+	m_DisplayFocusCenter = activate;
 	Refresh();
 }
 
@@ -907,7 +913,7 @@ auto cCamPreview::DrawGridMesh(wxGraphicsContext* gc_) -> void
 
 	auto penColour = wxColour(195, 195, 195, 100);
 	auto penSize = 1;
-	auto penStyle = wxPENSTYLE_SOLID;
+	auto penStyle = wxPENSTYLE_LONG_DASH;
 	gc_->SetPen(wxPen(penColour, penSize, penStyle));
 
 	//wxDouble offsetX{ 5.0 }, offsetY{ 5.0 };
@@ -1007,10 +1013,11 @@ auto cCamPreview::DrawCircleMesh(wxGraphicsContext* gc_) -> void
 
 auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void
 {
-	if (!m_Image.IsOk() || !m_DisplayFWHM || !m_HorizontalSumArray || !m_VerticalSumArray) return;
+	if (!m_Image.IsOk() || !m_HorizontalSumArray || !m_VerticalSumArray) return;
 	if (m_HorizontalFWHM_PX == -1.0 || m_VerticalFWHM_PX == -1.0) return;
 	if (!m_HorizonalBestPosSum.second || !m_VerticalBestPosSum.second) return;
-	
+	if (!m_DisplayFocusCenter) return;
+
 	if (m_ROIWindowWidth <= 0) return;
 
 	auto penColour = wxColour("red");

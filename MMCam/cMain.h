@@ -34,11 +34,12 @@ namespace MainFrameVariables
 	{
 		/* Menu Bar */
 		ID_MENUBAR_FILE_QUIT,
-		ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING,
 		ID_MENUBAR_EDIT_ENABLE_DARK_MODE,
 		ID_MENUBAR_EDIT_SETTINGS,
-		ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING,
-		ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING,
+		ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING,
+		ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING,
+		ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING,
+		ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING,
 		ID_MENUBAR_TOOLS_CROSSHAIR,
 		ID_MENUBAR_TOOLS_VALUE_DISPLAYING,
 		ID_MENUBAR_WINDOW_FULLSCREEN,
@@ -258,9 +259,12 @@ private:
 	void CreateMeasurement(wxPanel* right_side_panel, wxBoxSizer* right_side_panel_sizer);
 
 	auto OnEnableDarkMode(wxCommandEvent& evt) -> void;
-	auto OnEnableFWHMDisplaying(wxCommandEvent& evt) -> void;
-	auto OnEnableGridMeshDisplaying(wxCommandEvent& evt) -> void;
-	auto OnEnableCircleMeshDisplaying(wxCommandEvent& evt) -> void;
+
+	auto OnFWHMButton(wxCommandEvent& evt) -> void;
+	auto OnGridMeshButton(wxCommandEvent& evt) -> void;
+	auto OnFocusCenterButton(wxCommandEvent& evt) -> void;
+	auto OnCircleMeshButton(wxCommandEvent& evt) -> void;
+	auto OnCrossHairButton(wxCommandEvent& evt) -> void;
 
 	void UnCheckAllTools();
 	/* ProgressBar */
@@ -277,7 +281,6 @@ private:
 	auto InitializeSelectedCamera() -> void;
 	void EnableUsedAndDisableNonUsedMotors();
 
-	void OnCrossHairButton(wxCommandEvent& evt);
 	void OnValueDisplayingCheck(wxCommandEvent& evt);
 
 	void OnFullScreen(wxCommandEvent& evt);
@@ -1347,8 +1350,8 @@ private:
 	int m_Progress{};
 	wxString m_ProgressMsg{};
 
-	/* CrossHair */
-	bool m_IsCrossHairChecked{};
+	// Tools
+	bool m_IsCrossHairChecked{}, m_IsFWHMChecked{}, m_IsGridMeshChecked{}, m_IsCircleMeshChecked{}, m_IsFocusCenterChecked{};
 
 	/* Value Displaying */
 	bool m_IsValueDisplayingChecked{};

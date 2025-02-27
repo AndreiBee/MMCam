@@ -55,10 +55,11 @@ public:
 		std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> input_preview_panel_args
 	);
 	auto SetBackgroundColor(wxColour bckg_colour) -> void;
-	auto SetCrossHairButtonActive(bool activate = false) -> void;
 	auto SetValueDisplayingActive(bool activate = false) -> void;
 	
+	auto ActivateCrossHairDisplaying(bool activate = false) -> void;
 	auto ActivateFWHMDisplaying(bool activate = false) -> void;
+	auto ActivateFocusCenterDisplaying(bool activate = false) -> void;
 	auto ActivateGridMeshDisplaying(bool activate = false) -> void;
 	auto ActivateCircleMeshDisplaying(bool activate = false) -> void;
 
@@ -224,6 +225,8 @@ private:
 
 	bool m_DisplayGridMesh{}, m_DisplayCircleMesh{};
 	int m_GridMeshStepPX{ 100 };
+
+	bool m_DisplayFocusCenter{};
 
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};

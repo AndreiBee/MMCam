@@ -6,14 +6,15 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, cMain::OnSingleShotCameraImage)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, cMain::OnStartStopLiveCapturingMenu)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, cMain::OnEnableDarkMode)
-	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, cMain::OnEnableFWHMDisplaying)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, cMain::OnOpenSettings)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, cMain::OnCrossHairButton)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, cMain::OnValueDisplayingCheck)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, cMain::OnFWHMButton)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, cMain::OnFocusCenterButton)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING, cMain::OnGridMeshButton)
+	EVT_MENU(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING, cMain::OnCircleMeshButton)
 	EVT_MENU(MainFrameVariables::ID_MENUBAR_WINDOW_FULLSCREEN, cMain::OnFullScreen)
 	EVT_MENU(MainFrameVariables::ID_RIGHT_MT_START_STOP_MEASUREMENT, cMain::OnStartStopCapturingMenuButton)
-	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, cMain::OnEnableGridMeshDisplaying)
-	EVT_MENU(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, cMain::OnEnableCircleMeshDisplaying)
 	EVT_MAXIMIZE(cMain::OnMaximizeButton)
 	/* Detector X */
 	EVT_TEXT_ENTER(MainFrameVariables::ID_RIGHT_SC_DET_X_ABS_TE_CTL, cMain::OnEnterTextCtrlDetectorXAbsPos)
@@ -206,14 +207,17 @@ void cMain::CreateMenuBarOnFrame()
 
 
 	// Circle Mesh
-	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, wxT("Circle Mesh Displaying\tCtrl+O"));
-	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, false);
+	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING, wxT("Circle Mesh Displaying\tCtrl+O"));
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING, false);
+	// Focus Center
+	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, wxT("Focus Center Displaying\tCtrl+F"));
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, false);
 	// FWHM
-	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying\tF"));
-	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
+	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, wxT("FWHM Displaying\tF"));
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, false);
 	// Grid Mesh
-	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, wxT("Grid Mesh Displaying\tCtrl+G"));
-	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, false);
+	m_MenuBar->menu_tools->AppendCheckItem(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING, wxT("Grid Mesh Displaying\tCtrl+G"));
+	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING, false);
 	
 
 	// Append Tools Menu to the Menu Bar
@@ -1404,27 +1408,67 @@ auto cMain::OnEnableDarkMode(wxCommandEvent& evt) -> void
 	Refresh();
 }
 
-auto cMain::OnEnableFWHMDisplaying(wxCommandEvent& evt) -> void
+auto cMain::OnFWHMButton(wxCommandEvent& evt) -> void
 {
+	m_IsFWHMChecked = !m_IsFWHMChecked;
+
+	auto currID = MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING;
+	auto currState = m_IsFWHMChecked;
+
+	m_MenuBar->menu_tools->Check(currID, currState);
+	m_VerticalToolBar->tool_bar->ToggleTool(currID, currState);
+
 	m_CamPreview->ActivateFWHMDisplaying
 	(
-		m_MenuBar->menu_tools->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING)
+		currState
 	);
 }
 
-auto cMain::OnEnableGridMeshDisplaying(wxCommandEvent& evt) -> void
+auto cMain::OnGridMeshButton(wxCommandEvent& evt) -> void
 {	
+	m_IsGridMeshChecked = !m_IsGridMeshChecked;
+
+	auto currID = MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING;
+	auto currState = m_IsGridMeshChecked;
+
+	m_MenuBar->menu_tools->Check(currID, currState);
+	m_VerticalToolBar->tool_bar->ToggleTool(currID, currState);
+
 	m_CamPreview->ActivateGridMeshDisplaying
 	(
-		m_MenuBar->menu_tools->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING)
+		currState
 	);
 }
 
-auto cMain::OnEnableCircleMeshDisplaying(wxCommandEvent& evt) -> void
+auto cMain::OnFocusCenterButton(wxCommandEvent& evt) -> void
 {
+	m_IsFocusCenterChecked = !m_IsFocusCenterChecked;
+
+	auto currID = MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING;
+	auto currState = m_IsFocusCenterChecked;
+
+	m_MenuBar->menu_tools->Check(currID, currState);
+	m_VerticalToolBar->tool_bar->ToggleTool(currID, currState);
+
+	m_CamPreview->ActivateFocusCenterDisplaying
+	(
+		currState
+	);
+}
+
+auto cMain::OnCircleMeshButton(wxCommandEvent& evt) -> void
+{
+	m_IsCircleMeshChecked = !m_IsCircleMeshChecked;
+
+	auto currID = MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING;
+	auto currState = m_IsCircleMeshChecked;
+
+	m_MenuBar->menu_tools->Check(currID, currState);
+	m_VerticalToolBar->tool_bar->ToggleTool(currID, currState);
+
 	m_CamPreview->ActivateCircleMeshDisplaying
 	(
-		m_MenuBar->menu_tools->IsChecked(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING)
+		currState
 	);
 }
 
@@ -1609,9 +1653,10 @@ auto cMain::InitializeSelectedCamera() -> void
 		m_StartStopLiveCapturingTglBtn->Enable();
 		m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
 		m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
-		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
-		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_GRID_MESH_DISPLAYING, true);
-		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_CIRCLE_MESH_DISPLAYING, true);
+		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, true);
+		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, true);
+		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING, true);
+		m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING, true);
 		m_VerticalToolBar->tool_bar->Enable();
 	}
 
@@ -1772,24 +1817,161 @@ void cMain::CreateVerticalToolBar()
 		wxTB_VERTICAL
 	);
 
-	/* CrossHair bitmap */
-	wxBitmap crosshairToolBitmap{};
+	/* CrossHair */
 	{
-		auto bitmap = wxART_ARROW_TRENDING_LINES;
-		auto client = wxART_CLIENT_FLUENTUI_FILLED;
-		auto color = wxColour(128, 128, 255);
-		auto size = wxSize(32, 32);
-		crosshairToolBitmap = wxMaterialDesignArtProvider::GetBitmap
+		wxBitmap toolBitmap{};
+		{
+			auto bitmap = wxART_ARROW_TRENDING_LINES;
+			auto client = wxART_CLIENT_FLUENTUI_FILLED;
+			auto color = wxColour(128, 128, 255);
+			auto size = wxSize(32, 32);
+			toolBitmap = wxMaterialDesignArtProvider::GetBitmap
+			(
+				bitmap,
+				client,
+				size,
+				color
+			);
+		}
+
+		m_VerticalToolBar->tool_bar->AddCheckTool
 		(
-			bitmap,
-			client,
-			size,
-			color
+			MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, 
+			_("Crosshair"), 
+			toolBitmap
+		);
+
+		m_VerticalToolBar->tool_bar->SetToolShortHelp
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, 
+			wxT("Crosshair (C)")
 		);
 	}
 
-	m_VerticalToolBar->tool_bar->AddCheckTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, _("Crosshair"), crosshairToolBitmap);
-	m_VerticalToolBar->tool_bar->SetToolShortHelp(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, wxT("Crosshair (C)"));
+	/* Focus Center */
+	{
+		wxBitmap toolBitmap{};
+		{
+			auto bitmap = wxART_CENTER_FOCUS_WEAK;
+			auto client = wxART_CLIENT_MATERIAL_FILLED;
+			auto color = wxColour(255, 0, 128);
+			auto size = wxSize(32, 32);
+			toolBitmap = wxMaterialDesignArtProvider::GetBitmap
+			(
+				bitmap,
+				client,
+				size,
+				color
+			);
+		}
+
+		m_VerticalToolBar->tool_bar->AddCheckTool
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, 
+			_("Focus Center"), 
+			toolBitmap
+		);
+
+		m_VerticalToolBar->tool_bar->SetToolShortHelp
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, 
+			wxT("Focus Center (Ctrl+F)")
+		);
+	}
+
+	/* FWHM */
+	{
+		wxBitmap toolBitmap{};
+		{
+			auto bitmap = wxART_AUTOSUM;
+			auto client = wxART_CLIENT_FLUENTUI_FILLED;
+			auto color = wxColour(128, 255, 0);
+			auto size = wxSize(32, 32);
+			toolBitmap = wxMaterialDesignArtProvider::GetBitmap
+			(
+				bitmap,
+				client,
+				size,
+				color
+			);
+		}
+
+		m_VerticalToolBar->tool_bar->AddCheckTool
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, 
+			_("FWHM"), 
+			toolBitmap
+		);
+
+		m_VerticalToolBar->tool_bar->SetToolShortHelp
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, 
+			wxT("FWHM (F)")
+		);
+	}
+
+
+	/* Grid Mesh */
+	{
+		wxBitmap toolBitmap{};
+		{
+			auto bitmap = wxART_GRID_4X4;
+			auto client = wxART_CLIENT_MATERIAL_FILLED;
+			auto color = wxColour(192, 192, 192);
+			auto size = wxSize(32, 32);
+			toolBitmap = wxMaterialDesignArtProvider::GetBitmap
+			(
+				bitmap,
+				client,
+				size,
+				color
+			);
+		}
+
+		m_VerticalToolBar->tool_bar->AddCheckTool
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING, 
+			_("Grid Mesh"), 
+			toolBitmap
+		);
+
+		m_VerticalToolBar->tool_bar->SetToolShortHelp
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_GRID_MESH_DISPLAYING, 
+			wxT("Grid Mesh (Ctrl+G)")
+		);
+	}
+
+	/* Circle Mesh */
+	{
+		wxBitmap toolBitmap{};
+		{
+			auto bitmap = wxART_TARGET;
+			auto client = wxART_CLIENT_FLUENTUI_FILLED;
+			auto color = wxColour(255, 128, 64);
+			auto size = wxSize(32, 32);
+			toolBitmap = wxMaterialDesignArtProvider::GetBitmap
+			(
+				bitmap,
+				client,
+				size,
+				color
+			);
+		}
+
+		m_VerticalToolBar->tool_bar->AddCheckTool
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING, 
+			_("Circle Mesh"), 
+			toolBitmap
+		);
+
+		m_VerticalToolBar->tool_bar->SetToolShortHelp
+		(
+			MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_CIRCLE_MESH_DISPLAYING, 
+			wxT("Circle Mesh (Ctrl+O)")
+		);
+	}
 
 	m_VerticalToolBar->tool_bar->SetToolBitmapSize(wxSize(30, 30));
 	m_VerticalToolBar->tool_bar->Disable();
@@ -1815,10 +1997,17 @@ void cMain::UnCheckAllTools()
 	/* Unchecking CrossHair Button */
 	m_VerticalToolBar->tool_bar->ToggleTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
 	m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
-	m_CamPreview->SetCrossHairButtonActive(false);
+	m_CamPreview->ActivateCrossHairDisplaying(false);
 	m_CrossHairPosXTxtCtrl->Disable();
 	m_CrossHairPosYTxtCtrl->Disable();
 	//m_SetCrossHairPosTglBtn->Disable();
+
+	m_VerticalToolBar->tool_bar->ToggleTool(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, false);
+	m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, false);
+	//m_CamPreview->SetCrossHairButtonActive(false);
+	//m_CrossHairPosXTxtCtrl->Disable();
+	//m_CrossHairPosYTxtCtrl->Disable();
+
 }
 
 void cMain::OnFirstStageChoice(wxCommandEvent& evt)
@@ -2171,33 +2360,35 @@ void cMain::ChangeCameraManufacturerChoice(wxCommandEvent& evt)
 	ProcessEvent(simulate_change_exposure_value);
 }
 
-void cMain::OnCrossHairButton(wxCommandEvent& evt)
+auto cMain::OnCrossHairButton(wxCommandEvent& evt) -> void
 {
-	UnCheckAllTools();
-	if (!m_IsCrossHairChecked)
+	m_IsCrossHairChecked = !m_IsCrossHairChecked;
+
+	auto currID = MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR;
+	auto currState = m_IsCrossHairChecked;
+
+	m_MenuBar->menu_tools->Check(currID, currState);
+	m_VerticalToolBar->tool_bar->ToggleTool(currID, currState);
+
+	m_CamPreview->ActivateCrossHairDisplaying
+	(
+		currState
+	);
+
+	m_CrossHairPosXTxtCtrl->Enable(currState);
+	m_CrossHairPosYTxtCtrl->Enable(currState);
+
+	if (currState)
 	{
-		m_MenuBar->menu_tools->Check(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
-		m_VerticalToolBar->tool_bar->ToggleTool(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, true);
-		m_IsCrossHairChecked = true;
-		m_CamPreview->SetCrossHairButtonActive(true);
-		m_CrossHairPosXTxtCtrl->Enable();
-		m_CrossHairPosYTxtCtrl->Enable();
-		//m_SetCrossHairPosTglBtn->Enable();
+		auto xPos = 1, yPos = 1;
+		m_CrossHairPosXTxtCtrl->GetValue().ToInt(&xPos);
+		m_CrossHairPosYTxtCtrl->GetValue().ToInt(&yPos);
+		if (xPos == 1 && yPos == 1)
 		{
-			auto xPos = 1, yPos = 1;
-			m_CrossHairPosXTxtCtrl->GetValue().ToInt(&xPos);
-			m_CrossHairPosYTxtCtrl->GetValue().ToInt(&yPos);
-			if (xPos == 1 && yPos == 1)
-			{
-				auto img_size = m_CamPreview->GetImageSize();
-				m_CrossHairPosXTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetWidth() / 2));
-				m_CrossHairPosYTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetHeight() / 2));
-			}
+			auto img_size = m_CamPreview->GetImageSize();
+			m_CrossHairPosXTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetWidth() / 2));
+			m_CrossHairPosYTxtCtrl->SetValue(wxString::Format(wxT("%i"), img_size.GetHeight() / 2));
 		}
-	}
-	else
-	{
-		m_IsCrossHairChecked = false;
 	}
 }
 
@@ -3769,7 +3960,8 @@ auto cMain::EnableControlsAfterCapturing() -> void
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, true);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, true);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, true);
-	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, true);
+	//m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, true);
+	//m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, true);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, true);
 
 	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_VALUE_DISPLAYING, true);
@@ -3798,7 +3990,8 @@ auto cMain::DisableControlsBeforeCapturing() -> void
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_SINGLE_SHOT_BTN, false);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_RIGHT_CAM_START_STOP_LIVE_CAPTURING_TGL_BTN, false);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_DARK_MODE, false);
-	m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_EDIT_ENABLE_FWHM_DISPLAYING, false);
+	//m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FWHM_DISPLAYING, false);
+	//m_MenuBar->menu_tools->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_ENABLE_FOCUS_CENTER_DISPLAYING, false);
 	m_MenuBar->menu_edit->Enable(MainFrameVariables::ID_MENUBAR_EDIT_SETTINGS, false);
 	m_MenuBar->submenu_intensity_profile->Enable(MainFrameVariables::ID_MENUBAR_TOOLS_CROSSHAIR, false);
 
