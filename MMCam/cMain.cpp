@@ -1618,6 +1618,7 @@ void cMain::OnSetOutDirectoryBtn(wxCommandEvent& evt)
 void cMain::OnOpenSettings(wxCommandEvent& evt)
 {
 	m_CamPreview->SetFocus();
+
 #ifndef _DEBUG
 	m_Settings->ShowModal();
 #endif // !_DEBUG

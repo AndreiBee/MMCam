@@ -43,6 +43,7 @@ auto cCamPreview::SetBackgroundColor(wxColour bckg_colour) -> void
 
 auto cCamPreview::ActivateCrossHairDisplaying(bool activate) -> void
 {
+	m_DisplayCrossHair = activate;
 	m_CrossHairTool->ActivateToolButton(activate, activate);
 	//m_CrossHairTool->SetCursorPosOnCanvas(m_CursorPosOnCanvas);
 	ChangeCursorInDependenceOfCurrentParameters();
@@ -57,6 +58,9 @@ auto cCamPreview::SetValueDisplayingActive(bool activate) -> void
 auto cCamPreview::ActivateFWHMDisplaying(bool activate) -> void
 {
 	m_DisplayFWHM = activate;
+	if (activate)
+		CalculateFWHM();
+
 	Refresh();
 }
 
@@ -181,74 +185,7 @@ void cCamPreview::UpdateImageParameters()
 
 	// FWHM
 	if (m_DisplayFWHM)
-	{
-		// Create threads for horizontal and vertical calculations
-		std::thread horizontalThread([&]()
-			{
-				try 
-				{
-					FWHM::CalculateSumVertically
-					(
-						m_ImageData.get(),
-						m_ImageSize.GetWidth(),
-						m_ImageSize.GetHeight(),
-						m_HorizontalSumArray.get()
-					);
-
-					LOG("CalculatedSumVertically: " + wxString(__FUNCSIG__));
-
-					m_HorizontalFWHM_PX = FWHM::CalculateFWHM
-					(
-						m_HorizontalSumArray.get(),
-						m_ImageSize.GetWidth(),
-						&m_HorizonalBestPosSum.first,
-						&m_HorizonalBestPosSum.second,
-						&m_HorizontalWorstPosSum.first,
-						&m_HorizontalWorstPosSum.second,
-						&m_HorizontalMiddleFWHMPosPixel
-					);
-				}
-				catch (const std::exception& e) 
-				{
-					LOG("Exception in horizontal thread: " + wxString(e.what()));
-				}
-			});
-
-		std::thread verticalThread([&]()
-			{
-				try 
-				{
-					FWHM::CalculateSumHorizontally
-					(
-						m_ImageData.get(),
-						m_ImageSize.GetWidth(),
-						m_ImageSize.GetHeight(),
-						m_VerticalSumArray.get()
-					);
-
-					LOG("CalculatedSumHorizontally: " + wxString(__FUNCSIG__));
-
-					m_VerticalFWHM_PX = FWHM::CalculateFWHM
-					(
-						m_VerticalSumArray.get(),
-						m_ImageSize.GetHeight(),
-						&m_VerticalBestPosSum.first,
-						&m_VerticalBestPosSum.second,
-						&m_VerticalWorstPosSum.first,
-						&m_VerticalWorstPosSum.second,
-						&m_VerticalMiddleFWHMPosPixel
-					);
-				}
-				catch (const std::exception& e) 
-				{
-					LOG("Exception in vertical thread: " + wxString(e.what()));
-				}
-			});
-
-		// Wait for both threads to complete execution
-		horizontalThread.join();
-		verticalThread.join();
-	}
+		CalculateFWHM();
 
 	m_IsImageSet = true;
 	m_IsGraphicsBitmapSet = false;
@@ -671,6 +608,76 @@ auto cCamPreview::OnKeyReleased(wxKeyEvent& evt) -> void
 		evt.Skip(); // Allow other event handlers to process the event
 }
 
+auto cCamPreview::CalculateFWHM() -> void
+{
+	// Create threads for horizontal and vertical calculations
+	std::thread horizontalThread([&]()
+		{
+			try 
+			{
+				FWHM::CalculateSumVertically
+				(
+					m_ImageData.get(),
+					m_ImageSize.GetWidth(),
+					m_ImageSize.GetHeight(),
+					m_HorizontalSumArray.get()
+				);
+
+				LOG("CalculatedSumVertically: " + wxString(__FUNCSIG__));
+
+				m_HorizontalFWHM_PX = FWHM::CalculateFWHM
+				(
+					m_HorizontalSumArray.get(),
+					m_ImageSize.GetWidth(),
+					&m_HorizonalBestPosSum.first,
+					&m_HorizonalBestPosSum.second,
+					&m_HorizontalWorstPosSum.first,
+					&m_HorizontalWorstPosSum.second,
+					&m_HorizontalMiddleFWHMPosPixel
+				);
+			}
+			catch (const std::exception& e) 
+			{
+				LOG("Exception in horizontal thread: " + wxString(e.what()));
+			}
+		});
+
+	std::thread verticalThread([&]()
+		{
+			try 
+			{
+				FWHM::CalculateSumHorizontally
+				(
+					m_ImageData.get(),
+					m_ImageSize.GetWidth(),
+					m_ImageSize.GetHeight(),
+					m_VerticalSumArray.get()
+				);
+
+				LOG("CalculatedSumHorizontally: " + wxString(__FUNCSIG__));
+
+				m_VerticalFWHM_PX = FWHM::CalculateFWHM
+				(
+					m_VerticalSumArray.get(),
+					m_ImageSize.GetHeight(),
+					&m_VerticalBestPosSum.first,
+					&m_VerticalBestPosSum.second,
+					&m_VerticalWorstPosSum.first,
+					&m_VerticalWorstPosSum.second,
+					&m_VerticalMiddleFWHMPosPixel
+				);
+			}
+			catch (const std::exception& e) 
+			{
+				LOG("Exception in vertical thread: " + wxString(e.what()));
+			}
+		});
+
+	// Wait for both threads to complete execution
+	horizontalThread.join();
+	verticalThread.join();
+}
+
 void cCamPreview::InitDefaultComponents()
 {
 	//m_GraphicsBitmapImage = std::make_unique<wxGraphicsBitmap>();
@@ -926,7 +933,17 @@ auto cCamPreview::DrawGridMesh(wxGraphicsContext* gc_) -> void
 	auto rightBottomBoundary = wxRealPoint();
 	rightBottomBoundary.x = (m_StartDrawPos.x + m_ImageSize.GetWidth()) * m_Zoom / m_ZoomOnOriginalSizeImage;
 	rightBottomBoundary.y = (m_StartDrawPos.y + m_ImageSize.GetHeight()) * m_Zoom / m_ZoomOnOriginalSizeImage;
+
+	{
+		rightBottomBoundary.x = rightBottomBoundary.x > GetSize().GetWidth() ? GetSize().GetWidth() : rightBottomBoundary.x;
+		rightBottomBoundary.y = rightBottomBoundary.y > GetSize().GetHeight() ? GetSize().GetHeight() : rightBottomBoundary.y;
+	}
+
 	auto leftUpperBoundary = m_StartDrawPos;
+	{
+		leftUpperBoundary.x = leftUpperBoundary.x > 0.0 ? leftUpperBoundary.x : 0.0;
+		leftUpperBoundary.y = leftUpperBoundary.y > 0.0 ? leftUpperBoundary.y : 0.0;
+	}
 	leftUpperBoundary.x *= m_Zoom / m_ZoomOnOriginalSizeImage;
 	leftUpperBoundary.y *= m_Zoom / m_ZoomOnOriginalSizeImage;
 
@@ -1009,6 +1026,42 @@ auto cCamPreview::DrawGridMesh(wxGraphicsContext* gc_) -> void
 
 auto cCamPreview::DrawCircleMesh(wxGraphicsContext* gc_) -> void
 {
+	if (!m_Image.IsOk() || !m_DisplayCircleMesh) return;
+
+	auto penColour = wxColour(237, 28, 36, 100);
+	auto penSize = 4;
+	auto penStyle = wxPENSTYLE_LONG_DASH;
+	gc_->SetPen(wxPen(penColour, penSize, penStyle));
+
+	auto centerPoint = wxRealPoint();
+
+	if (m_DisplayCrossHair)
+	{
+		centerPoint.x = (m_StartDrawPos.x + m_CrossHairPos.x + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage;
+		centerPoint.y = (m_StartDrawPos.y + m_CrossHairPos.y + 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage;
+	}
+	else
+	{
+		centerPoint.x = (m_StartDrawPos.x + m_ImageSize.GetWidth() / 2 - 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage;
+		centerPoint.y = (m_StartDrawPos.y + m_ImageSize.GetHeight() / 2 - 0.5) * m_Zoom / m_ZoomOnOriginalSizeImage;
+	}
+
+	auto maxRadius = std::min(m_CanvasSize.GetWidth(), m_CanvasSize.GetHeight()) / 2.0;
+	auto currRadius = m_CircleMeshStepPX / m_ZoomOnOriginalSizeImage;
+
+	wxGraphicsPath path = gc_->CreatePath();
+	while ((int)currRadius <= maxRadius)
+	{
+		path.AddCircle
+		(
+			centerPoint.x, 
+			centerPoint.y, 
+			currRadius
+		);
+
+		currRadius += m_CircleMeshStepPX / m_ZoomOnOriginalSizeImage;
+	}
+	gc_->StrokePath(path);
 }
 
 auto cCamPreview::DrawSpotCroppedWindow(wxGraphicsContext* gc_) -> void

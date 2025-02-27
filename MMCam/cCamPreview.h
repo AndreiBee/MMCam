@@ -179,6 +179,8 @@ private:
 	auto OnKeyPressed(wxKeyEvent& evt) -> void;
 	auto OnKeyReleased(wxKeyEvent& evt) -> void;
 
+	auto CalculateFWHM() -> void;
+
 private:
 	/* Buttons on keyboard */
 	bool m_CTRLPressed{};
@@ -225,8 +227,10 @@ private:
 
 	bool m_DisplayGridMesh{}, m_DisplayCircleMesh{};
 	int m_GridMeshStepPX{ 100 };
+	int m_CircleMeshStepPX{ 200 };
 
 	bool m_DisplayFocusCenter{};
+	bool m_DisplayCrossHair{};
 
 
 	std::unique_ptr<CameraPreviewVariables::InputPreviewPanelArgs> m_ParentArguments{};
